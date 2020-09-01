@@ -10651,13 +10651,20 @@ void hme_level0_sb(
             num_of_ref_pic_to_search = 1;
         }
         else {
+#if FIX_HME_REF_COUNT
+            num_of_ref_pic_to_search =
+                (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
             num_of_ref_pic_to_search =
                 (pcs_ptr->slice_type == P_SLICE)
                 ? pcs_ptr->ref_list0_count
                 : (list_index == REF_LIST_0)
                 ? pcs_ptr->ref_list0_count
                 : pcs_ptr->ref_list1_count;
-
+#endif
             referenceObject = (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
 #if !FIX_WARNINGS
             ref0Poc = pcs_ptr->ref_pic_poc_array[0][0];
@@ -10878,13 +10885,20 @@ void hme_level1_sb(
             num_of_ref_pic_to_search = 1;
         }
         else {
+#if FIX_HME_REF_COUNT
+            num_of_ref_pic_to_search =
+                (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
             num_of_ref_pic_to_search =
                 (pcs_ptr->slice_type == P_SLICE)
                 ? pcs_ptr->ref_list0_count
                 : (list_index == REF_LIST_0)
                 ? pcs_ptr->ref_list0_count
                 : pcs_ptr->ref_list1_count;
-
+#endif
             referenceObject = (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
 #if !FIX_WARNINGS
             ref0Poc = pcs_ptr->ref_pic_poc_array[0][0];
@@ -11078,13 +11092,20 @@ void hme_level2_sb(
             num_of_ref_pic_to_search = 1;
         }
         else {
+#if FIX_HME_REF_COUNT
+            num_of_ref_pic_to_search =
+                (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                : pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
             num_of_ref_pic_to_search =
                 (pcs_ptr->slice_type == P_SLICE)
                 ? pcs_ptr->ref_list0_count
                 : (list_index == REF_LIST_0)
                 ? pcs_ptr->ref_list0_count
                 : pcs_ptr->ref_list1_count;
-
+#endif
             referenceObject = (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
 #if !FIX_WARNINGS
             ref0Poc = pcs_ptr->ref_pic_poc_array[0][0];

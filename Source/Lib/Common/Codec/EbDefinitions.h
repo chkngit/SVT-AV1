@@ -690,6 +690,49 @@ extern "C" {
 
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
 #define AUG27_ADOPTS                     1 // M4-M7 adoptions
+
+
+// Build M8
+#define PRED_ONLY_B_SLICE 0
+#define END_ZERO          0
+#define START_ZERO        0
+#define PRED_ONLY_ALL     0
+#define BYPASS_PD0        0
+#define SHUT_RDOQ         0
+#define SHUT_PME          0
+#define SHUT_SUBPEL_ME    0
+#define SHUT_SUBPEL_PME   0
+
+#define SHUT_TXT_B_SLICE  0
+#define SHUT_TXT_ALL      0
+
+#define NIC_1_MDS1        0
+#define BYPASS_MDS1       0
+
+#define SHUT_ADAPT_ME     0 
+
+#define SHUT_CDEF         0 
+#define SHUT_SG           0
+#define SHUT_WN           0
+
+#define SHUT_TXS          0
+#define SHUT_WARP         0
+
+#define FIX_HME_REF_COUNT 1
+
+#define SHUT_TF           0
+
+#define UNIPRED_BASE      0
+
+#define PUSH_TH           0
+#define COST_RANGE_BASED_TH 0
+#define DIST_BASED_REFINEMENT 0
+#define NRF_TH     0
+#define I_SLICE_TH 0
+#define COST_BASED_PRED_ONLY 1
+
+
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

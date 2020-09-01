@@ -1516,6 +1516,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #if SHUT_LAYER_BASED_FEATURES
     enable_wm = EB_TRUE;
 #endif
+#if SHUT_WARP
+    enable_wm = EB_FALSE;
+#endif
     frm_hdr->allow_warped_motion =
         enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&

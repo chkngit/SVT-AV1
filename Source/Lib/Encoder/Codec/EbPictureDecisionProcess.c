@@ -1134,7 +1134,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set the Multi-Pass PD level
 #if ADD_NEW_MPPD_LEVEL
 #if ADOPT_SKIPPING_PD1
+#if BYPASS_PD0
+    pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
+#else
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_0;
+#endif
 #else
 #if MAR23_ADOPTIONS
     if (sc_content_detected)
@@ -2150,6 +2154,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         pcs_ptr->cdef_level = 0;
+
+#if SHUT_CDEF
+    pcs_ptr->cdef_level = 0;
+#endif
 #else
     // CDEF Level                                   Settings
     // 0                                            OFF
@@ -2321,6 +2329,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 #endif
+#if SHUT_SG
+    cm->sg_filter_mode = 0;
+#endif
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
@@ -2375,6 +2386,12 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MAR12_M8_ADOPTIONS
         else
             cm->wn_filter_mode = 2;
+
+
+#if SHUT_WN
+    cm->wn_filter_mode = 0;
+#endif
+
 #else
         else if (pcs_ptr->enc_mode <= ENC_M7)
             cm->wn_filter_mode = 2;
@@ -2641,6 +2658,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     else
         pcs_ptr->tx_size_search_mode = 0;
+#if SHUT_TXS
+    pcs_ptr->tx_size_search_mode = 0;
+#endif
 #if SHUT_FEATURE_INTERACTIONS
     pcs_ptr->tx_size_search_mode = 1;
 #endif
@@ -3203,6 +3223,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         }
     else
         context_ptr->tf_level = 3;
+#endif
+#if SHUT_TF
+    context_ptr->tf_level = 0;
 #endif
     set_tf_controls(context_ptr, context_ptr->tf_level);
 #else

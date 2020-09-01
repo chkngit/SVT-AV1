@@ -1923,6 +1923,30 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]        = 0;
 #endif
         break;
+#if UNIPRED_BASE
+    case 7:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[WARP_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP] = 1;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP] = 0;
+
+        break;
+#endif
     default: assert(0); break;
     }
 }
@@ -2184,7 +2208,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     // Step 1: derive bypass_stage1 flags
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
         context_ptr->md_staging_mode == MD_STAGING_MODE_2)
+#if BYPASS_MDS1
+        memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
+#else
         memset(context_ptr->bypass_md_stage_1, EB_FALSE, CAND_CLASS_TOTAL);
+#endif
     else
         memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
 
@@ -4006,6 +4034,14 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     if (use_nic_1_last_stage) {
         for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+#if BYPASS_MDS1
+            if (context_ptr->bypass_md_stage_1[cidx] && context_ptr->bypass_md_stage_2[cidx]) {
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+            } else
+#endif
             if (context_ptr->bypass_md_stage_2[cidx]) {
                 context_ptr->md_stage_2_count[cidx] = 1;
                 context_ptr->md_stage_2_count[cidx] = 1;
@@ -4020,6 +4056,15 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
         }
     }
+
+#if NIC_1_MDS1
+    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+        }
+#endif
 #endif
 
     // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC
@@ -13189,6 +13234,11 @@ EbErrorType signal_derivation_block(
 #if !SWITCH_MODE_BASED_ON_STATISTICS
     soft_cycles_reduction_mrp(context_ptr, & context_ptr->inter_inter_distortion_based_reference_pruning);
 #endif
+#if UNIPRED_BASE
+    if(pcs->parent_pcs_ptr->temporal_layer_index == 0)
+        context_ptr->inter_inter_distortion_based_reference_pruning = 7;
+#endif
+
     set_inter_inter_distortion_based_reference_pruning_controls(context_ptr, context_ptr->inter_inter_distortion_based_reference_pruning);
 
 
