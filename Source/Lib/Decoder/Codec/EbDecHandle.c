@@ -499,6 +499,7 @@ svt_av1_dec_init_handle(EbComponentType **p_handle, void *p_app_data,
             ((EbComponentType *)(*p_handle))->p_application_private = p_app_data;
         else if (return_error == EB_ErrorInsufficientResources) {
             svt_av1_dec_deinit((EbComponentType *)NULL);
+            free(*p_handle);
             *p_handle = (EbComponentType *)NULL;
         } else
             return_error = EB_ErrorInvalidComponent;

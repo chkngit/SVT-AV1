@@ -194,6 +194,7 @@ int32_t main(int32_t argc, char *argv[]) {
         fps_summary = cli.fps_summary;
 
         EbBufferHeaderType *recon_buffer = malloc(sizeof(*recon_buffer));
+        assert(recon_buffer != NULL);
         recon_buffer->p_buffer           = malloc(sizeof(EbSvtIOFormat));
 
         /* FilmGrain module req. even dim. for internal operation */
@@ -201,7 +202,7 @@ int32_t main(int32_t argc, char *argv[]) {
         int h = (cli.height & 1) ? (cli.height + 1) : cli.height;
         int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ? sizeof(uint8_t) : sizeof(uint16_t);
         size     = size * w * h;
-
+        assert(recon_buffer->p_buffer != NULL);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->luma = (uint8_t *)malloc(size);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb   = (uint8_t *)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr   = (uint8_t *)malloc(size >> 2);

@@ -10578,6 +10578,7 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi, TxSi
             xd->above_txfm_context + blk_col, xd->left_txfm_context + blk_row, tx_size, tx_size);
 
     } else {
+        assert(tx_size < TX_SIZES_ALL);
         const TxSize sub_txs = sub_tx_size_map[tx_size];
         const int    bsw     = tx_size_wide_unit[sub_txs];
         const int    bsh     = tx_size_high_unit[sub_txs];

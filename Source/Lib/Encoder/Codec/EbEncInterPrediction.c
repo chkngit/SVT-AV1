@@ -3464,6 +3464,7 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
     uint8_t *src_ptr_l0, *src_ptr_l1;
     uint8_t *dst_ptr;
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+        assert(ref_pic_list0 != NULL);
         // Y
         src_ptr_l0 = ref_pic_list0->buffer_y + (is16bit ? 2 : 1)
                                                * (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
@@ -3475,6 +3476,7 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
         buf_height = ref_pic_list0->height;
     }
     else{ //UNI_PRED_LIST_1
+        assert(ref_pic_list1 != NULL);
         src_ptr_l0 = ref_pic_list1->buffer_y + (is16bit ? 2 : 1)
                                                * (ref_pic_list1->origin_x + ref_pic_list1->origin_y * ref_pic_list1->stride_y);
         src_ptr_l1 = NULL;
