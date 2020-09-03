@@ -1782,9 +1782,17 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 
         depth_refinement_ctrls->enabled = 0;
         break;
-
+#if I_SLICE_TH
     case 1:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -10;
+        depth_refinement_ctrls->sub_to_current_th = 10;
 
+        break;
+    case 2:
+#else
+    case 1:
+#endif
         depth_refinement_ctrls->enabled = 1;
         depth_refinement_ctrls->parent_to_current_th = -10;
 #if PUSH_TH
@@ -7770,7 +7778,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->block_based_depth_refinement_level = 0;
     else {
 #if I_SLICE_TH
-        context_ptr->block_based_depth_refinement_level = 1;
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 1;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 2;
+        }
 #else
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 0;
