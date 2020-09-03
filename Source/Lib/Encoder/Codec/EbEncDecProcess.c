@@ -11543,6 +11543,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 #endif
+#if END_ZERO
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : -1;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
 #if PRED_ONLY_ALL
                                     s_depth = 0;
                                     e_depth = 0;
