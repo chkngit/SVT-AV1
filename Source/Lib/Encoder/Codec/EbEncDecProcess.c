@@ -1787,7 +1787,11 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 
         depth_refinement_ctrls->enabled = 1;
         depth_refinement_ctrls->parent_to_current_th = -10;
+#if PUSH_TH
+        depth_refinement_ctrls->sub_to_current_th = -10;
+#else
         depth_refinement_ctrls->sub_to_current_th = 5;
+#endif
         break;
     default:
         assert(0);
@@ -11074,8 +11078,24 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)(MAX(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost,1));
     }
 
+#if COST_RANGE_BASED_TH
+    int64_t sub_to_current_th = context_ptr->depth_refinement_ctrls.sub_to_current_th;
+#if 0
+    uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+    uint64_t cost_th = RDCOST(full_lambda, 16, 500 * blk_geom->bwidth * blk_geom->bheight);
+    
+    if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost > cost_th)
+        sub_to_current_th -= 15;
+#endif
+    if(blk_geom->sq_size > 16)
+        sub_to_current_th -= 15;
 
+    if (child_to_current_deviation <= sub_to_current_th)
+#else
     if (child_to_current_deviation <= context_ptr->depth_refinement_ctrls.sub_to_current_th)
+#endif
         return EB_TRUE;
 
     return EB_FALSE;

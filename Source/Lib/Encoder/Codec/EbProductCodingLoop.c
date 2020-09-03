@@ -1923,6 +1923,30 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]        = 0;
 #endif
         break;
+#if UNIPRED_BASE
+    case 7:
+        ref_pruning_ctrls->inter_to_inter_pruning_enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[WARP_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP] = 1;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP] = 1;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP] = 0;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP] = 0;
+
+        break;
+#endif
     default: assert(0); break;
     }
 }
@@ -13210,6 +13234,11 @@ EbErrorType signal_derivation_block(
 #if !SWITCH_MODE_BASED_ON_STATISTICS
     soft_cycles_reduction_mrp(context_ptr, & context_ptr->inter_inter_distortion_based_reference_pruning);
 #endif
+#if UNIPRED_BASE
+    if(pcs->parent_pcs_ptr->temporal_layer_index == 0)
+        context_ptr->inter_inter_distortion_based_reference_pruning = 7;
+#endif
+
     set_inter_inter_distortion_based_reference_pruning_controls(context_ptr, context_ptr->inter_inter_distortion_based_reference_pruning);
 
 
