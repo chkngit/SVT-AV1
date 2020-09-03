@@ -12025,7 +12025,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         context_ptr->full_lambda_md[EB_10_BIT_MD] :
                         context_ptr->full_lambda_md[EB_8_BIT_MD];
 
-                    uint64_t cost_th_0 = RDCOST(full_lambda, 16, 50 * blk_geom->bwidth * blk_geom->bheight);
+                    uint64_t cost_th_0 = RDCOST(full_lambda, 16, 100 * blk_geom->bwidth * blk_geom->bheight); // 50: safe
 
                     if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
                         s_depth = 0;
