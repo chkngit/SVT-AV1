@@ -693,7 +693,7 @@ extern "C" {
 
 
 // Build M8
-#define PRED_ONLY_B_SLICE 0
+#define PRED_ONLY_B_SLICE 1
 #define PRED_ONLY_ALL     0
 #define BYPASS_PD0        0
 #define SHUT_RDOQ         0
@@ -725,8 +725,11 @@ extern "C" {
 #define PUSH_TH           0
 #define COST_RANGE_BASED_TH 0
 #define DIST_BASED_REFINEMENT 0
-#define NRF_TH     1
-#define I_SLICE_TH 1
+#define NRF_TH     0
+#define I_SLICE_TH 0
+
+
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
