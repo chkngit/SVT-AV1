@@ -11999,7 +11999,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         scs_ptr, context_ptr, blk_geom, blk_index, &s_depth, &e_depth);
 #endif
                     // Add block indices of upper depth(s)
-#if 0//BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
+#if BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
                     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_parent_depth = 1;
                     if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
@@ -12023,10 +12023,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
 
                     // Add block indices of lower depth(s)
-#if 0//BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
+#if BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
                     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_sub_depth = 1;
+#if I_SLICE_TH
+                    if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size > 4) {
+#else
                     if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index]) {
+#endif
                         add_sub_depth = is_child_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom, blk_index);
                     }
