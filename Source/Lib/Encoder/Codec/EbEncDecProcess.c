@@ -11501,8 +11501,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
+#if NRF_TH
+                                    s_depth = -1;
+                                    e_depth =  1
+#else
                                     s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
                                     e_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
 #if PRED_ONLY_B_SLICE
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
