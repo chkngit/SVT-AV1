@@ -10982,6 +10982,9 @@ uint16_t depth_cycles_reduction_th[6][5][4] = {
 uint8_t update_s_depth_e_depth(SequenceControlSet *scs_ptr,
     ModeDecisionContext *context_ptr, const BlockGeom *blk_geom, uint32_t blk_index, int8_t *s_depth, int8_t *e_depth) {
 
+    uint64_t parent_cost = (uint64_t) ~0;
+    uint64_t child_cost = (uint64_t) ~0;
+
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
     if (*s_depth == -1 && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
         int64_t parent_to_current_deviation = MIN_SIGNED_VALUE;
@@ -11029,10 +11032,13 @@ uint8_t update_s_depth_e_depth(SequenceControlSet *scs_ptr,
                 (int64_t)(((int64_t)context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost - (int64_t)current_depth_cost) * 100) /
                 (int64_t)current_depth_cost;
 #else
+            parent_cost = context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost;
+
             parent_to_current_deviation =
-                (int64_t)(((int64_t)MAX(context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost, 1) - (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
+                (int64_t)(((int64_t)MAX(parent_cost, 1) - (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
                 (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
 #endif
+ 
         }
 
         if (parent_to_current_deviation > context_ptr->depth_refinement_ctrls.parent_to_current_th)
@@ -11048,10 +11054,10 @@ uint8_t update_s_depth_e_depth(SequenceControlSet *scs_ptr,
         child_block_idx_3 = child_block_idx_2 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
         child_block_idx_4 = child_block_idx_3 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
 
-        uint64_t child_cost = 0;
+    
         uint8_t child_cnt = 0;
         if (context_ptr->md_local_blk_unit[child_block_idx_1].avail_blk_flag) {
-            child_cost += context_ptr->md_local_blk_unit[child_block_idx_1].default_cost;
+            child_cost = context_ptr->md_local_blk_unit[child_block_idx_1].default_cost;
             child_cnt++;
         }
         if (context_ptr->md_local_blk_unit[child_block_idx_2].avail_blk_flag) {
@@ -11093,6 +11099,14 @@ uint8_t update_s_depth_e_depth(SequenceControlSet *scs_ptr,
         if (child_to_current_deviation > context_ptr->depth_refinement_ctrls.sub_to_current_th)
 #endif
             *e_depth = 0;
+    }
+
+    if (*s_depth == -1 && *e_depth == 1 && parent_cost != (uint64_t)~0 && child_cost != (uint64_t)~0) {
+    
+        if (parent_cost < (child_cost * 4))
+            *e_depth = 0;
+        else
+            *s_depth = 0;
     }
 }
 #endif
