@@ -7769,12 +7769,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (enc_mode <= ENC_M6)
         context_ptr->block_based_depth_refinement_level = 0;
     else {
+#if I_SLICE_TH
+        context_ptr->block_based_depth_refinement_level = 1;
+#else
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 0;
         }
         else {
             context_ptr->block_based_depth_refinement_level = 1;
         }
+#endif
     }
     set_block_based_depth_refinement_controls(context_ptr, context_ptr->block_based_depth_refinement_level);
 #endif
