@@ -694,8 +694,8 @@ extern "C" {
 
 // Build M8
 #define PRED_ONLY_B_SLICE 0
-#define END_ZERO          0
-#define START_ZERO        1
+#define END_ZERO          1
+#define START_ZERO        0
 #define PRED_ONLY_ALL     0
 #define BYPASS_PD0        0
 #define SHUT_RDOQ         0
