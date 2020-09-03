@@ -1785,8 +1785,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 #if I_SLICE_TH
     case 1:
         depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->parent_to_current_th = 0;
-        depth_refinement_ctrls->sub_to_current_th = 15;
+        depth_refinement_ctrls->parent_to_current_th = -5;
+        depth_refinement_ctrls->sub_to_current_th = 10;
 
         break;
     case 2:
