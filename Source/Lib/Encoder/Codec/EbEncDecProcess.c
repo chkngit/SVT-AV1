@@ -12019,6 +12019,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     update_s_depth_e_depth(
                         scs_ptr, context_ptr, blk_geom, blk_index, &s_depth, &e_depth);
 #endif
+
+#if COST_BASED_PRED_ONLY
+                    uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+                        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+                        context_ptr->full_lambda_md[EB_8_BIT_MD];
+
+                    uint64_t cost_th_0 = RDCOST(full_lambda, 16, 50 * blk_geom->bwidth * blk_geom->bheight);
+
+                    if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
+                        s_depth = 0;
+                        e_depth = 0;
+                    }
+#endif
                     // Add block indices of upper depth(s)
 #if BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
                     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
