@@ -11999,7 +11999,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         scs_ptr, context_ptr, blk_geom, blk_index, &s_depth, &e_depth);
 #endif
                     // Add block indices of upper depth(s)
-#if BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
+#if 0//BLOCK_BASED_DEPTH_REFINMENT && !DIST_BASED_REFINEMENT
                     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_parent_depth = 1;
                     if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {

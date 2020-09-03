@@ -726,7 +726,7 @@ extern "C" {
 #define COST_RANGE_BASED_TH 0
 #define DIST_BASED_REFINEMENT 0
 #define NRF_TH     1
-#define I_SLICE_TH 0
+#define I_SLICE_TH 1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
