@@ -429,7 +429,7 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
 
 static void eb_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
-#if LAD_MEM_RED
+#if LAD_MEM_RED && !TPL_REC_BUFFER
     if (obj->encode_context_ptr && obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved)
         EB_FREE_ARRAY(obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved);
 #endif
@@ -445,7 +445,7 @@ EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *
 
     EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, EB_NULL);
     scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
-#if LAD_MEM_RED
+#if LAD_MEM_RED && !TPL_REC_BUFFER
     if (scs_init_data.encode_context_ptr)
         scs_init_data.encode_context_ptr->mc_flow_rec_picture_buffer_saved = NULL;
 #endif

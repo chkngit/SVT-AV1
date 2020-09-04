@@ -653,12 +653,17 @@ extern "C" {
 #if INL_ME
 #define FORCE_DECODE_ORDER   1
 #define IME_REUSE_TPL_RESULT 0 // Reuse TPL results for iLoopME
-#define INL_TPL_ME_DBG 1
+#define INL_TPL_ME_DBG 0
 #define INL_ME_DBG 0 //In loop me for debug
 #if INL_ME_DBG
 #define INL_ME_ON_INPUT_DBG 1 //ME on original debug
 #define INL_GM_ON_INPUT_DBG 1 //GM on original debug
 #endif
+#endif
+#define IN_LOOP_TPL 1
+#if IN_LOOP_TPL
+#define TPL_REC_BUFFER 1
+#define TPL_SETUP_REF 1
 #endif
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////

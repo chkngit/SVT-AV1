@@ -12,7 +12,7 @@
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
 #include "EbResize.h"
-#if TPL_LA
+#if TPL_LA & !IN_LOOP_TPL
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
@@ -839,7 +839,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
-#if TPL_LA
+#if TPL_LA & !IN_LOOP_TPL
 #if TPL_LA_LAMBDA_SCALING
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
 {
@@ -1679,7 +1679,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
       pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
 
-    //SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
+    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
 #if TPL_LA_LAMBDA_SCALING
     generate_lambda_scaling_factor(pcs_ptr);
 #endif
@@ -1844,7 +1844,7 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
         generate_r0beta(pcs_array[0]);
 
-#if 0 //AMIR_PRINTS
+#if 1 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
         for (frame_idx = 0; frame_idx <= sw_length - 1; frame_idx++)
@@ -1901,6 +1901,35 @@ EbErrorType tpl_mc_flow(
             if(pcs_array[frame_idx]->picture_number <= pcs_array[1]->picture_number)
 #endif
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
+
+#if 1 //AMIR_PRINTS
+        SVT_LOG("LOG displayorder:%ld\n",
+            pcs_array[1]->picture_number);
+        for (frame_idx = 1; frame_idx <= sw_length - 1; frame_idx++)
+        {
+            PictureParentControlSet         *pcs_ptr_tmp = pcs_array[frame_idx];
+            Av1Common *cm = pcs_ptr_tmp->av1_cm;
+            SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
+            //int tpl_stride = tpl_frame->stride;
+            int64_t intra_cost_base = 0;
+            int64_t mc_dep_cost_base = 0;
+            const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+            const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
+
+            for (int row = 0; row < cm->mi_rows; row += step) {
+                for (int col = 0; col < mi_cols_sr; col += step) {
+                    TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                    int64_t mc_dep_delta =
+                        RDCOST(pcs_ptr_tmp->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                    intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                }
+            }
+
+            SVT_LOG("After mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld\n",
+                frame_idx, pcs_ptr_tmp->picture_number, intra_cost_base, mc_dep_cost_base);
+        }
+#endif
     }
 
     for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
@@ -2432,7 +2461,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 : &pcs_ptr->stat_struct;
                         if (scs_ptr->use_output_stat_file)
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
-#if TPL_LA
+#if TPL_LA & !IN_LOOP_TPL
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
 #if !TPL_SW_UPDATE
