@@ -694,7 +694,7 @@ extern "C" {
 
 // Build M8
 /*************************************************/
-#if 1 // Fastest possible (step0)
+#if 0 // Fastest possible (step0)
 #define PRED_ONLY_B_SLICE 0
 #define END_ZERO          0
 #define START_ZERO        0
@@ -726,13 +726,13 @@ extern "C" {
 
 #define UNIPRED_BASE      0
 
-#define PUSH_TH           0
+
 #define COST_RANGE_BASED_TH 0
 #define DIST_BASED_REFINEMENT 0
-#define NRF_TH     0
-#define I_SLICE_TH 0
-#define COST_BASED_PRED_ONLY 0
-
+#define NRF_TH 1
+#define I_SLICE_TH 1
+#define COST_BASED_PRED_ONLY 1
+#define PUSH_TH 0
 
 
 #endif

@@ -1794,10 +1794,11 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
     case 1:
 #endif
         depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->parent_to_current_th = -10;
 #if PUSH_TH
-        depth_refinement_ctrls->sub_to_current_th = -10;
+        depth_refinement_ctrls->parent_to_current_th = -10;
+        depth_refinement_ctrls->sub_to_current_th = 0;
 #else
+        depth_refinement_ctrls->parent_to_current_th = -10;
         depth_refinement_ctrls->sub_to_current_th = 5;
 #endif
         break;
@@ -12042,6 +12043,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
                     uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); // 
                     uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); // 
+                    uint64_t cost_th_3 = RDCOST(full_lambda, 16, 500 * blk_geom->bwidth * blk_geom->bheight); // 
                     int64_t th_offset = 0;
                     if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0){
                         s_depth = 0;
