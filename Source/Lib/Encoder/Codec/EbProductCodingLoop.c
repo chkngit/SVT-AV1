@@ -2593,6 +2593,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     context_ptr->md_stage_2_count[CAND_CLASS_3] =
                         (pcs_ptr->slice_type == I_SLICE) ? 8 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
+
+#if SET_NIC_1
+                    context_ptr->md_stage_2_count[CAND_CLASS_0] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_1] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_2] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_3] = 1;
+#endif
 #if !UNIFY_SC_NSC
                 }
 #endif
@@ -2656,7 +2663,9 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 #endif
 #if NICS_CLEANUP
                 // scale nics
+#if !SET_NIC_1
             scale_nics (pcs_ptr,context_ptr);
+#endif
 #endif
 #if !REMOVE_COMBINE_CLASS12
             if (context_ptr->combine_class12) {
@@ -3991,6 +4000,14 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             (context_ptr->md_stage_2_count[CAND_CLASS_2] + 1) >> 1;
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
+
+#if SET_NIC_1
+        context_ptr->md_stage_3_count[CAND_CLASS_0] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_3] = 1;
+#endif
+
 #if !CLASS_MERGING
         context_ptr->md_stage_3_count[CAND_CLASS_4] =
             (context_ptr->md_stage_2_count[CAND_CLASS_4] + 1) >> 1;

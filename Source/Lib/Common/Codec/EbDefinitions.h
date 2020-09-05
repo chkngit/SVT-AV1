@@ -731,6 +731,8 @@ extern "C" {
 #define SHUT_PALETTE      1
 #define SHUT_RATE_EST     1
 #define SHUT_IFS          1
+
+#define SET_NIC_1         1
 #endif
 /*************************************************/
 #define FIX_HME_REF_COUNT 1
