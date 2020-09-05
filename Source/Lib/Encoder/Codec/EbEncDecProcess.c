@@ -3322,6 +3322,89 @@ void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_c
     }
 }
 #endif
+#if NIC_SCALING_PER_STAGE
+void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
+
+    NicCtrls* nic_ctrls = &mdctxt->nic_ctrls;
+
+    switch (nic_scaling_level)
+    {
+    case 0:
+        nic_ctrls->stage1_scaling_num = 20;
+        nic_ctrls->stage2_scaling_num = 20;
+        nic_ctrls->stage3_scaling_num = 20;
+        break;
+    case 1:
+        nic_ctrls->stage1_scaling_num = 16;
+        nic_ctrls->stage2_scaling_num = 16;
+        nic_ctrls->stage3_scaling_num = 16;
+        break;
+    case 2:
+        nic_ctrls->stage1_scaling_num = 14;
+        nic_ctrls->stage2_scaling_num = 14;
+        nic_ctrls->stage3_scaling_num = 14;
+        break;
+    case 3:
+        nic_ctrls->stage1_scaling_num = 12;
+        nic_ctrls->stage2_scaling_num = 12;
+        nic_ctrls->stage3_scaling_num = 12;
+        break;
+    case 4:
+        nic_ctrls->stage1_scaling_num = 10;
+        nic_ctrls->stage2_scaling_num = 10;
+        nic_ctrls->stage3_scaling_num = 10;
+        break;
+    case 5:
+        nic_ctrls->stage1_scaling_num = 8;
+        nic_ctrls->stage2_scaling_num = 8;
+        nic_ctrls->stage3_scaling_num = 8;
+        break;
+    case 6:
+        nic_ctrls->stage1_scaling_num = 6;
+        nic_ctrls->stage2_scaling_num = 6;
+        nic_ctrls->stage3_scaling_num = 6;
+        break;
+    case 7:
+        nic_ctrls->stage1_scaling_num = 5;
+        nic_ctrls->stage2_scaling_num = 5;
+        nic_ctrls->stage3_scaling_num = 5;
+        break;
+    case 8:
+        nic_ctrls->stage1_scaling_num = 4;
+        nic_ctrls->stage2_scaling_num = 4;
+        nic_ctrls->stage3_scaling_num = 4;
+        break;
+    case 9:
+        nic_ctrls->stage1_scaling_num = 5;
+        nic_ctrls->stage2_scaling_num = 3;
+        nic_ctrls->stage3_scaling_num = 3;
+        break;
+    case 10:
+        nic_ctrls->stage1_scaling_num = 3;
+        nic_ctrls->stage2_scaling_num = 3;
+        nic_ctrls->stage3_scaling_num = 3;
+        break;
+    case 11:
+        nic_ctrls->stage1_scaling_num = 3;
+        nic_ctrls->stage2_scaling_num = 2;
+        nic_ctrls->stage3_scaling_num = 2;
+        break;
+    case 12:
+        nic_ctrls->stage1_scaling_num = 2;
+        nic_ctrls->stage2_scaling_num = 2;
+        nic_ctrls->stage3_scaling_num = 2;
+        break;
+    case 13:
+        nic_ctrls->stage1_scaling_num = 1;
+        nic_ctrls->stage2_scaling_num = 1;
+        nic_ctrls->stage3_scaling_num = 1;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if (SWITCH_MODE_BASED_ON_SQ_COEFF || SWITCH_MODE_BASED_ON_STATISTICS) && !UNIFY_LEVELS
 /*
  * Update the non-NSQ and non-depth SB-level feature settings.  This is used by features that
@@ -5717,7 +5800,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if MAR17_ADOPTIONS
 #if MDS2_V0
+#if NIC_SCALING_PER_STAGE
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M1)
+#endif
             context_ptr->md_staging_mode = MD_STAGING_MODE_2;
         else 
             context_ptr->md_staging_mode = MD_STAGING_MODE_1;
@@ -6255,6 +6342,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_1_cand_prune_th = 75;
     else
 #if UNIFY_SC_NSC
+#if USE_MDS1_PRUNING
+        if (enc_mode <= ENC_M0)
+            context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+        else if (enc_mode <= ENC_M2)
+            context_ptr->md_stage_1_cand_prune_th = 300;
+        else if (enc_mode <= ENC_M5)
+            context_ptr->md_stage_1_cand_prune_th = 200;
+#else
 #if AUG5_ADOPTS
 #if AUG27_ADOPTS
         if (enc_mode <= ENC_M5)
@@ -6271,6 +6366,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
         else if (enc_mode <= ENC_M2)
             context_ptr->md_stage_1_cand_prune_th = 75;
+#endif
 #endif
         else
             context_ptr->md_stage_1_cand_prune_th = 45;
@@ -6354,6 +6450,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (pd_pass == PD_PASS_1)
             context_ptr->md_stage_1_class_prune_th = 100;
         else
+#if USE_MDS1_PRUNING
+            if (enc_mode <= ENC_M0)
+                context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+            else if (enc_mode <= ENC_M2)
+                context_ptr->md_stage_1_class_prune_th = 300;
+            else if (enc_mode <= ENC_M5)
+                context_ptr->md_stage_1_class_prune_th = 200;
+#else
 #if PRESETS_SHIFT
 #if APR25_10AM_ADOPTIONS
 #if UNIFY_SC_NSC
@@ -6398,6 +6502,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
                     context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+#endif
                 else
 
 #if MDS2_V0
@@ -7571,6 +7676,29 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->txs_in_inter_classes = 0;
 #endif
+#if NIC_SCALING_PER_STAGE
+    // If using a mode offset, do not modify the NSQ-targeting features or NICS
+    if (!mode_offset) {
+        uint8_t nic_scaling_level = 1;
+
+        if (enc_mode <= ENC_MR)
+            nic_scaling_level = 0;
+        else if (enc_mode <= ENC_M0)
+            nic_scaling_level = 1;
+        else if (enc_mode <= ENC_M1)
+            nic_scaling_level = 4;
+        else if (enc_mode <= ENC_M2)
+            nic_scaling_level = 5;
+        else if (enc_mode <= ENC_M3)
+            nic_scaling_level = 7;
+        else if (enc_mode <= ENC_M4)
+            nic_scaling_level = 9;
+        else
+            nic_scaling_level = 11;
+
+        set_nic_controls(context_ptr, nic_scaling_level);
+    }
+#else
     //{10, 8},   // level0
     //{ 8,8 },    // level1
     //{ 7,8 },    // level2
@@ -7628,6 +7756,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->nic_scaling_level = 9;
 
+#endif
 #endif
 #endif
 #if COEFF_BASED_TXS_BYPASS

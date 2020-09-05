@@ -447,6 +447,13 @@ typedef struct TxTSearchCtrls {
     uint8_t txt_allow_skip; // Allow the skipping of tx_type_search
 }TxTSearchCtrls;
 #endif
+#if NIC_SCALING_PER_STAGE
+typedef struct NicCtrls {
+    uint8_t stage1_scaling_num; // Scaling numerator for post-stage 0 NICS: <x>/16
+    uint8_t stage2_scaling_num; // Scaling numerator for post-stage 1 NICS: <x>/16
+    uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
+}NicCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -1036,7 +1043,11 @@ typedef struct ModeDecisionContext {
 #else
     uint8_t txs_in_inter_classes;
 #endif
+#if NIC_SCALING_PER_STAGE
+    NicCtrls nic_ctrls;
+#else
     uint8_t nic_scaling_level;
+#endif
     uint8_t inter_compound_mode;
 #endif
 #if SWITCH_MODE_BASED_ON_SQ_COEFF

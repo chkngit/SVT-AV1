@@ -1491,6 +1491,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
 #define INTER_PRED_NFL 24
 #define INTER_COMP_NFL 16
 #else
+#if !NIC_SCALING_PER_STAGE
 #if UNIFY_SC_NSC
 #if JUNE26_ADOPTIONS
 uint32_t nics_scale_factor[11/*levels*/][2/*num/denum*/] =
@@ -1611,6 +1612,7 @@ uint32_t nics_scale_factor[2/*sc/nsc*/][6/*levels*/][2/*num/denum*/] = {
 
 
 };
+#endif
 #endif
 #endif
 #endif
@@ -2000,6 +2002,15 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     // minimum nics allowed
     uint32_t min_nics = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 1;
 
+#if NIC_SCALING_PER_STAGE
+    // Set the scaling numerators
+    uint32_t stage1_scale_num = context_ptr->nic_ctrls.stage1_scaling_num;
+    uint32_t stage2_scale_num = context_ptr->nic_ctrls.stage2_scaling_num;
+    uint32_t stage3_scale_num = context_ptr->nic_ctrls.stage3_scaling_num;
+
+    // The scaling denominator is 16 for all stages
+    uint32_t scale_denum = 16;
+#else
 #if MOVE_SIGNALS_TO_MD
     uint8_t nics_scling_level = context_ptr->nic_scaling_level;
 #else
@@ -2164,9 +2175,17 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t scale_denum    =
         nics_scale_factor[pcs_ptr->parent_pcs_ptr->sc_content_detected][nics_scling_level][1];
 #endif
-
+#endif
     // no NIC setting should be done beyond this point
     for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+#if NIC_SCALING_PER_STAGE
+        context_ptr->md_stage_1_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * stage1_scale_num, scale_denum));
+        context_ptr->md_stage_2_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cidx] * stage2_scale_num, scale_denum));
+        context_ptr->md_stage_3_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * stage3_scale_num, scale_denum));
+#else
         context_ptr->md_stage_1_count[cidx] = MAX(min_nics,
             DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * scale_num, scale_denum));
         context_ptr->md_stage_2_count[cidx] = MAX(min_nics,
@@ -2174,6 +2193,7 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 #if MDS2_V0
         context_ptr->md_stage_3_count[cidx] = MAX(min_nics,
             DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * scale_num, scale_denum));
+#endif
 #endif
     }
 }
