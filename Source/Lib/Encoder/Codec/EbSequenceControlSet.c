@@ -161,6 +161,11 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
+
+#if SHUT_REST
+    scs_ptr->seq_header.enable_restoration = 0;
+#endif
+
 #endif
 
     if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)

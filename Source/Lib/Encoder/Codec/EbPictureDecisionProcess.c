@@ -2240,6 +2240,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->sg_filter_mode = 4;
     else
         cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
+#if SHUT_REST
+    cm->sg_filter_mode = 0;
+#endif
 #else
     if (sc_content_detected)
 #if MAR12_M8_ADOPTIONS
@@ -2393,6 +2396,10 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->wn_filter_mode = 2;
         else
             cm->wn_filter_mode = 0;
+#endif
+
+#if SHUT_REST
+    cm->wn_filter_mode = 0;
 #endif
 
     // Intra prediction modes                       Settings
