@@ -721,7 +721,7 @@ extern "C" {
 
 #define SHUT_MRP          1
 #define SHUT_GM           1
-#define SHUT_CFL          0
+#define SHUT_CFL          1
 #define SHUT_REST         1
 #define SHUT_MFMV         1
 #define SHUT_OBMC         1
