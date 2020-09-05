@@ -1223,6 +1223,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         assert(scs_ptr->cdf_mode == 0 && "use cdf_mode 0");
 #endif
 #endif
+
+#if SHUT_RATE_EST
+    pcs_ptr->update_cdf = 0;
+#endif
+
     // Filter INTRA
 #if FILTER_INTRA_CLI
     // pic_filter_intra_level specifies whether filter intra would be active
@@ -1293,6 +1298,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     else
         pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
+
+#if SHUT_FILTER_INTRA
+    pcs_ptr->pic_filter_intra_level = 0;
+#endif
+
 #else
     if (scs_ptr->seq_header.enable_filter_intra)
         pcs_ptr->pic_filter_intra_mode = 1;
@@ -1372,6 +1382,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
             ? 1
             : 0;
+
+#if SHUT_HIGH_PREC
+    frm_hdr->allow_high_precision_mv = 0;
+#endif
 
     // Warped
     EbBool enable_wm;
@@ -1647,6 +1661,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->static_config.obmc_level;
+
+#if SHUT_OBMC
+        pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
+#endif
 
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||

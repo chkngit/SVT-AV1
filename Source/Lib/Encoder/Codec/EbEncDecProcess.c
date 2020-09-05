@@ -4340,6 +4340,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->interpolation_search_level = IFS_MDS1;
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
+#if SHUT_IFS
+    context_ptr->interpolation_search_level = IFS_OFF;
+#endif
 #else
     // Interpolation search Level                     Settings
     // 0                                              OFF
@@ -5142,6 +5145,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->global_mv_injection = 0;
+
+#if SHUT_GM
+        context_ptr->global_mv_injection = 0;
+#endif
 
     if (pd_pass == PD_PASS_0)
         context_ptr->new_nearest_injection = 0;

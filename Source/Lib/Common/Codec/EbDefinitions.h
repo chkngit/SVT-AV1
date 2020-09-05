@@ -701,7 +701,7 @@ extern "C" {
 #define PRED_ONLY_ALL     1
 #define BYPASS_PD0        0
 #define SHUT_RDOQ         1
-#define SHUT_PME          1
+#define SHUT_PME          0
 #define SHUT_SUBPEL_ME    0
 #define SHUT_SUBPEL_PME   0
 
@@ -711,13 +711,26 @@ extern "C" {
 #define NIC_1_MDS1        0
 #define BYPASS_MDS1       0
 
-#define SHUT_ADAPT_ME     1 
+#define SHUT_ADAPT_ME     0 
 
 #define SHUT_CDEF         1 
 
 #define SHUT_TXS          1
 #define SHUT_WARP         1
 #define SHUT_TF           1
+
+#define SHUT_MRP          1
+#define SHUT_GM           1
+#define SHUT_CFL          0
+#define SHUT_REST         0
+#define SHUT_MFMV         1
+#define SHUT_OBMC         1
+#define SHUT_HIGH_PREC    1
+#define SHUT_FILTER_INTRA 1
+#define SHUT_COMPOUND     0
+#define SHUT_PALETTE      1
+#define SHUT_RATE_EST     1
+#define SHUT_IFS          1
 #endif
 /*************************************************/
 #define FIX_HME_REF_COUNT 1

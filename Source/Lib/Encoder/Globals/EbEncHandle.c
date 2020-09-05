@@ -2363,6 +2363,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 
+#if SHUT_MFMV
+    scs_ptr->mfmv_enabled = 0;
+#endif
+
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;

@@ -1920,6 +1920,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
                         pcs_ptr->palette_level = 0;
 
+#if SHUT_PALETTE
+    pcs_ptr->palette_level = 0;
+#endif
+
     assert(pcs_ptr->palette_level < 7);
 #else
     // Palette Modes:
@@ -3015,6 +3019,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_DOWN;
 #endif
 
+#if SHUT_GM
+    pcs_ptr->gm_level = GM_DOWN;
+#endif
+
     // Exit TX size search when all coefficients are zero
     // 0: OFF
     // 1: ON
@@ -3362,6 +3370,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     }else
         pcs_ptr->mrp_level = scs_ptr->static_config.mrp_level;
+#if SHUT_MRP
+    pcs_ptr->mrp_level = 0;
+#endif
 #endif
 #if TPL_OPT
 #if SHIFT_PRESETS
