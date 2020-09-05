@@ -732,7 +732,7 @@ extern "C" {
 #define NRF_TH 1
 #define I_SLICE_TH 1
 #define COST_BASED_PRED_ONLY 1
-#define PUSH_TH 0
+#define PUSH_TH 1
 
 
 #endif
