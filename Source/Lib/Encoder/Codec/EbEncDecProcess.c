@@ -5479,6 +5479,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
         else
             context_ptr->inter_compound_mode = sequence_control_set_ptr->static_config.compound_level;
+
+#if SHUT_COMPOUND
+        context_ptr->inter_compound_mode = 0;
+#endif
+
 #endif
 #if !UNIFY_PME_SIGNALS
 #if UPGRADE_SUBPEL
@@ -7478,6 +7483,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->md_inter_intra_level = 0;
+
+#if SHUT_COMPOUND
+    context_ptr->md_inter_intra_level = 0;
+#endif
+
 #else
     if (pd_pass == PD_PASS_0)
         context_ptr->md_inter_intra_level = 0;

@@ -727,7 +727,7 @@ extern "C" {
 #define SHUT_OBMC         1
 #define SHUT_HIGH_PREC    1
 #define SHUT_FILTER_INTRA 1
-#define SHUT_COMPOUND     0
+#define SHUT_COMPOUND     1
 #define SHUT_PALETTE      1
 #define SHUT_RATE_EST     1
 #define SHUT_IFS          1

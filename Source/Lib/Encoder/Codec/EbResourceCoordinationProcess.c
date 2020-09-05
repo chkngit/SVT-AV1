@@ -1115,6 +1115,10 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
+#if SHUT_COMPOUND
+            scs_ptr->compound_mode = 0;
+#endif
+
 #if M8_NEW_REF
                 scs_ptr->compound_mode = 1 ;
 #endif
