@@ -2500,6 +2500,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 context_ptr->md_stage_1_count[CAND_CLASS_3] =
                     (pcs_ptr->slice_type == I_SLICE) ? 16 :
                     (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+
+#if SET_NIC_1
+                context_ptr->md_stage_1_count[CAND_CLASS_0] = 1;
+                context_ptr->md_stage_1_count[CAND_CLASS_1] = 1;
+                context_ptr->md_stage_1_count[CAND_CLASS_2] = 1;
+                context_ptr->md_stage_1_count[CAND_CLASS_3] = 1;
+#endif
 #else
             context_ptr->md_stage_1_count[CAND_CLASS_0] =
                 (pcs_ptr->slice_type == I_SLICE)
