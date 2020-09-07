@@ -167,7 +167,9 @@ typedef struct DepthRefinementCtrls {
 
     int64_t sub_to_current_th; // decrease towards a more agressive level
     int64_t parent_to_current_th; // decrease towards a more agressive level
-
+#if ADD_LEVELS
+    uint8_t use_pred_block_cost; // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
+#endif
 }DepthRefinementCtrls;
 typedef struct MdNsqMotionSearchCtrls {
     uint8_t enabled;                    // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON

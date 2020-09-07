@@ -1693,6 +1693,52 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 
 
 }
+#if ADD_LEVELS
+void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
+
+    DepthRefinementCtrls *depth_refinement_ctrls = &mdctxt->depth_refinement_ctrls;
+
+    switch (block_based_depth_refinement_level)
+    {
+    case 0:
+        depth_refinement_ctrls->enabled = 0;
+        break;
+    case 1:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 25;
+        depth_refinement_ctrls->sub_to_current_th = 25;
+        depth_refinement_ctrls->use_pred_block_cost = 0;
+        break;
+    case 2:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = 20;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+        break;
+    case 3:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 0;
+        depth_refinement_ctrls->sub_to_current_th = 15;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+        break;
+    case 4:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -5;
+        depth_refinement_ctrls->sub_to_current_th = 10;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+        break;
+    case 5:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -10;
+        depth_refinement_ctrls->sub_to_current_th = 0; // 5
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
 
     DepthRefinementCtrls *depth_refinement_ctrls = &mdctxt->depth_refinement_ctrls;
@@ -1712,6 +1758,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
         break;
     }
 }
+#endif
 /*
  * Control NSQ search
  */
@@ -2752,6 +2799,34 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_palette_level = pcs_ptr->parent_pcs_ptr->palette_level;
 
     // Set block_based_depth_refinement_level
+#if ADD_LEVELS
+    if (enc_mode <= ENC_M5)
+        context_ptr->block_based_depth_refinement_level = 0;
+    else if (enc_mode <= ENC_M6) {
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 0;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 1;
+        }
+    }
+    else if (enc_mode <= ENC_M7) {
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 3;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 4;
+        }
+    }
+    else {
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 4;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 5;
+        }
+    }
+#else
     if (enc_mode <= ENC_M6)
         context_ptr->block_based_depth_refinement_level = 0;
     else {
@@ -2762,6 +2837,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->block_based_depth_refinement_level = 1;
         }
     }
+#endif
     set_block_based_depth_refinement_controls(context_ptr, context_ptr->block_based_depth_refinement_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
@@ -3545,12 +3621,16 @@ static uint8_t determine_sb_class(
         sb_class = SB_CLASS_18;
     return sb_class;
 }
+#if COST_BASED_PRED_ONLY
+uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
+    ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, int64_t th_offset) {
+#else
 #define DEPTH_MAX_PROB 300 // max probabilty value for depth 100 -> 10%
 // Depth probabilies per sq_size, pedicted depth and frequency band
 // for sc content
 uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *mdctxt, const BlockGeom *blk_geom) {
-
+#endif
     int64_t parent_to_current_deviation = MIN_SIGNED_VALUE;
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
         // Get the parent of the current block
@@ -3564,16 +3644,22 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)(((int64_t)MAX(mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost, 1) - (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
     }
-
+#if COST_BASED_PRED_ONLY
+    if (parent_to_current_deviation <= (mdctxt->depth_refinement_ctrls.parent_to_current_th + th_offset))
+#else
     if (parent_to_current_deviation <= mdctxt->depth_refinement_ctrls.parent_to_current_th)
+#endif
         return EB_TRUE;
 
     return EB_FALSE;
 }
-
+#if COST_BASED_PRED_ONLY
+uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
+    ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, uint32_t blk_index, int64_t th_offset) {
+#else
 uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, uint32_t blk_index) {
-
+#endif
     int64_t child_to_current_deviation = MIN_SIGNED_VALUE;
 
     uint32_t child_block_idx_1, child_block_idx_2, child_block_idx_3, child_block_idx_4;
@@ -3608,8 +3694,11 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)(MAX(mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost, 1));
     }
 
-
+#if COST_BASED_PRED_ONLY
+    if (child_to_current_deviation <= (mdctxt->depth_refinement_ctrls.sub_to_current_th + th_offset))
+#else
     if (child_to_current_deviation <= mdctxt->depth_refinement_ctrls.sub_to_current_th)
+#endif
         return EB_TRUE;
 
     return EB_FALSE;
@@ -3679,14 +3768,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
                             else {
+#if COST_BASED_PRED_ONLY
+                                    s_depth = -1;
+                                    e_depth = 1;
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M9) {
                                     s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
                                     e_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
-                            }
+                                }
                                 else {
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
                                 }
+#endif
                             }
                         }
                         else {
@@ -3739,12 +3833,42 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     }
 
                     uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)blk_geom->sq_size);
+
+#if COST_BASED_PRED_ONLY
+                    int64_t th_offset = 0;
+                    if (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.use_pred_block_cost) {
+
+                        uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+                            context_ptr->full_lambda_md[EB_10_BIT_MD] :
+                            context_ptr->full_lambda_md[EB_8_BIT_MD];
+
+                        uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
+                        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); // 
+                        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); // 
+
+                        if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
+                            s_depth = 0;
+                            e_depth = 0;
+                        }
+                        else if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_1) {
+                            th_offset = -10;
+                        }
+                        else if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_2) {
+                            th_offset = -5;
+                        }
+                    }
+#endif
                     // Add block indices of upper depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_parent_depth = 1;
                     if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
+#if COST_BASED_PRED_ONLY
+                        add_parent_depth = is_parent_to_current_deviation_small(
+                            scs_ptr, context_ptr, blk_geom, th_offset);
+#else
                         add_parent_depth = is_parent_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom);
+#endif
                     }
                     if (add_parent_depth)
                     if (s_depth != 0)
@@ -3753,9 +3877,16 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     // Add block indices of lower depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_sub_depth = 1;
+
+#if COST_BASED_PRED_ONLY
+                    if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size > 4) {
+                        add_sub_depth = is_child_to_current_deviation_small(
+                            scs_ptr, context_ptr, blk_geom, blk_index, th_offset);
+#else
                     if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index]) {
                         add_sub_depth = is_child_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom, blk_index);
+#endif
                     }
                     if (add_sub_depth)
                     if (e_depth != 0)
