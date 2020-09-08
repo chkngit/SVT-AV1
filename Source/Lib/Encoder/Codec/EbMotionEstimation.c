@@ -1790,7 +1790,7 @@ static EbPictureBufferDesc* get_me_reference(
     uint8_t                   level,
     uint16_t                  *dist) {
 
-    EbPictureBufferDesc* ref_pic_ptr = NULL;
+    EbPictureBufferDesc* ref_pic_ptr;
     ref_pic_ptr = level == 0 ? context_ptr->me_ds_ref_array[list_index][ref_pic_index].sixteenth_picture_ptr :
                   level == 1 ? context_ptr->me_ds_ref_array[list_index][ref_pic_index].quarter_picture_ptr :
                                context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_ptr;
@@ -1835,7 +1835,9 @@ void integer_search_sb(
     uint32_t num_of_list_to_search;
     uint32_t list_index;
     uint8_t ref_pic_index;
+#if !INL_ME
     uint8_t num_of_ref_pic_to_search;
+#endif
     // Final ME Search Center
     int16_t x_search_center = 0;
     int16_t y_search_center = 0;
@@ -1861,7 +1863,8 @@ void integer_search_sb(
                 : pcs_ptr->ref_list1_count_try;
         }
 #else
-        num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
+        uint8_t num_of_ref_pic_to_search =
+            context_ptr->num_of_ref_pic_to_search[list_index];
 #endif
 
         // Ref Picture Loop
@@ -2129,7 +2132,9 @@ void me_prune_ref(
     HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
     uint8_t list_index, ref_pic_index;
+#if !INL_ME
     uint8_t num_of_ref_pic_to_search, num_of_list_to_search;
+#endif
     uint32_t idx;
     uint32_t pu_index;
 #if !INL_ME
@@ -2140,7 +2145,7 @@ void me_prune_ref(
     if (context_ptr->me_alt_ref == EB_TRUE)
         num_of_list_to_search = 0;
 #else
-    num_of_list_to_search = context_ptr->num_of_list_to_search;
+    uint8_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 #endif
 
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
@@ -2157,7 +2162,7 @@ void me_prune_ref(
                 : pcs_ptr->ref_list1_count_try;
         }
 #else
-        num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
+        uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
 #endif
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
@@ -2723,9 +2728,9 @@ void set_final_seach_centre_sb(
     uint32_t num_of_list_to_search;
     uint32_t list_index;
     uint8_t ref_pic_index;
-    uint8_t num_of_ref_pic_to_search;
 
 #if !INL_ME
+    uint8_t num_of_ref_pic_to_search;
     uint32_t numQuadInWidth;
     uint32_t totalMeQuad;
     uint32_t quadIndex;
@@ -2774,7 +2779,7 @@ void set_final_seach_centre_sb(
             ref0Poc = pcs_ptr->ref_pic_poc_array[0][0];
         }
 #else
-        num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
+        uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
 #endif
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index){

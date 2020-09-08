@@ -163,7 +163,6 @@ void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *c
     EbPictureBufferDesc *quarter_picture_ptr = ds_object->quarter_picture_ptr;
     EbPictureBufferDesc *sixteenth_picture_ptr = ds_object->sixteenth_picture_ptr;
     PictureControlSet *child_pcs_ptr = pcs_ptr->child_pcs;
-    EbPictureBufferDesc *ref_picture_ptr;
 
     uint32_t num_of_list_to_search =
             (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
@@ -217,10 +216,10 @@ void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *c
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
-            EbReferenceObject *reference_object;
-                reference_object =
+            EbReferenceObject *reference_object =
                     (EbReferenceObject *)child_pcs_ptr->ref_pic_ptr_array[list_index][ref_pic_index]
                         ->object_ptr;
+            EbPictureBufferDesc *ref_picture_ptr;
 
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode

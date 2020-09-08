@@ -1338,7 +1338,6 @@ void *inloop_me_kernel(void *input_ptr) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
     InLoopMeContext *context_ptr = (InLoopMeContext *)thread_context_ptr->priv;
 
-    SequenceControlSet *     scs_ptr;
 
     EbObjectWrapper *       in_results_wrapper_ptr;
     PictureManagerResults   *in_results_ptr;
@@ -1366,7 +1365,6 @@ void *inloop_me_kernel(void *input_ptr) {
     uint32_t segment_col_count = 0;
     uint32_t segment_row_count = 0;
 
-    uint8_t  task_type = 0;
 #if IME_REUSE_TPL_RESULT
     EbBool skip_me = EB_FALSE;
 #endif
@@ -1377,8 +1375,9 @@ void *inloop_me_kernel(void *input_ptr) {
 
         in_results_ptr = (PictureManagerResults *)in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet* ppcs_ptr = (PictureParentControlSet*)in_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
-        task_type = in_results_ptr->task_type;
+        SequenceControlSet* scs_ptr =
+            (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
+        uint8_t task_type = in_results_ptr->task_type;
 
         // iME get ppcs input, and output pcs to RC kernel
 

@@ -956,7 +956,7 @@ EbErrorType tpl_mc_flow(
     uint32_t                         inputQueueIndex;
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
 #endif
-    int32_t                          frame_idx, i;
+    uint32_t                         frame_idx, i;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;

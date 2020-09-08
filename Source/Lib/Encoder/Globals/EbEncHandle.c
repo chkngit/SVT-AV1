@@ -1115,8 +1115,8 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
     // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
-	ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
-	ref_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
+    ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
+    ref_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
 
     if (is_16bit)
         ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
