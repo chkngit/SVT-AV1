@@ -3621,6 +3621,7 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
                     &current_depth_cost);
             if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
                 parent_depth_cost = MAX_MODE_COST;
+
             if (parent_depth_cost <= current_depth_cost) {
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;
@@ -3628,6 +3629,10 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
             } else {
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost = current_depth_cost;
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].part    = PARTITION_SPLIT;
+
+                // Phoenix: Shouldn't the split_flag be true here?
+                //context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_TRUE;
+                //assert(context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag == EB_TRUE);
             }
 
             //setup next parent inter depth
