@@ -16481,7 +16481,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         // Need to use the parent depth, because context_ptr->blk_geom->depth is updated by md_update_all_neighbour_arrays_multiple() for the last child block in a parent sq (presumably
         // because of the d2 decision)
         const BlockGeom *parent_blk_geom = context_ptr->blk_geom = get_blk_geom_mds(0);
-        for (uint32_t parent_blk_idx = 0; parent_blk_idx < scs_ptr->max_block_cnt; parent_blk_idx += d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth]) {
+        for (uint32_t parent_blk_idx = 0; parent_blk_idx < scs_ptr->max_block_cnt && blk_index < leaf_count; parent_blk_idx += d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth]) {
             //assert(leaf_count == 4421 || leaf_count == 1101);--> not true b/c leaf_count is only a count of total # of blocks to be considered
             assert((scs_ptr->seq_header.sb_size == BLOCK_128X128 && parent_blk_idx < 4421) ||
                 (scs_ptr->seq_header.sb_size == BLOCK_64X64 && parent_blk_idx < 1101));
@@ -16493,7 +16493,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
             // iterate over all blocks within the parent's d1 dimension
             //mdcResultTbPtr->leaf_data_array[parent_blk_idx].tot_d1_blocks
-            for (uint32_t d1_blk_idx = parent_blk_idx; d1_blk_idx < parent_blk_idx + d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth]; d1_blk_idx++) {
+            for (uint32_t d1_blk_idx = parent_blk_idx; (d1_blk_idx < parent_blk_idx + d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth]) && blk_index < leaf_count; d1_blk_idx++) {
                 assert((scs_ptr->seq_header.sb_size == BLOCK_128X128 && d1_blk_idx < 4421) ||
                     (scs_ptr->seq_header.sb_size == BLOCK_64X64 && d1_blk_idx < 1101));
 
