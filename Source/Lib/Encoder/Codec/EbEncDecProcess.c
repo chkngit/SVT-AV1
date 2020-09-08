@@ -1730,7 +1730,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
     case 5:
         depth_refinement_ctrls->enabled = 1;
 #if PARENT_COST
-        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->parent_to_current_th = 10;
 #else
         depth_refinement_ctrls->parent_to_current_th = -10;
 #endif
