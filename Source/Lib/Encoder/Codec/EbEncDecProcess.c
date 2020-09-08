@@ -3640,9 +3640,47 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
         parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
 
     if (mdctxt->md_local_blk_unit[parent_depth_idx_mds].avail_blk_flag) {
+#if PARENT_COST
+        // Get the child of the parent (1 of the child is the current block)
+        const BlockGeom *parent_blk_geom = get_blk_geom_mds(parent_depth_idx_mds);
+        uint32_t child_block_idx_1, child_block_idx_2, child_block_idx_3, child_block_idx_4;
+        child_block_idx_1 = parent_depth_idx_mds + d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth];
+        child_block_idx_2 = child_block_idx_1 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth + 1];
+        child_block_idx_3 = child_block_idx_2 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth + 1];
+        child_block_idx_4 = child_block_idx_3 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth + 1];
+
+        //if (child_block_idx_1 != blk_index && child_block_idx_2 != blk_index && child_block_idx_3 != blk_index && child_block_idx_4 != blk_index)
+        //    printf("error\n");
+        uint64_t current_depth_cost = 0;
+        uint8_t child_cnt = 0;
+
+        if (mdctxt->md_local_blk_unit[child_block_idx_1].avail_blk_flag) {
+            current_depth_cost += mdctxt->md_local_blk_unit[child_block_idx_1].default_cost;
+            child_cnt++;
+        }
+        if (mdctxt->md_local_blk_unit[child_block_idx_2].avail_blk_flag) {
+            current_depth_cost += mdctxt->md_local_blk_unit[child_block_idx_2].default_cost;
+            child_cnt++;
+        }
+        if (mdctxt->md_local_blk_unit[child_block_idx_3].avail_blk_flag) {
+            current_depth_cost += mdctxt->md_local_blk_unit[child_block_idx_3].default_cost;
+            child_cnt++;
+        }
+        if (mdctxt->md_local_blk_unit[child_block_idx_4].avail_blk_flag) {
+            current_depth_cost += mdctxt->md_local_blk_unit[child_block_idx_4].default_cost;
+            child_cnt++;
+        }
+        // Derive currrent depth cost
+        current_depth_cost = (current_depth_cost / child_cnt) * 4;
+
+        parent_to_current_deviation =
+            (int64_t)(((int64_t)mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost - (int64_t)current_depth_cost) * 100) /
+            (int64_t)MAX(current_depth_cost, 1);
+#else
         parent_to_current_deviation =
             (int64_t)(((int64_t)MAX(mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost, 1) - (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
+#endif
     }
 #if COST_BASED_PRED_ONLY
     if (parent_to_current_deviation <= (mdctxt->depth_refinement_ctrls.parent_to_current_th + th_offset))
