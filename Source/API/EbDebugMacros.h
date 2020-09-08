@@ -40,7 +40,7 @@ extern "C" {
 
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
-#define PARENT_COST 1
+#define PARENT_COST 0
 #ifdef __cplusplus
 }
 #endif // __cplusplus
