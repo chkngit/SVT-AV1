@@ -16473,6 +16473,63 @@ void init_cu_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     blk_ptr->tx_depth = 0;
 }
 
+// Check cost of current depth to parent depth, and if current cost is larger, signal to exit processing depth early
+void check_curr_to_parent_cost(SequenceControlSet *scs_ptr,
+    PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr,
+    uint32_t sb_addr,
+    uint32_t d1_block_itr,
+    uint32_t* next_non_skip_blk_idx_mds,
+    EbBool* md_early_exit_sq) {
+
+    const BlockGeom *blk_geom = context_ptr->blk_geom;
+    BlkStruct *     blk_ptr = context_ptr->blk_ptr;
+
+    if (blk_geom->quadi > 0 && d1_block_itr == 0 && !(*md_early_exit_sq)) {
+        uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+
+        // from a given child index, derive the index of the parent
+        uint32_t parent_depth_idx_mds =
+            (blk_geom->sqi_mds -
+            (blk_geom->quadi - 3) *
+                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                [blk_geom->depth]) -
+            parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+            [blk_geom->depth];
+
+        if ((pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 &&
+            scs_ptr->seq_header.sb_size == BLOCK_128X128) ||
+            !pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
+            parent_depth_cost = MAX_MODE_COST;
+        else
+            compute_depth_costs_md_skip(
+                context_ptr,
+                scs_ptr,
+                pcs_ptr->parent_pcs_ptr,
+                parent_depth_idx_mds,
+                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                [blk_geom->depth],
+                &parent_depth_cost,
+                &current_depth_cost);
+
+        // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
+        // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+        if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
+            *md_early_exit_sq = 1;
+            *next_non_skip_blk_idx_mds =
+                parent_depth_idx_mds +
+                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                [blk_geom->depth - 1];
+        }
+        else {
+            *md_early_exit_sq = 0;
+        }
+    }
+    // skip until we reach the next block @ the parent block depth
+    if (blk_ptr->mds_idx >= *next_non_skip_blk_idx_mds && *md_early_exit_sq == 1)
+        *md_early_exit_sq = 0;
+}
+
 // Update d1 data (including d1 decision) after each processed block, determine if should use early exit
 void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     uint16_t sb_origin_x, uint16_t sb_origin_y,
@@ -16855,51 +16912,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 signal_derivation_block(pcs_ptr, context_ptr, 0);
 
                 // Check current depth cost; if larger than parent, exit early
-                if (blk_geom->quadi > 0 && d1_block_itr == 0 && !md_early_exit_sq) {
-                    uint64_t parent_depth_cost = 0, current_depth_cost = 0;
-
-                    // from a given child index, derive the index of the parent
-                    uint32_t parent_depth_idx_mds =
-                        (context_ptr->blk_geom->sqi_mds -
-                        (context_ptr->blk_geom->quadi - 3) *
-                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                            [context_ptr->blk_geom->depth]) -
-                        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                        [blk_geom->depth];
-
-                    if (pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 &&
-                        scs_ptr->seq_header.sb_size == BLOCK_128X128)
-                        parent_depth_cost = MAX_MODE_COST;
-                    else
-                        compute_depth_costs_md_skip(
-                            context_ptr,
-                            scs_ptr,
-                            pcs_ptr->parent_pcs_ptr,
-                            parent_depth_idx_mds,
-                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                            [context_ptr->blk_geom->depth],
-                            &parent_depth_cost,
-                            &current_depth_cost);
-
-                    if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
-                        parent_depth_cost = MAX_MODE_COST;
-
-                    // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
-                    // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
-                    if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
-                        md_early_exit_sq = 1;
-                        next_non_skip_blk_idx_mds =
-                            parent_depth_idx_mds +
-                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                            [context_ptr->blk_geom->depth - 1];
-                    }
-                    else {
-                        md_early_exit_sq = 0;
-                    }
-                }
-                // skip until we reach the next block @ the parent block depth
-                if (blk_ptr->mds_idx >= next_non_skip_blk_idx_mds && md_early_exit_sq == 1)
-                    md_early_exit_sq = 0;
+                check_curr_to_parent_cost(scs_ptr,
+                    pcs_ptr,
+                    context_ptr,
+                    sb_addr,
+                    d1_block_itr,
+                    &next_non_skip_blk_idx_mds,
+                    &md_early_exit_sq);
 
                 // encode the current block only if it's not redundant
                 if (!update_redundant(context_ptr)) {
