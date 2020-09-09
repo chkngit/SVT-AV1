@@ -6530,7 +6530,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         else
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
-        context_ptr->md_staging_tx_search = 1;
+        context_ptr->md_staging_tx_search = 2;
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
 

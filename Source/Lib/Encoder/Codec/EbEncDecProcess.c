@@ -2213,7 +2213,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
-                context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+                context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
     uint8_t txt_cycles_reduction_level = 0;
     if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
         txt_cycles_reduction_level = 0;
@@ -2226,7 +2226,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M4)
             txt_cycles_reduction_level = 0;
         else
-            txt_cycles_reduction_level = 5;
+            txt_cycles_reduction_level = 0;
     }
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
     if (pd_pass == PD_PASS_0)
