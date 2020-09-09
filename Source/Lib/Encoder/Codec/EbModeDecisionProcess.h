@@ -70,8 +70,10 @@ typedef struct MdBlkStruct {
     unsigned             top_neighbor_mode : 2;
     unsigned             left_neighbor_mode : 2;
     unsigned             full_distortion : 32;
+#if !REMOVE_USELESS_0
     unsigned             chroma_distortion : 32;
     unsigned             chroma_distortion_inter_depth : 32;
+#endif
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
@@ -471,6 +473,12 @@ typedef struct ModeDecisionContext {
     MD_COMP_TYPE compound_types_to_try;
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
+#if PD0_SHUT_SKIP_DC_SIGN_UPDATE
+    uint8_t      shut_skip_ctx_dc_sign_update; // Use src-to-pred distortion only (i.e. only md_stage_0() data)
+#endif
+#if FASTER_PD0
+    uint8_t      src_to_pred_decision; // Use src-to-pred distortion only (i.e. only md_stage_0() data)
+#endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
     uint8_t      tx_search_level;
     uint8_t      interpolation_search_level;
@@ -546,6 +554,9 @@ typedef struct ModeDecisionContext {
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
     MV ref_mv;
+#if FASTER_PD0
+    uint16_t sb_index;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,

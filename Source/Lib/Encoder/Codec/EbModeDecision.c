@@ -2998,6 +2998,21 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 
+#if 0//PD0_REDUCE_ME_INTER_CAND
+        if (context_ptr->pd_pass == PD_PASS_0) {
+#if 0
+            if (pcs_ptr->slice_type == B_SLICE) {
+                if (inter_direction != 2 || list0_ref_index || list1_ref_index)
+                    continue;
+            }
+            else
+#endif       
+            { // if (pcs_ptr->slice_type == P_SLICE) {
+                if (inter_direction != 0 || list0_ref_index)
+                    continue;
+            }
+        }
+#endif
         /**************
             NEWMV L0
         ************* */
@@ -3394,6 +3409,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 }
             }
         }
+#if PD0_REDUCE_ME_INTER_CAND
+        if (context_ptr->pd_pass == PD_PASS_0 && cand_total_cnt)
+            break;
+#endif
     }
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
@@ -5083,9 +5102,18 @@ EbErrorType generate_md_stage_0_cand(
     return EB_ErrorNone;
 }
 
+
 /***************************************
 * Full Mode Decision
 ***************************************/
+#if REMOVE_USELESS_0
+uint32_t product_full_mode_decision(
+    struct ModeDecisionContext   *context_ptr,
+    BlkStruct                   *blk_ptr,
+    ModeDecisionCandidateBuffer **buffer_ptr_array,
+    uint32_t                      candidate_total_count,
+    uint32_t                     *best_candidate_index_array)
+#else
 uint32_t product_full_mode_decision(
     struct ModeDecisionContext   *context_ptr,
     BlkStruct                   *blk_ptr,
@@ -5093,9 +5121,12 @@ uint32_t product_full_mode_decision(
     uint32_t                      candidate_total_count,
     uint32_t                     *best_candidate_index_array,
     uint32_t                     *best_intra_mode)
+#endif
 {
     uint64_t                  lowest_cost = 0xFFFFFFFFFFFFFFFFull;
+#if !REMOVE_USELESS_0
     uint64_t                  lowest_intra_cost = 0xFFFFFFFFFFFFFFFFull;
+#endif
     uint32_t                  lowest_cost_index = 0;
 
     ModeDecisionCandidate       *candidate_ptr;
@@ -5105,13 +5136,13 @@ uint32_t product_full_mode_decision(
     // Find the candidate with the lowest cost
     for (uint32_t i = 0; i < candidate_total_count; ++i) {
         uint32_t cand_index = best_candidate_index_array[i];
-
+#if !REMOVE_USELESS_0
         // Compute fullCostBis
         if ((*(buffer_ptr_array[cand_index]->full_cost_ptr) < lowest_intra_cost) && buffer_ptr_array[cand_index]->candidate_ptr->type == INTRA_MODE) {
             *best_intra_mode = buffer_ptr_array[cand_index]->candidate_ptr->pred_mode;
             lowest_intra_cost = *(buffer_ptr_array[cand_index]->full_cost_ptr);
         }
-
+#endif
         if (*(buffer_ptr_array[cand_index]->full_cost_ptr) < lowest_cost) {
             lowest_cost_index = cand_index;
             lowest_cost = *(buffer_ptr_array[cand_index]->full_cost_ptr);
@@ -5119,7 +5150,11 @@ uint32_t product_full_mode_decision(
     }
 
     candidate_ptr = buffer_ptr_array[lowest_cost_index]->candidate_ptr;
+#if FASTER_PD0 && !ENHANCED_FASTER_PD0 // TODO
+    if (context_ptr->blk_lambda_tuning && !context_ptr->src_to_pred_decision) {
+#else
     if (context_ptr->blk_lambda_tuning){
+#endif
         // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used
         uint32_t full_lambda = context_ptr->hbd_mode_decision ?
             context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
@@ -5133,17 +5168,24 @@ uint32_t product_full_mode_decision(
     else {
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
+#if !REMOVE_USELESS_0
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost - buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
+#endif
     }
+#if LOSSLESS_OPT
+    if (!context_ptr->shut_fast_rate) {
+#endif
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_skip_ptr;
-
+#if !REMOVE_USELESS_0
     if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE)
         context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].chroma_distortion = buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion;
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].full_distortion = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->full_distortion;
+#if !REMOVE_USELESS_0
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].chroma_distortion = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion;
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].chroma_distortion_inter_depth = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
-
+#endif
     blk_ptr->prediction_mode_flag = candidate_ptr->type;
     blk_ptr->tx_depth = candidate_ptr->tx_depth;
     blk_ptr->skip_flag = candidate_ptr->skip_flag; // note, the skip flag is re-checked in the ENCDEC process
@@ -5273,7 +5315,9 @@ uint32_t product_full_mode_decision(
             eb_memcpy(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1, &candidate_ptr->wm_params_l1, sizeof(EbWarpedMotionParams));
         }
     }
-
+#if LOSSLESS_OPT
+    }
+#endif
     uint32_t txb_itr;
     uint32_t txb_index;
     uint32_t tu_total_count;

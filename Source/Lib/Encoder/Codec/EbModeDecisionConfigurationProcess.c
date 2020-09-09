@@ -425,7 +425,7 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     EB_MALLOC_ARRAY(context_ptr->mdc_blk_ptr->av1xd, 1);
     return EB_ErrorNone;
 }
-
+#if !REMOVE_USELESS_0
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -720,20 +720,25 @@ void derive_sb_md_mode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     // Set the search method using the SB cost (mapping)
     derive_search_method(pcs_ptr, context_ptr);
 }
-
+#endif
 /******************************************************
 * Derive Mode Decision Config Settings for OQ
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if REMOVE_USELESS_0
+EbErrorType signal_derivation_mode_decision_config_kernel_oq(
+    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
+#else
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
+#endif
     UNUSED(scs_ptr);
     EbErrorType return_error = EB_ErrorNone;
-
+#if !REMOVE_USELESS_0
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
-
+#endif
         if (pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->update_cdf = 1;
         else
@@ -821,9 +826,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if REMOVE_USELESS_0
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
+    PictureControlSet *pcs_ptr);
+#else
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) ;
+#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -1093,11 +1103,17 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
+#if REMOVE_USELESS_0
+        if (use_output_stat(scs_ptr))
+            first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
+        else
+            signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
+#else
         if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-
+#endif
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
         // Init block selection

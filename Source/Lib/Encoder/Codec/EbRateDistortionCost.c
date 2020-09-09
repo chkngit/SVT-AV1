@@ -544,17 +544,20 @@ uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
 int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
                              uint32_t mode);
-
+#if !REMOVE_USELESS_0
 /*static*/ void model_rd_from_sse(BlockSize bsize, int16_t quantizer,
                                   //const Av1Comp *const cpi,
                                   //const MacroBlockD *const xd,
                                   //BlockSize bsize,
                                   //int32_t plane,
                                   uint64_t sse, uint32_t *rate, uint64_t *dist);
-
+#endif
 uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
-                             EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
+#if !REMOVE_USELESS_0
+                             EbBool use_ssd, 
+#endif
+                             PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
                              uint8_t md_pass, uint32_t left_neighbor_mode,
@@ -569,7 +572,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     UNUSED(top_neighbor_mode);
     UNUSED(md_pass);
     UNUSED(enable_inter_intra);
+#if !REMOVE_USELESS_0
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr, pcs_ptr->parent_pcs_ptr->slice_type)
         && candidate_ptr->use_intrabc) {
         uint64_t rate = 0;
@@ -764,6 +769,7 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         // Keep the Fast Luma and Chroma rate for future use
         candidate_ptr->fast_luma_rate = luma_rate;
         candidate_ptr->fast_chroma_rate = chroma_rate;
+#if !REMOVE_USELESS_0
         if (use_ssd) {
             int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
             Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
@@ -783,6 +789,7 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
             return (RDCOST(lambda, rate, total_distortion));
         } else {
+#endif
             luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
             chromasad_       = chroma_distortion << AV1_COST_PRECISION;
             total_distortion = luma_sad + chromasad_;
@@ -791,7 +798,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
             // Assign fast cost
             return (RDCOST(lambda, rate, total_distortion));
+#if !REMOVE_USELESS_0
         }
+#endif
     }
 }
 
@@ -1329,7 +1338,10 @@ void two_pass_cost_update_64bit(PictureControlSet *pcs_ptr, ModeDecisionCandidat
 
 uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
-                             EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
+#if !REMOVE_USELESS_0
+                             EbBool use_ssd,
+#endif
+                             PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
                              uint8_t md_pass, uint32_t left_neighbor_mode,
@@ -1609,6 +1621,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     // Keep the Fast Luma and Chroma rate for future use
     candidate_ptr->fast_luma_rate = luma_rate;
     candidate_ptr->fast_chroma_rate = chroma_rate;
+#if !REMOVE_USELESS_0
     if (use_ssd) {
         int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
@@ -1636,6 +1649,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         }
         return (RDCOST(lambda, rate, total_distortion));
     } else {
+#endif
         luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         chromasad_       = chroma_distortion << AV1_COST_PRECISION;
         total_distortion = luma_sad + chromasad_;
@@ -1651,7 +1665,9 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
             if (skip_mode_rate < rate) return (RDCOST(lambda, skip_mode_rate, total_distortion));
         }
         return (RDCOST(lambda, rate, total_distortion));
+#if !REMOVE_USELESS_0
     }
+#endif
 }
 EbErrorType av1_txb_estimate_coeff_bits(
     struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,

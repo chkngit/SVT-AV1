@@ -2802,6 +2802,50 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_palette_level = pcs_ptr->parent_pcs_ptr->palette_level;
 
+#if FASTER_PD0
+    // Use src-to-pred distortion only (i.e. only md_stage_0() data)
+
+    uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
+        context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+        context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
+
+    if (pcs_ptr->slice_type == I_SLICE)
+        context_ptr->src_to_pred_decision = EB_FALSE;
+    else {
+        uint64_t cost_0 = pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
+        uint64_t cost_1 = (64 * 64 * 8) / 4;// RDCOST(fast_lambda, (32768 / 4), 64 * 64);
+
+        if (pd_pass == PD_PASS_0)
+#if ENHANCED_FASTER_PD0
+            context_ptr->src_to_pred_decision = EB_TRUE;
+#else
+            context_ptr->src_to_pred_decision = (cost_0 < cost_1) ? EB_TRUE : EB_FALSE;
+#endif
+        else if (pd_pass == PD_PASS_1)
+            context_ptr->src_to_pred_decision = EB_FALSE;
+        else
+            context_ptr->src_to_pred_decision = EB_FALSE;
+    }
+    // Use coeff rate and split flag rate only (i.e. no fast rate)
+    if (pd_pass == PD_PASS_0)
+        context_ptr->shut_fast_rate = EB_TRUE;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->shut_fast_rate = EB_FALSE;
+    else
+        context_ptr->shut_fast_rate = EB_FALSE;
+
+    // Set skip_intra
+    if (pcs_ptr->slice_type == I_SLICE)
+        context_ptr->skip_intra = 0;
+    else if (pd_pass == PD_PASS_0)
+        if (enc_mode <= ENC_M4)
+            context_ptr->skip_intra = 0;
+        else
+            context_ptr->skip_intra = 1;
+    else
+        context_ptr->skip_intra = 0;
+#endif
     // Set block_based_depth_refinement_level
 #if ADD_LEVELS
     if (enc_mode <= ENC_M5)
@@ -2843,6 +2887,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
 #endif
     set_block_based_depth_refinement_controls(context_ptr, context_ptr->block_based_depth_refinement_level);
+#if FASTER_PD0
+    if(context_ptr->src_to_pred_decision)
+        context_ptr->depth_refinement_ctrls.use_pred_block_cost = 0;
+#endif
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
     else if (pd_pass == PD_PASS_1)
@@ -2940,6 +2988,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->disable_angle_z2_intra_flag = EB_TRUE;
     else
         context_ptr->disable_angle_z2_intra_flag = EB_FALSE;
+#if PD0_SHUT_SKIP_DC_SIGN_UPDATE
+    // Shut skip_context and dc_sign update for rate estimation
+    if (pd_pass == PD_PASS_0)
+        context_ptr->shut_skip_ctx_dc_sign_update = EB_TRUE;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
+    else
+        context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
+#endif
+
+#if !FASTER_PD0
     // Use coeff rate and slit flag rate only (i.e. no fast rate)
     if (pd_pass == PD_PASS_0)
         context_ptr->shut_fast_rate = EB_TRUE;
@@ -2947,6 +3006,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->shut_fast_rate = EB_FALSE;
     else
         context_ptr->shut_fast_rate = EB_FALSE;
+
     if (pcs_ptr->slice_type == I_SLICE)
         context_ptr->skip_intra = 0;
     else if (pd_pass == PD_PASS_0)
@@ -2956,6 +3016,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->skip_intra = 1;
     else
         context_ptr->skip_intra = 0;
+#endif
+
+
     // skip cfl based on inter/intra cost deviation (skip if intra_cost is
     // skip_cfl_cost_dev_th % greater than inter_cost)
     if (enc_mode <= ENC_MR)
@@ -3809,10 +3872,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
-                            else {
+                                else {
 #if COST_BASED_PRED_ONLY
+#if PRED_ONLY
+                                    s_depth = 0;
+                                    e_depth = 0;
+#else                                  
                                     s_depth = -1;
                                     e_depth = 1;
+#endif
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M9) {
                                     s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
@@ -4184,6 +4252,9 @@ void *mode_decision_kernel(void *input_ptr) {
                     uint16_t tile_group_x_sb_start =
                         pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
                             .tile_group_sb_start_x;
+#if FASTER_PD0
+                    context_ptr->md_context->sb_index =
+#endif
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
                     if (use_output_stat(scs_ptr) && sb_index == 0)

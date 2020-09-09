@@ -41,6 +41,18 @@ extern "C" {
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
 #define PARENT_COST 0
+/************************************/
+#define REMOVE_USELESS_0 1
+#define REMOVE_USELESS_1 1
+#define LOSSLESS_OPT 1
+#define PD0_SHUT_SKIP_DC_SIGN_UPDATE 1 //---->
+/************************************/
+#define PD0_REDUCE_ME_INTER_CAND 0
+/************************************/
+#define PRED_ONLY 0
+#define FASTER_PD0 1
+#define ENHANCED_FASTER_PD0 0
+/************************************/
 #ifdef __cplusplus
 }
 #endif // __cplusplus
