@@ -2481,8 +2481,10 @@ void copy_api_from_app(
     scs_ptr->static_config.new_nearest_comb_inject      = ((EbSvtAv1EncConfiguration*)config_struct)->new_nearest_comb_inject;
     // prune unipred at me
     scs_ptr->static_config.prune_unipred_me             = ((EbSvtAv1EncConfiguration*)config_struct)->prune_unipred_me;
+#if !REMOVE_REF_FOR_RECT_PART
     //prune ref frame for rec partitions
     scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
+#endif
     // NSQ table
     scs_ptr->static_config.nsq_table                    = ((EbSvtAv1EncConfiguration*)config_struct)->nsq_table;
     // frame end cdf update mode
@@ -3289,12 +3291,12 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid prune_unipred_me flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_unipred_me);
       return_error = EB_ErrorBadParameter;
     }
-
+#if !REMOVE_REF_FOR_RECT_PART
     if (config->prune_ref_rec_part != 0 && config->prune_ref_rec_part != 1 && config->prune_ref_rec_part != -1) {
       SVT_LOG("Error instance %u: Invalid prune_ref_rec_part flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_ref_rec_part);
       return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->nsq_table != 0 && config->nsq_table != 1 && config->nsq_table != -1) {
       SVT_LOG("Error instance %u: Invalid nsq_table flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->nsq_table);
       return_error = EB_ErrorBadParameter;
@@ -3462,7 +3464,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->over_bndry_blk = DEFAULT;
     config_ptr->new_nearest_comb_inject = DEFAULT;
     config_ptr->prune_unipred_me = DEFAULT;
+#if !REMOVE_REF_FOR_RECT_PART
     config_ptr->prune_ref_rec_part = DEFAULT;
+#endif
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;

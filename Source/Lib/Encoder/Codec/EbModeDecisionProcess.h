@@ -300,6 +300,7 @@ typedef struct DepthRefinementCtrls {
 
 }DepthRefinementCtrls;
 #endif
+#if !REMOVE_BLK_BASED_DEPTH_RED
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
 typedef struct DepthReductionCtrls {
     uint8_t enabled;
@@ -317,6 +318,7 @@ typedef struct DepthReductionCtrls {
     int64_t h_v_to_h4_v4_th; // increase towards a more agressive level
 
 }DepthReductionCtrls;
+#endif
 #endif
 #if ADD_MD_NSQ_SEARCH
 typedef struct MdNsqMotionSearchCtrls {
@@ -779,7 +781,9 @@ typedef struct ModeDecisionContext {
     uint64_t *   ref_best_cost_sq_table;
     uint32_t *   ref_best_ref_sq_table;
     uint8_t      edge_based_skip_angle_intra;
+#if !REMOVE_REF_FOR_RECT_PART
     uint8_t      prune_ref_frame_for_rec_partitions;
+#endif
     unsigned int source_variance; // input block variance
 #if !INTER_COMP_REDESIGN
     unsigned int inter_inter_wedge_variance_th;
@@ -862,9 +866,11 @@ typedef struct ModeDecisionContext {
     uint8_t block_based_depth_refinement_level;
     DepthRefinementCtrls depth_refinement_ctrls;
 #endif
+#if !REMOVE_BLK_BASED_DEPTH_RED
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
     uint8_t      block_based_depth_reduction_level;
     DepthReductionCtrls depth_reduction_ctrls;
+#endif
 #endif
 #if ADAPTIVE_ME_SEARCH
     // Control signals for MD sparse search (used for increasing ME search for active clips)

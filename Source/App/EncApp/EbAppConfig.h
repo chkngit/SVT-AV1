@@ -322,10 +322,12 @@ typedef struct EbConfig {
       * prune unipred at me
      ****************************************/
     int prune_unipred_me;
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     /****************************************
       * prune ref frame for rec partitions
      ****************************************/
     int prune_ref_rec_part;
+#endif
     /****************************************
       * nsq table
      ****************************************/

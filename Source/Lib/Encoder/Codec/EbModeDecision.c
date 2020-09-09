@@ -874,7 +874,7 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
         buffer_ptr->recon_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
     return EB_ErrorNone;
 }
-
+#if !REMOVE_REF_FOR_RECT_PART
 uint8_t check_ref_beackout(struct ModeDecisionContext *context_ptr, uint8_t ref_frame_type,
                            Part shape) {
     uint8_t skip_candidate     = 0;
@@ -893,6 +893,7 @@ uint8_t check_ref_beackout(struct ModeDecisionContext *context_ptr, uint8_t ref_
     }
     return skip_candidate;
 }
+#endif
 /***************************************
 * return true if the MV candidate is already injected
 ***************************************/
@@ -1070,9 +1071,10 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                         (bipred_3x3_y_pos[bipred_index] << 1);
                 }
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+#if !REMOVE_REF_FOR_RECT_PART
                 uint8_t skip_cand          = check_ref_beackout(
                     context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                 inside_tile = 1;
                 if (umv0tile)
                     inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -1081,7 +1083,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                                           mi_col,
                                                           mi_row,
                                                           context_ptr->blk_geom->bsize);
+#if REMOVE_REF_FOR_RECT_PART
+                uint8_t skip_cand = (!inside_tile);
+#else
                 skip_cand = skip_cand || (!inside_tile);
+#endif
 
 #if INTRA_COMPOUND_OPT
                     MvReferenceFrame rf[2];
@@ -1261,9 +1267,10 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                     }
                     uint8_t to_inject_ref_type =
                         svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+#if !REMOVE_REF_FOR_RECT_PART
                     uint8_t skip_cand = check_ref_beackout(
                         context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                     inside_tile = 1;
                     if (umv0tile)
                         inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -1272,7 +1279,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                                               mi_col,
                                                               mi_row,
                                                               context_ptr->blk_geom->bsize);
+#if REMOVE_REF_FOR_RECT_PART
+                    uint8_t skip_cand = (!inside_tile);
+#else
                     skip_cand = skip_cand || (!inside_tile);
+#endif
 
 #if INTRA_COMPOUND_OPT
                     MvReferenceFrame rf[2];
@@ -1525,9 +1536,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                     rf[1] =
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
                     uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
+#if !REMOVE_REF_FOR_RECT_PART
                     uint8_t skip_cand          = check_ref_beackout(
                         context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                     inside_tile = 1;
                     if (umv0tile) {
                         inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -1543,7 +1555,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                                               mi_row,
                                                               context_ptr->blk_geom->bsize);
                     }
+#if REMOVE_REF_FOR_RECT_PART
+                    uint8_t skip_cand = (!inside_tile);
+#else
                     skip_cand = skip_cand || (!inside_tile);
+#endif
                     if (!skip_cand &&
                         (context_ptr->injected_mv_count_bipred == 0 ||
                          mrp_is_already_injected_mv_bipred(context_ptr,
@@ -1720,9 +1736,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                     rf[1] =
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
                     uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
+#if !REMOVE_REF_FOR_RECT_PART
                     uint8_t skip_cand          = check_ref_beackout(
                         context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                     inside_tile = 1;
                     if (umv0tile) {
                         inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -1738,7 +1755,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                                               mi_row,
                                                               context_ptr->blk_geom->bsize);
                     }
+#if REMOVE_REF_FOR_RECT_PART
+                    uint8_t skip_cand = (!inside_tile);
+#else
                     skip_cand = skip_cand || (!inside_tile);
+#endif
                     if (!skip_cand &&
                         (context_ptr->injected_mv_count_bipred == 0 ||
                          mrp_is_already_injected_mv_bipred(context_ptr,
@@ -3437,13 +3458,14 @@ void inject_warped_motion_candidates(
             to_inject_mv_y =
                 context_ptr
                 ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
+#if !REMOVE_REF_FOR_RECT_PART
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
             uint8_t skip_cand = check_ref_beackout(
                 context_ptr,
                 to_inject_ref_type,
                 context_ptr->blk_geom->shape);
-
             if (!skip_cand) {
+#endif
 #if INCREASE_WM_CANDS
                 for (int i = 0; i < 13; i++) {
 #else
@@ -3523,7 +3545,9 @@ void inject_warped_motion_candidates(
                             INCRMENT_CAND_TOTAL_COUNT(can_idx);
                     }
                 }
+#if !REMOVE_REF_FOR_RECT_PART
             }
+#endif
         }
         /**************
            NEWMV L1
@@ -3544,12 +3568,14 @@ void inject_warped_motion_candidates(
             to_inject_mv_y =
                 context_ptr
                 ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
+#if !REMOVE_REF_FOR_RECT_PART
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
             uint8_t skip_cand = check_ref_beackout(
                 context_ptr,
                 to_inject_ref_type,
                 context_ptr->blk_geom->shape);
             if (!skip_cand) {
+#endif
 #if INCREASE_WM_CANDS
                 for (int i = 0; i < 13; i++) {
 #else
@@ -3633,7 +3659,9 @@ void inject_warped_motion_candidates(
                             INCRMENT_CAND_TOTAL_COUNT(can_idx);
                     }
                 }
+#if !REMOVE_REF_FOR_RECT_PART
             }
+#endif
         }
     }
 
@@ -3949,9 +3977,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 context_ptr
                 ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+#if !REMOVE_REF_FOR_RECT_PART
             uint8_t skip_cand =
                 check_ref_beackout(context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
             inside_tile = 1;
             if (umv0tile)
                 inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -3960,7 +3989,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                                       mi_col,
                                                       mi_row,
                                                       context_ptr->blk_geom->bsize);
+#if REMOVE_REF_FOR_RECT_PART
+            uint8_t skip_cand = (!inside_tile);
+#else
             skip_cand = skip_cand || (!inside_tile);
+#endif
 
             if (!skip_cand &&
                 (context_ptr->injected_mv_count_l0 == 0 ||
@@ -4115,9 +4148,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 int16_t to_inject_mv_y = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds]
                     [REF_LIST_1][list1_ref_index][1];
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+#if !REMOVE_REF_FOR_RECT_PART
                 uint8_t skip_cand          = check_ref_beackout(
                     context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                 inside_tile = 1;
                 if (umv0tile)
                     inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -4126,7 +4160,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                                           mi_col,
                                                           mi_row,
                                                           context_ptr->blk_geom->bsize);
+#if REMOVE_REF_FOR_RECT_PART
+                uint8_t skip_cand = !inside_tile;
+#else
                 skip_cand = skip_cand || !inside_tile;
+#endif
 
                 if (!skip_cand &&
                     (context_ptr->injected_mv_count_l1 == 0 ||
@@ -4294,9 +4332,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     rf[1] =
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index);
                     uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
+#if !REMOVE_REF_FOR_RECT_PART
                     uint8_t skip_cand          = check_ref_beackout(
                         context_ptr, to_inject_ref_type, context_ptr->blk_geom->shape);
-
+#endif
                     inside_tile = 1;
                     if (umv0tile) {
                         inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -4312,7 +4351,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                                               mi_row,
                                                               context_ptr->blk_geom->bsize);
                     }
+#if REMOVE_REF_FOR_RECT_PART
+                    uint8_t skip_cand = (!inside_tile);
+#else
                     skip_cand = skip_cand || (!inside_tile);
+#endif
                     if (!skip_cand &&
                         (context_ptr->injected_mv_count_bipred == 0 ||
                          mrp_is_already_injected_mv_bipred(context_ptr,
@@ -7674,13 +7717,18 @@ uint32_t product_full_mode_decision(
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t                      candidate_total_count,
     uint32_t                     *best_candidate_index_array,
+#if !REMOVE_REF_FOR_RECT_PART
     uint8_t                       prune_ref_frame_for_rec_partitions,
+#endif
     uint32_t                     *best_intra_mode)
 {
+#if !REMOVE_REF_FOR_RECT_PART
     uint32_t                  cand_index;
+#endif
     uint64_t                  lowest_cost = 0xFFFFFFFFFFFFFFFFull;
     uint64_t                  lowest_intra_cost = 0xFFFFFFFFFFFFFFFFull;
     uint32_t                  lowest_cost_index = 0;
+#if !REMOVE_REF_FOR_RECT_PART
     if (prune_ref_frame_for_rec_partitions) {
         if (context_ptr->blk_geom->shape == PART_N) {
             for (uint32_t i = 0; i < candidate_total_count; ++i) {
@@ -7711,7 +7759,7 @@ uint32_t product_full_mode_decision(
             }
         }
     }
-
+#endif
 
     PredictionUnit       *pu_ptr;
     uint32_t                   i;
@@ -7721,7 +7769,11 @@ uint32_t product_full_mode_decision(
 
     // Find the candidate with the lowest cost
     for (i = 0; i < candidate_total_count; ++i) {
+#if REMOVE_REF_FOR_RECT_PART
+        uint32_t cand_index = best_candidate_index_array[i];
+#else
         cand_index = best_candidate_index_array[i];
+#endif
 
         // Compute fullCostBis
         if ((*(buffer_ptr_array[cand_index]->full_cost_ptr) < lowest_intra_cost) && buffer_ptr_array[cand_index]->candidate_ptr->type == INTRA_MODE) {

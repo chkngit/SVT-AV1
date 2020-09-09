@@ -696,6 +696,9 @@ extern "C" {
 #define USE_MDS1_PRUNING                 1 // Turn on md stage 1 pruning for M1-M5 with conservative settings
 
 #define REFACTOR_CU_PROCESSING           1 // Use nested for loops to iterate over all blocks in mode_decision_sb()
+#define MODULAR_CU_PROCESSING            1 // Add functions for CU processing to modularize it
+#define REMOVE_REF_FOR_RECT_PART         1 // remove prune_ref_frame_for_rec_partitions
+#define REMOVE_BLK_BASED_DEPTH_RED       1 // remove block_based_depth_reduction_level
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

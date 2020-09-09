@@ -347,10 +347,12 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int prune_unipred_me;
 #endif
+#if !REMOVE_REF_FOR_RECT_PART
     /* prune ref frame for rec partitions
     *
     * Default is -1. */
     int prune_ref_rec_part;
+#endif
     /* nsq table
     *
     * Default is -1. */

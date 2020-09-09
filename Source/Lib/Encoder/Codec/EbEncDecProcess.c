@@ -1795,6 +1795,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
     }
 }
 #endif
+#if !REMOVE_BLK_BASED_DEPTH_RED
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
 void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8_t block_based_depth_reduction_level) {
 
@@ -1844,6 +1845,7 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
         break;
     }
 }
+#endif
 #endif
 #if UNIFY_PME_SIGNALS
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
@@ -6216,7 +6218,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             sequence_control_set_ptr->static_config.edge_skp_angle_intra;
     else
         context_ptr->edge_based_skip_angle_intra = 0;
-
+#if !REMOVE_REF_FOR_RECT_PART
     // Set prune_ref_frame_for_rec_partitions
     if (pd_pass == PD_PASS_0)
 #if ON_OFF_FEATURE_MRP
@@ -6289,6 +6291,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if SHUT_FEATURE_INTERACTIONS
     context_ptr->prune_ref_frame_for_rec_partitions = 0;
+#endif
 #endif
 #if !INTER_COMP_REDESIGN
     // Derive INTER/INTER WEDGE variance TH
@@ -7965,6 +7968,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     set_block_based_depth_refinement_controls(context_ptr, context_ptr->block_based_depth_refinement_level);
 #endif
+#if !REMOVE_BLK_BASED_DEPTH_RED
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
     if (pd_pass == PD_PASS_0)
         context_ptr->block_based_depth_reduction_level = 0;
@@ -8042,6 +8046,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->block_based_depth_reduction_level = 0;
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
+#endif
 #endif
 #if ADAPTIVE_ME_SEARCH
     if (pd_pass == PD_PASS_0)

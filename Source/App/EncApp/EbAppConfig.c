@@ -89,7 +89,9 @@
 #define OVR_BNDRY_BLK_TOKEN "-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_TOKEN "-new-nrst-near-comb"
 #define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 #define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
+#endif
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
@@ -232,7 +234,9 @@
 #define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
 #define NX4_4XN_MV_INJECT_NEW_TOKEN "--enable-nx4-4xn-mv-inject"
 #define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 #define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
+#endif
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
@@ -479,9 +483,11 @@ static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
 static void set_prune_unipred_me_flag(const char *value, EbConfig *cfg) {
     cfg->prune_unipred_me = strtol(value, NULL, 0);
 };
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 static void set_prune_ref_rec_part_flag(const char *value, EbConfig *cfg) {
     cfg->prune_ref_rec_part = strtol(value, NULL, 0);
 };
+#endif
 static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
     cfg->nsq_table = strtol(value, NULL, 0);
 };
@@ -1071,10 +1077,12 @@ ConfigEntry config_entry_specific[] = {
       PRUNE_UNIPRED_ME_NEW_TOKEN,
       "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
       set_prune_unipred_me_flag},
+#if 0 //!REMOVE_REF_FOR_RECT_PART
      {SINGLE_INPUT,
       PRUNE_REF_REC_PART_NEW_TOKEN,
       "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
       set_prune_ref_rec_part_flag},
+#endif
      {SINGLE_INPUT,
       NSQ_TABLE_NEW_TOKEN,
       "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1461,7 +1469,9 @@ ConfigEntry config_entry[] = {
      "NewNearestCombInjection",
      set_new_nearest_comb_inject_flag},
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN, "PruneUnipredMe", set_prune_unipred_me_flag},
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     {SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN, "PruneRefRecPart", set_prune_ref_rec_part_flag},
+#endif
     {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
     {SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN, "FrameEndCdfUpdate", set_frame_end_cdf_update_flag},
 
@@ -1681,7 +1691,9 @@ ConfigEntry config_entry[] = {
      "New Nearest Comb Injection",
      set_new_nearest_comb_inject_flag},
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_NEW_TOKEN, "Prune Uni pred Me", set_prune_unipred_me_flag},
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     {SINGLE_INPUT, PRUNE_REF_REC_PART_NEW_TOKEN, "Prune Ref Rec Part", set_prune_ref_rec_part_flag},
+#endif
     {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
     {SINGLE_INPUT,
      FRAME_END_CDF_UPDATE_NEW_TOKEN,
@@ -1792,7 +1804,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->over_bndry_blk                            = DEFAULT;
     config_ptr->new_nearest_comb_inject                   = DEFAULT;
     config_ptr->prune_unipred_me                          = DEFAULT;
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     config_ptr->prune_ref_rec_part                        = DEFAULT;
+#endif
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
