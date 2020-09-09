@@ -37,7 +37,7 @@
 #endif
 
 #if IN_LOOP_TPL
-static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
+static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
     const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
@@ -49,7 +49,7 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
     const int stride = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
-    const double c = 2;
+    const double c = 1.2;
 
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
@@ -72,7 +72,8 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 rk = intra_cost / mc_dep_cost;
             }
-            pcs_ptr->tpl_rdmult_scaling_factors[index] = rk / pcs_ptr->r0 + c;
+
+            pcs_ptr->tpl_rdmult_scaling_factors[index] = (mc_dep_cost_base) ? rk / pcs_ptr->r0 + c : c;
         }
     }
 
@@ -108,7 +109,7 @@ static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
 
     for (int idx = 0; idx < eob; ++idx) {
         int abs_level = abs(qcoeff[scan_order->scan[idx]]);
-        rate_cost += (int)(log(abs_level + 1.0) / log(2.0)) + 1;
+        rate_cost += (int)(log1p(abs_level) / log(2.0)) + 1;
     }
 
     return (rate_cost << AV1_PROB_COST_SHIFT);
@@ -230,7 +231,7 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, AomBitDepth bit_depth) {
     }
 }
 
-int av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
+int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
     const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
     //const int q = eb_av1_dc_quant_Q3(qindex, 0, bit_depth);
     int rdmult = q * q;
@@ -254,10 +255,12 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
 #define TPL_DEP_COST_SCALE_LOG2 4
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
+    int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
 
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-uint8_t is_me_data_valid(
+static uint8_t is_me_data_valid(
     const MeSbResults           *me_results,
     uint32_t                     me_mb_offset,
     uint8_t                      list_idx,
@@ -268,7 +271,7 @@ uint8_t is_me_data_valid(
 
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
         const MeCandidate *me_cand = &me_block_results[me_cand_i];
-        assert(me_cand->direction >= 0 && me_cand->direction <= 2);
+        assert(/*me_cand->direction >= 0 && */me_cand->direction <= 2);
         if (me_cand->direction == 0 || me_cand->direction == 2) {
             if (list_idx == me_cand->ref0_list && ref_idx == me_cand->ref_idx_l0)
                 return 1;
@@ -294,8 +297,6 @@ void tpl_mc_flow_dispenser(
     uint32_t    picture_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
     uint32_t    picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t    picture_height_in_sb = (pcs_ptr->enhanced_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-    uint32_t    sb_origin_x;
-    uint32_t    sb_origin_y;
     int16_t     x_curr_mv = 0;
     int16_t     y_curr_mv = 0;
     uint32_t    me_mb_offset = 0;
@@ -378,14 +379,11 @@ void tpl_mc_flow_dispenser(
     mb_plane.zbin_qtx = pcs_ptr->quants_bd.y_zbin[qIndex];
     mb_plane.round_qtx = pcs_ptr->quants_bd.y_round[qIndex];
     mb_plane.dequant_qtx = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
-    pcs_ptr->base_rdmult = av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
+    pcs_ptr->base_rdmult = svt_av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        sb_origin_x = (sb_index % picture_width_in_sb) * BLOCK_SIZE_64;
-        sb_origin_y = (sb_index / picture_width_in_sb) * BLOCK_SIZE_64;
-        if (((sb_origin_x + 16) <= input_picture_ptr->width) &&
-            ((sb_origin_y + 16) <= input_picture_ptr->height)) {
+        {
             SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
             uint32_t pa_blk_index = 0;
             while (pa_blk_index < CU_MAX_COUNT) {
@@ -422,6 +420,7 @@ void tpl_mc_flow_dispenser(
 #endif
                     int64_t inter_cost;
                     int64_t recon_error = 1, sse = 1;
+                    uint64_t best_ref_poc = 0;
                     int32_t best_rf_idx = -1;
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = { 0, 0 };
@@ -439,8 +438,8 @@ void tpl_mc_flow_dispenser(
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
 #if IN_LOOP_TPL
-                        if((list_index == 0 && (ref_pic_index + 1 ) > pcs_ptr->tpl_ref0_count) ||
-                            (list_index == 1 && (ref_pic_index + 1 )> pcs_ptr->tpl_ref1_count))
+                        if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_ref0_count) ||
+                            (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_ref1_count))
                             continue;
 
                         if (!pcs_ptr->ref_in_slide_window[list_index][ref_pic_index] && pcs_ptr->picture_number == 8)
@@ -456,7 +455,7 @@ void tpl_mc_flow_dispenser(
 #if !IN_LOOP_TPL
                         if (!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
+                        uint64_t ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
                         uint32_t ref_frame_idx = 0;
                         while (ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
                             ref_frame_idx++;
@@ -509,6 +508,7 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
+                            best_ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
@@ -517,7 +517,7 @@ void tpl_mc_flow_dispenser(
                         }
                     } // rf_idx
                     if (best_inter_cost < INT64_MAX) {
-                        uint16_t eob;
+                        uint16_t eob = 0;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
                         int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
@@ -532,7 +532,7 @@ void tpl_mc_flow_dispenser(
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                        uint64_t ref_poc = best_ref_poc;
                         uint32_t ref_frame_idx = 0;
 #if TPL_REC_BUFFER
                         uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
@@ -628,7 +628,7 @@ void tpl_mc_flow_dispenser(
                     eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
-                    uint16_t eob;
+                    uint16_t eob = 0;
 
                     get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
                     int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
@@ -648,7 +648,7 @@ void tpl_mc_flow_dispenser(
 
                     if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
                         tpl_stats.mv = final_best_mv;
-                        tpl_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                        tpl_stats.ref_frame_poc = best_ref_poc;
                     }
                     // Motion flow dependency dispenser.
                     result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
@@ -678,6 +678,7 @@ void tpl_mc_flow_dispenser(
 #endif
     return;
 }
+
 
 static int get_overlap_area(int grid_pos_row, int grid_pos_col, int ref_pos_row,
     int ref_pos_col, int block, int/*BLOCK_SIZE*/ bsize) {
@@ -871,15 +872,12 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
         }
     }
 
-    if (mc_dep_cost_base == 0) {
-        pcs_ptr->r0 = 0;
-    }
-    else {
+    if (mc_dep_cost_base != 0) {
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
 
     SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
-    generate_lambda_scaling_factor(pcs_ptr);
+    generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
     const uint32_t picture_sb_width = (uint32_t)((scs_ptr->seq_header.max_frame_width + sb_sz - 1) / sb_sz);
@@ -907,13 +905,12 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 }
             }
             double beta = 1.0;
-            double rk = -1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 //if (mc_dep_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
                 //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS)
                 //    && intra_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
                 //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS) ){
-                rk = (double)intra_cost / mc_dep_cost;
+                double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
                 //if (pcs_ptr->picture_number == 16)
                 //SVT_LOG(
@@ -956,7 +953,7 @@ EbErrorType tpl_mc_flow(
     uint32_t                         inputQueueIndex;
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
 #endif
-    uint32_t                         frame_idx, i;
+    int32_t                         frame_idx, i;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;

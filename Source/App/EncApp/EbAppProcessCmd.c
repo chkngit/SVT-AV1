@@ -1193,7 +1193,8 @@ AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *con
             case 0: break;
             case 1:
                 if (!(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
-                    fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", *frame_count);
+                    //fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", *frame_count);
+                    *frame_count++;//anaghdin
                 break;
             case 2:
                 fprintf(stderr,
