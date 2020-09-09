@@ -4574,6 +4574,70 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
                 continue;
+#if ENABLE_DCT_DCT_ONLY
+        if (tx_type != DCT_DCT)
+            continue;
+#endif
+#if ENABLE_ADST_DCT_ONLY
+        if (tx_type != ADST_DCT)
+            continue;
+#endif
+#if ENABLE_DCT_ADST_ONLY
+        if (tx_type != DCT_ADST)
+            continue;
+#endif
+#if ENABLE_ADST_ADST_ONLY
+        if (tx_type != ADST_ADST)
+            continue;
+#endif
+#if ENABLE_FLIPADST_DCT_ONLY
+        if (tx_type != FLIPADST_DCT)
+            continue;
+#endif
+#if ENABLE_DCT_FLIPADST_ONLY
+        if (tx_type != DCT_FLIPADST)
+            continue;
+#endif
+#if ENABLE_FLIPADST_FLIPADST_ONLY
+        if (tx_type != FLIPADST_FLIPADST)
+            continue;
+#endif
+#if ENABLE_ADST_FLIPADST_ONLY
+        if (tx_type != ADST_FLIPADST)
+            continue;
+#endif
+#if ENABLE_FLIPADST_ADST_ONLY
+        if (tx_type != FLIPADST_ADST)
+            continue;
+#endif
+#if ENABLE_IDTX_ONLY
+        if (tx_type != IDTX)
+            continue;
+#endif
+#if ENABLE_V_DCT_ONLY
+        if (tx_type != V_DCT)
+            continue;
+#endif
+#if ENABLE_H_DCT_ONLY
+        if (tx_type != H_DCT)
+            continue;
+#endif
+#if ENABLE_V_ADST_ONLY
+        if (tx_type != V_ADST)
+            continue;
+#endif
+#if ENABLE_H_ADST_ONLY
+        if (tx_type != H_ADST)
+            continue;
+#endif
+#if ENABLE_V_FLIPADST_ONLY
+        if (tx_type != V_FLIPADST)
+            continue;
+#endif
+#if ENABLE_H_FLIPADST_ONLY
+        if (tx_type != H_FLIPADST)
+            continue;
+#endif
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
             // Determine if current tx_type should be skipped based on statistics

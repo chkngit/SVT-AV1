@@ -38,6 +38,24 @@ extern "C" {
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
+// TxT Evaluation Macros
+#define ENABLE_DCT_DCT_ONLY             0
+#define ENABLE_ADST_DCT_ONLY            0
+#define ENABLE_DCT_ADST_ONLY            0
+#define ENABLE_ADST_ADST_ONLY           0
+#define ENABLE_FLIPADST_DCT_ONLY        0
+#define ENABLE_DCT_FLIPADST_ONLY        0
+#define ENABLE_FLIPADST_FLIPADST_ONLY   0
+#define ENABLE_ADST_FLIPADST_ONLY       0
+#define ENABLE_FLIPADST_ADST_ONLY       0
+#define ENABLE_IDTX_ONLY                0
+#define ENABLE_V_DCT_ONLY               0
+#define ENABLE_H_DCT_ONLY               0
+#define ENABLE_V_ADST_ONLY              0
+#define ENABLE_H_ADST_ONLY              0
+#define ENABLE_V_FLIPADST_ONLY          0
+#define ENABLE_H_FLIPADST_ONLY          0
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
