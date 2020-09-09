@@ -1500,7 +1500,119 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                         src_ptr + j * input_picture_ptr->stride_y,
                         context_ptr->blk_geom->bwidth * sizeof(uint8_t));
             }
+#if !VBR_BUG_FIX
+    //copy neigh recon data in blk_ptr
+    {
+        uint32_t             j;
+        EbPictureBufferDesc *recon_ptr = candidate_buffer->recon_ptr;
+        uint32_t             rec_luma_offset =
+            context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * recon_ptr->stride_y;
 
+        uint32_t rec_cb_offset = ((((context_ptr->blk_geom->origin_x >> 3) << 3) +
+                                   ((context_ptr->blk_geom->origin_y >> 3) << 3) *
+                                       candidate_buffer->recon_ptr->stride_cb) >>
+                                  1);
+        uint32_t rec_cr_offset = ((((context_ptr->blk_geom->origin_x >> 3) << 3) +
+                                   ((context_ptr->blk_geom->origin_y >> 3) << 3) *
+                                       candidate_buffer->recon_ptr->stride_cr) >>
+                                  1);
+
+        if (!context_ptr->hbd_mode_decision) {
+            memcpy(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                       .neigh_top_recon[0],
+                   recon_ptr->buffer_y + rec_luma_offset +
+                       (context_ptr->blk_geom->bheight - 1) * recon_ptr->stride_y,
+                   context_ptr->blk_geom->bwidth);
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                memcpy(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                           .neigh_top_recon[1],
+                       recon_ptr->buffer_cb + rec_cb_offset +
+                           (context_ptr->blk_geom->bheight_uv - 1) * recon_ptr->stride_cb,
+                       context_ptr->blk_geom->bwidth_uv);
+                memcpy(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                           .neigh_top_recon[2],
+                       recon_ptr->buffer_cr + rec_cr_offset +
+                           (context_ptr->blk_geom->bheight_uv - 1) * recon_ptr->stride_cr,
+                       context_ptr->blk_geom->bwidth_uv);
+            }
+
+            for (j = 0; j < context_ptr->blk_geom->bheight; ++j)
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .neigh_left_recon[0][j] =
+                    recon_ptr->buffer_y[rec_luma_offset + context_ptr->blk_geom->bwidth - 1 +
+                                        j * recon_ptr->stride_y];
+
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                for (j = 0; j < context_ptr->blk_geom->bheight_uv; ++j) {
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                        .neigh_left_recon[1][j] =
+                        recon_ptr->buffer_cb[rec_cb_offset + context_ptr->blk_geom->bwidth_uv - 1 +
+                                             j * recon_ptr->stride_cb];
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                        .neigh_left_recon[2][j] =
+                        recon_ptr->buffer_cr[rec_cr_offset + context_ptr->blk_geom->bwidth_uv - 1 +
+                                             j * recon_ptr->stride_cr];
+                }
+            }
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+                uint8_t *src_ptr = recon_ptr->buffer_y + rec_luma_offset;
+                uint8_t *dst_ptr =
+                    ref_pic->buffer_y + ref_pic->origin_x + context_ptr->blk_origin_x +
+                    (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
+                for (j = 0; j < context_ptr->blk_geom->bheight; j++)
+                    eb_memcpy(dst_ptr + j * ref_pic->stride_y,
+                        src_ptr + j * recon_ptr->stride_y,
+                        context_ptr->blk_geom->bwidth * sizeof(uint8_t));
+            }
+
+        } else {
+            uint16_t sz = sizeof(uint16_t);
+            memcpy(
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .neigh_top_recon_16bit[0],
+                recon_ptr->buffer_y + sz * (rec_luma_offset + (context_ptr->blk_geom->bheight - 1) *
+                                                                  recon_ptr->stride_y),
+                sz * context_ptr->blk_geom->bwidth);
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                memcpy(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                           .neigh_top_recon_16bit[1],
+                       recon_ptr->buffer_cb +
+                           sz * (rec_cb_offset +
+                                 (context_ptr->blk_geom->bheight_uv - 1) * recon_ptr->stride_cb),
+                       sz * context_ptr->blk_geom->bwidth_uv);
+                memcpy(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                           .neigh_top_recon_16bit[2],
+                       recon_ptr->buffer_cr +
+                           sz * (rec_cr_offset +
+                                 (context_ptr->blk_geom->bheight_uv - 1) * recon_ptr->stride_cr),
+                       sz * context_ptr->blk_geom->bwidth_uv);
+            }
+
+            for (j = 0; j < context_ptr->blk_geom->bheight; ++j)
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .neigh_left_recon_16bit[0][j] =
+                    ((uint16_t *)
+                         recon_ptr->buffer_y)[rec_luma_offset + context_ptr->blk_geom->bwidth - 1 +
+                                              j * recon_ptr->stride_y];
+
+            if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+                for (j = 0; j < context_ptr->blk_geom->bheight_uv; ++j) {
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                        .neigh_left_recon_16bit[1][j] =
+                        ((uint16_t *)recon_ptr
+                             ->buffer_cb)[rec_cb_offset + context_ptr->blk_geom->bwidth_uv - 1 +
+                                          j * recon_ptr->stride_cb];
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                        .neigh_left_recon_16bit[2][j] =
+                        ((uint16_t *)recon_ptr
+                             ->buffer_cr)[rec_cr_offset + context_ptr->blk_geom->bwidth_uv - 1 +
+                                          j * recon_ptr->stride_cr];
+                }
+            }
+        }
+    }
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
 
