@@ -15658,6 +15658,7 @@ uint8_t update_skip_nsq_shapes(
 
     return skip_nsq;
 }
+#if !REMOVE_BLK_BASED_DEPTH_RED
 static void set_child_to_be_skipped(
     ModeDecisionContext   *context_ptr,
     uint32_t    blk_index,
@@ -15751,7 +15752,6 @@ static void set_child_to_be_skipped(
     }
 }
 
-#if !REMOVE_BLK_BASED_DEPTH_RED
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
 void derive_shape_default_cost(
     ModeDecisionContext *context_ptr) {
@@ -16334,68 +16334,25 @@ EbBool update_redundant(ModeDecisionContext *context_ptr) {
 }
 
 // create a struct with block processing data which must be preserved between blocks (i.e. invocation of each blk processing func call)
-typedef struct {
-    EbBool md_early_exit_sq;
-    uint32_t next_non_skip_blk_idx_mds;
-    EbBool md_early_exit_nsq;
-    uint32_t d1_blocks_accumlated;
-
-    int64_t depth_cost[NUMBER_OF_DEPTH];
-    uint64_t nsq_cost[NUMBER_OF_SHAPES];
-    Part nsq_shape_table[NUMBER_OF_SHAPES];
-} CuProcessingData;
+//typedef struct {
+//    EbBool md_early_exit_sq;
+//    uint32_t next_non_skip_blk_idx_mds;
+//    EbBool md_early_exit_nsq;
+//    uint32_t d1_blocks_accumlated;
+//
+//    int64_t depth_cost[NUMBER_OF_DEPTH];
+//    uint64_t nsq_cost[NUMBER_OF_SHAPES];
+//    Part nsq_shape_table[NUMBER_OF_SHAPES];
+//} CuProcessingData;
 
 // Check if should skip processing the current block
 // return 1 if should skip, 0 otherwise
-EbBool skip_next_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-    CuProcessingData cu_processing_data, uint32_t blk_idx_mds,
-    uint32_t d1_block_itr, uint32_t sb_addr) {
+EbBool skip_next_block(SequenceControlSet *scs_ptr,
+                       PictureControlSet *pcs_ptr,
+                       ModeDecisionContext *context_ptr,
+                       uint32_t blk_idx_mds) {
 
     const BlockGeom *blk_geom = context_ptr->blk_geom;
-    BlkStruct *     blk_ptr = context_ptr->blk_ptr;
-
-    // early exit based on cost of quadrant sub-blocks
-    if (blk_geom->quadi > 0 && d1_block_itr == 0 && !cu_processing_data.md_early_exit_sq) {
-        uint64_t parent_depth_cost = 0, current_depth_cost = 0;
-
-        // from a given child index, derive the index of the parent
-        uint32_t parent_depth_idx_mds =
-            (blk_geom->sqi_mds - (blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]) -
-            parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
-
-        if (pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && scs_ptr->seq_header.sb_size == BLOCK_128X128)
-            parent_depth_cost = MAX_MODE_COST;
-        else
-            compute_depth_costs_md_skip(
-                context_ptr,
-                scs_ptr,
-                pcs_ptr->parent_pcs_ptr,
-                parent_depth_idx_mds,
-                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth],
-                &parent_depth_cost,
-                &current_depth_cost);
-
-        if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
-            parent_depth_cost = MAX_MODE_COST;
-
-        // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
-        // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
-        if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
-            cu_processing_data.md_early_exit_sq = 1;
-            cu_processing_data.next_non_skip_blk_idx_mds =
-                parent_depth_idx_mds +
-                ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth - 1];
-        }
-        else {
-            cu_processing_data.md_early_exit_sq = 0;
-        }
-    }
-    if (cu_processing_data.md_early_exit_sq)
-        return 1;
-
-    // skip until we reach the next block @ the parent block depth
-    if (blk_ptr->mds_idx >= cu_processing_data.next_non_skip_blk_idx_mds && cu_processing_data.md_early_exit_sq == 1)
-        cu_processing_data.md_early_exit_sq = 0;
 
     // Apply mode offset based on NSQ stats
     AMdCycleRControls*adaptive_md_cycles_red_ctrls = &context_ptr->admd_cycles_red_ctrls;
@@ -16404,21 +16361,21 @@ EbBool skip_next_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, 
         pred_depth_refinement = MIN(pred_depth_refinement, 2);
         pred_depth_refinement = MAX(pred_depth_refinement, -2);
         pred_depth_refinement += 2;
-        if (context_ptr->ad_md_prob[pred_depth_refinement][context_ptr->blk_geom->shape] < adaptive_md_cycles_red_ctrls->switch_mode_th) {
+        if (context_ptr->ad_md_prob[pred_depth_refinement][blk_geom->shape] < adaptive_md_cycles_red_ctrls->switch_mode_th) {
             signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, adaptive_md_cycles_red_ctrls->mode_offset);
             signal_derivation_block(pcs_ptr, context_ptr, adaptive_md_cycles_red_ctrls->mode_offset);
         }
     }
 
     // If SQ block has zero coeffs, use more aggressive settings (or skip) for NSQ blocks
-    uint8_t zero_sq_coeff_skip_action = 0;
-    uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+    //uint8_t zero_sq_coeff_skip_action = 0;
+    uint8_t sq_index = LOG2F(blk_geom->sq_size) - 2;
     EbBool switch_md_mode_based_on_sq_coeff = EB_FALSE;
     CoeffBSwMdCtrls *coeffb_sw_md_ctrls = &context_ptr->cb_sw_md_ctrls;
     if (coeffb_sw_md_ctrls->enabled) {
 
-        if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
-            switch_md_mode_based_on_sq_coeff = context_ptr->blk_geom->shape == PART_N || context_ptr->parent_sq_has_coeff[sq_index] != 0 ? EB_FALSE : EB_TRUE;
+        if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag)
+            switch_md_mode_based_on_sq_coeff = blk_geom->shape == PART_N || context_ptr->parent_sq_has_coeff[sq_index] != 0 ? EB_FALSE : EB_TRUE;
 
         if (switch_md_mode_based_on_sq_coeff) {
             if (coeffb_sw_md_ctrls->skip_block) {
@@ -16520,7 +16477,7 @@ void init_cu_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     uint16_t sb_origin_x, uint16_t sb_origin_y,
                     uint32_t blk_idx_mds, uint32_t* d1_block_itr,
-                    uint32_t* skip_next_nsq, uint64_t nsq_cost[NUMBER_OF_SHAPES]) {
+                    EbBool* skip_next_nsq, uint64_t nsq_cost[NUMBER_OF_SHAPES]) {
 
     const BlockGeom *blk_geom = context_ptr->blk_geom;
     BlkStruct *     blk_ptr = context_ptr->blk_ptr;
@@ -16788,11 +16745,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     blk_index = 0; //index over mdc array
 #endif
     uint32_t blk_idx_mds = 0;
-#if !MODULAR_CU_PROCESSING
+#if MODULAR_CU_PROCESSING
+    EbBool md_early_exit_sq = 0;
+    EbBool md_early_exit_nsq = 0;
+#else
     uint32_t d1_blocks_accumlated = 0;
-#endif
     int      skip_next_nsq = 0;
     int      skip_next_sq = 0;
+#endif
     uint32_t next_non_skip_blk_idx_mds = 0;
     int64_t  depth_cost[NUMBER_OF_DEPTH] = { -1, -1, -1, -1, -1, -1 };
     uint64_t nsq_cost[NUMBER_OF_SHAPES] = { MAX_CU_COST,
@@ -16811,15 +16771,15 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if MODULAR_CU_PROCESSING
     uint32_t d1_block_itr = 0;
     uint32_t d1_first_block = 1;
-    CuProcessingData cu_processing_data = {
-        0, // md_early_exit_sq
-        0, // next_non_skip_blk_idx_mds
-        0, // md_early_exit_nsq
-        0, // d1_blocks_accumlated
-        { -1, -1, -1, -1, -1, -1 }, //depth_cost
-        { MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST}, // nsq_cost
-        {PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S } // nsq_shape_table
-    };
+    //CuProcessingData cu_processing_data = {
+    //    0, // md_early_exit_sq
+    //    0, // next_non_skip_blk_idx_mds
+    //    0, // md_early_exit_nsq
+    //    0, // d1_blocks_accumlated
+    //    { -1, -1, -1, -1, -1, -1 }, //depth_cost
+    //    { MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST, MAX_CU_COST}, // nsq_cost
+    //    {PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S } // nsq_shape_table
+    //};
 #else
     uint8_t skip_next_depth = 0;
 #endif
@@ -16894,14 +16854,61 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, 0);
                 signal_derivation_block(pcs_ptr, context_ptr, 0);
 
+                // Check current depth cost; if larger than parent, exit early
+                if (blk_geom->quadi > 0 && d1_block_itr == 0 && !md_early_exit_sq) {
+                    uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+
+                    // from a given child index, derive the index of the parent
+                    uint32_t parent_depth_idx_mds =
+                        (context_ptr->blk_geom->sqi_mds -
+                        (context_ptr->blk_geom->quadi - 3) *
+                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                            [context_ptr->blk_geom->depth]) -
+                        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                        [blk_geom->depth];
+
+                    if (pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 &&
+                        scs_ptr->seq_header.sb_size == BLOCK_128X128)
+                        parent_depth_cost = MAX_MODE_COST;
+                    else
+                        compute_depth_costs_md_skip(
+                            context_ptr,
+                            scs_ptr,
+                            pcs_ptr->parent_pcs_ptr,
+                            parent_depth_idx_mds,
+                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                            [context_ptr->blk_geom->depth],
+                            &parent_depth_cost,
+                            &current_depth_cost);
+
+                    if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
+                        parent_depth_cost = MAX_MODE_COST;
+
+                    // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
+                    // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+                    if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
+                        md_early_exit_sq = 1;
+                        next_non_skip_blk_idx_mds =
+                            parent_depth_idx_mds +
+                            ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
+                            [context_ptr->blk_geom->depth - 1];
+                    }
+                    else {
+                        md_early_exit_sq = 0;
+                    }
+                }
+                // skip until we reach the next block @ the parent block depth
+                if (blk_ptr->mds_idx >= next_non_skip_blk_idx_mds && md_early_exit_sq == 1)
+                    md_early_exit_sq = 0;
+
                 // encode the current block only if it's not redundant
                 if (!update_redundant(context_ptr)) {
 
                     if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
-                        !skip_next_nsq &&
-                        //!cu_processing_data.md_early_exit_sq &&
+                        !md_early_exit_nsq &&
+                        !md_early_exit_sq &&
                         !context_ptr->blk_ptr->do_not_process_block &&
-                        !skip_next_block(scs_ptr, pcs_ptr, context_ptr, cu_processing_data, blk_idx_mds, d1_block_itr, sb_addr)) {
+                        !skip_next_block(scs_ptr, pcs_ptr, context_ptr, blk_idx_mds)) {
 
                         md_encode_block(pcs_ptr,
                             context_ptr,
@@ -16929,7 +16936,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                sb_origin_y,
                                blk_idx_mds,
                                &d1_block_itr,
-                               &skip_next_nsq,
+                               &md_early_exit_nsq,
                                nsq_cost);
 
                 if (d1_first_block)
