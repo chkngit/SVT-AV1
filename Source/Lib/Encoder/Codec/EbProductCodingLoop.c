@@ -16519,28 +16519,31 @@ void init_cu_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 // Update d1 data after each processed block, determine if should use early exit
 void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     uint16_t sb_origin_x, uint16_t sb_origin_y,
-                    uint32_t blk_idx_mds, uint32_t d1_block_itr,
-                    uint32_t* skip_next_nsq, uint64_t* nsq_cost) {
+                    uint32_t blk_idx_mds, uint32_t* d1_block_itr,
+                    uint32_t* skip_next_nsq, uint64_t nsq_cost[NUMBER_OF_SHAPES]) {
+
+    const BlockGeom *blk_geom = context_ptr->blk_geom;
+    BlkStruct *     blk_ptr = context_ptr->blk_ptr;
 
     *skip_next_nsq = 0;
-    if (context_ptr->blk_geom->nsi + 1 == context_ptr->blk_geom->totns) {
-        nsq_cost[context_ptr->blk_geom->shape] =
-            d1_non_square_block_decision(context_ptr, d1_block_itr);
-        d1_block_itr++;
+    if (blk_geom->nsi + 1 == blk_geom->totns) {
+        nsq_cost[blk_geom->shape] =
+            d1_non_square_block_decision(context_ptr, *d1_block_itr);
+        (*d1_block_itr)++;
     }
-    else if (d1_block_itr) {
+    else if (*d1_block_itr) {
         uint64_t tot_cost = 0;
-        uint32_t first_blk_idx = context_ptr->blk_ptr->mds_idx - (context_ptr->blk_geom->nsi); //index of first block in this partition
-        for (int blk_it = 0; blk_it < context_ptr->blk_geom->nsi + 1; blk_it++)
+        uint32_t first_blk_idx = blk_ptr->mds_idx - (blk_geom->nsi); //index of first block in this partition
+        for (int blk_it = 0; blk_it < blk_geom->nsi + 1; blk_it++)
             tot_cost += context_ptr->md_local_blk_unit[first_blk_idx + blk_it].cost;
-        nsq_cost[context_ptr->blk_geom->shape] = tot_cost;
+        nsq_cost[blk_geom->shape] = tot_cost;
 
-        if (tot_cost > context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)
+        if (tot_cost > context_ptr->md_local_blk_unit[blk_geom->sqi_mds].cost)
             *skip_next_nsq = 1;
     }
 
-    if (context_ptr->blk_geom->shape != PART_N) {
-        if (context_ptr->blk_geom->nsi + 1 < context_ptr->blk_geom->totns)
+    if (blk_geom->shape != PART_N) {
+        if (blk_geom->nsi + 1 < blk_geom->totns)
             md_update_all_neighbour_arrays(
                 pcs_ptr, context_ptr, blk_idx_mds, sb_origin_x, sb_origin_y);
         else
@@ -16549,7 +16552,7 @@ void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 context_ptr,
                 1,
                 0,
-                context_ptr->blk_geom->sqi_mds,
+                blk_geom->sqi_mds,
                 sb_origin_x,
                 sb_origin_y);
     }
@@ -17198,7 +17201,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                sb_origin_x,
                                sb_origin_y,
                                blk_idx_mds,
-                               d1_block_itr,
+                               &d1_block_itr,
                                &skip_next_nsq,
                                nsq_cost);
 #else
