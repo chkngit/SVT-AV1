@@ -4570,74 +4570,112 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint32_t y_count_non_zero_coeffs_txt[TX_TYPES]= { 0 };
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
+
+#if TX_TYPE_EVAL
+    EbBool use_dct = EB_FALSE;
+    int32_t desired_type;
+#endif
+
+#if ENABLE_DCT_DCT_ONLY
+    desired_type = DCT_DCT;
+#endif
+#if ENABLE_ADST_DCT_ONLY
+    desired_type = ADST_DCT;
+#endif
+#if ENABLE_DCT_ADST_ONLY
+    desired_type = DCT_ADST;
+#endif
+#if ENABLE_ADST_ADST_ONLY
+    desired_type = ADST_ADST;
+#endif
+#if ENABLE_FLIPADST_DCT_ONLY
+    desired_type = FLIPADST_DCT;
+#endif
+#if ENABLE_DCT_FLIPADST_ONLY
+    desired_type = DCT_FLIPADST;
+#endif
+#if ENABLE_FLIPADST_FLIPADST_ONLY
+    desierd_type = FLIPADST_FLIPADST;
+#endif
+#if ENABLE_ADST_FLIPADST_ONLY
+    desired_type = ADST_FLIPADST;
+#endif
+#if ENABLE_FLIPADST_ADST_ONLY
+    desired_type = FLIPADST_ADST;
+#endif
+#if ENABLE_IDTX_ONLY
+    desired_type = IDTX;
+#endif
+#if ENABLE_V_DCT_ONLY
+    desired_type = V_DCT;
+#endif
+#if ENABLE_H_DCT_ONLY
+    desierd_type = H_DCT;
+#endif
+#if ENABLE_V_ADST_ONLY
+    desired_type = V_ADST;
+#endif
+#if ENABLE_H_ADST_ONLY
+    desired_type = H_ADST;
+#endif
+#if ENABLE_V_FLIPADST_ONLY
+    desired_type = V_FLIPADST;
+#endif
+#if ENABLE_H_FLIPADST_ONLY
+    desired_type = H_FLIPADST;
+#endif
+
+#if TX_TYPE_EVAL
+    if (desired_type != DCT_DCT) {
+        if (is_inter) {
+            TxSize          max_tx_size = context_ptr->blk_geom->txsize[0][0];
+            const TxSetType tx_set_type_inter = get_ext_tx_set_type(
+                max_tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
+            int32_t eset = get_ext_tx_set(
+                max_tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
+            // eset == 0 should correspond to a set with only DCT_DCT and there
+            // is no need to send the tx_type
+            if (eset <= 0)
+                use_dct = EB_TRUE;
+            else if (av1_ext_tx_used[tx_set_type_inter][desired_type] == 0)
+                use_dct = EB_TRUE;
+            else if (context_ptr->blk_geom
+                ->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 ||
+                context_ptr->blk_geom
+                ->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32)
+                use_dct = EB_TRUE;
+        }
+        int32_t eset = get_ext_tx_set(
+            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+            is_inter,
+            pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
+        // eset == 0 should correspond to a set with only DCT_DCT and there
+        // is no need to send the tx_type
+        if (eset <= 0)
+            use_dct = EB_TRUE;
+        else if (av1_ext_tx_used[tx_set_type][desired_type] == 0)
+            use_dct = EB_TRUE;
+        else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >
+            32 ||
+            context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >
+            32)
+            use_dct = EB_TRUE;
+    }
+#endif
+
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
                 continue;
-#if ENABLE_DCT_DCT_ONLY
-        if (tx_type != DCT_DCT)
+
+#if TX_TYPE_EVAL
+        if (use_dct && tx_type != DCT_DCT)
+            continue;
+
+        if (!use_dct && tx_type != desired_type)
             continue;
 #endif
-#if ENABLE_ADST_DCT_ONLY
-        if (tx_type != ADST_DCT && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_DCT_ADST_ONLY
-        if (tx_type != DCT_ADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_ADST_ADST_ONLY
-        if (tx_type != ADST_ADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_FLIPADST_DCT_ONLY
-        if (tx_type != FLIPADST_DCT && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_DCT_FLIPADST_ONLY
-        if (tx_type != DCT_FLIPADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_FLIPADST_FLIPADST_ONLY
-        if (tx_type != FLIPADST_FLIPADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_ADST_FLIPADST_ONLY
-        if (tx_type != ADST_FLIPADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_FLIPADST_ADST_ONLY
-        if (tx_type != FLIPADST_ADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_IDTX_ONLY
-        if (tx_type != IDTX && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_V_DCT_ONLY
-        if (tx_type != V_DCT && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_H_DCT_ONLY
-        if (tx_type != H_DCT && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_V_ADST_ONLY
-        if (tx_type != V_ADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_H_ADST_ONLY
-        if (tx_type != H_ADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_V_FLIPADST_ONLY
-        if (tx_type != V_FLIPADST && tx_type != DCT_DCT)
-            continue;
-#endif
-#if ENABLE_H_FLIPADST_ONLY
-        if (tx_type != H_FLIPADST && tx_type != DCT_DCT)
-            continue;
-#endif
+
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
             // Determine if current tx_type should be skipped based on statistics
