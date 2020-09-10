@@ -16575,7 +16575,9 @@ void update_d2_decision(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                         ModeDecisionContext *context_ptr,
                         SuperBlock *sb_ptr, uint32_t sb_addr,
                         uint16_t sb_origin_x, uint16_t sb_origin_y,
+#if !REMOVE_DEPTH_COST_ARRAY
                         int64_t depth_cost[NUMBER_OF_DEPTH],
+#endif
                         uint64_t nsq_cost[NUMBER_OF_SHAPES],
                         Part nsq_shape_table[NUMBER_OF_SHAPES]) {
 
@@ -16592,10 +16594,11 @@ void update_d2_decision(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
             }
         }
     }
+#if !REMOVE_DEPTH_COST_ARRAY
     depth_cost[scs_ptr->static_config.super_block_size == 128
         ? context_ptr->blk_geom->depth
         : context_ptr->blk_geom->depth + 1] += nsq_cost[nsq_shape_table[0]];
-
+#endif
     uint32_t last_blk_index_mds =
         d2_inter_depth_block_decision(context_ptr,
             context_ptr->blk_geom->sqi_mds, //input is parent square
@@ -16873,7 +16876,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     int      skip_next_sq = 0;
 #endif
     uint32_t next_non_skip_blk_idx_mds = 0;
+#if !REMOVE_DEPTH_COST_ARRAY
     int64_t  depth_cost[NUMBER_OF_DEPTH] = { -1, -1, -1, -1, -1, -1 };
+#endif
     uint64_t nsq_cost[NUMBER_OF_SHAPES] = { MAX_CU_COST,
                                            MAX_CU_COST,
                                            MAX_CU_COST,
@@ -17049,7 +17054,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                sb_addr,
                                sb_origin_x,
                                sb_origin_y,
+#if !REMOVE_DEPTH_COST_ARRAY
                                depth_cost,
+#endif
                                nsq_cost,
                                nsq_shape_table);
 
@@ -17551,13 +17558,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     context_ptr->md_disallow_nsq = default_md_disallow_nsq;
 #endif
 #endif
+#if !REMOVE_DEPTH_COST_ARRAY
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 
     for (uint8_t depth_idx = 0; depth_idx < NUMBER_OF_DEPTH; depth_idx++) {
         sb_ptr->depth_cost[depth_idx] =
             depth_cost[depth_idx] < 0 ? MAX_MODE_COST : depth_cost[depth_idx];
     }
-
+#endif
     return return_error;
 }
 #define MAX_SEARCH_POINT_WIDTH 128
