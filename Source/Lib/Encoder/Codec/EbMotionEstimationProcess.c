@@ -415,12 +415,22 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
     if (input_resolution <= INPUT_SIZE_480p_RANGE)
         me_context_ptr->update_hme_search_center_flag = 0;
 
+#if TF_CHROMA_BLIND
+    me_context_ptr->tf_hp = (pcs_ptr->enc_mode <= ENC_M5)
+        ? 1
+        : 0;
+
+    me_context_ptr->tf_chroma = (pcs_ptr->enc_mode <= ENC_M7)
+        ? 1
+        : 0;
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
         me_context_ptr->high_precision = 1;
     }
     else {
         me_context_ptr->high_precision = 0;
     }
+#endif
     return NULL;
 };
 /******************************************************

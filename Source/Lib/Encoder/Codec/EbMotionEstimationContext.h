@@ -405,7 +405,12 @@ typedef struct MeContext {
     EbBool   me_alt_ref;
     void *   alt_ref_reference_ptr;
     // tf
+#if TF_CHROMA_BLIND
+    uint8_t tf_hp;
+    uint8_t tf_chroma;
+#else
     uint8_t high_precision;
+#endif
     int tf_frame_index;
     int tf_index_center;
     signed short tf_16x16_mv_x[16];

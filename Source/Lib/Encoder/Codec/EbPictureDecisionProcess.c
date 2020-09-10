@@ -1056,12 +1056,29 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 context_ptr->tf_level = 0;
         }
+#if TF_FASTER_LEVEL
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 2;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else {
+            if(pcs_ptr->slice_type == I_SLICE)
+                context_ptr->tf_level = 2;
+            else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 3;
+            else
+                context_ptr->tf_level = 0;
+        }
+#else
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
             else
                 context_ptr->tf_level = 0;
         }
+#endif
         }
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
@@ -1072,6 +1089,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         context_ptr->tf_level = 0;
+
+#if SHUT_TF
+    context_ptr->tf_level = 0;
+#endif
     set_tf_controls(context_ptr, context_ptr->tf_level);
 
     if (pcs_ptr->enc_mode <= ENC_M4)
@@ -3819,6 +3840,7 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->stride_cb,
             encoder_bit_depth);
 
+
     }
     else {
         EbByte buffer_y = central_picture_ptr->buffer_y +
@@ -3847,6 +3869,7 @@ EbErrorType derive_tf_window_params(
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cr);
+
     }
 
     // Adjust number of filtering frames based on noise and quantization factor.
@@ -3866,8 +3889,22 @@ EbErrorType derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
+#if TF_OFF_HIGH_NOISE
+    else if (noise_levels[0] < 3.0) {
+        adjust_num = 0;
+    }
+    else if (noise_levels[0] > 2.0) {
+        adjust_num = -4;
+    }
+#endif
     }
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
+#if TF_OFF_HIGH_NOISE
+    if (altref_nframes <= 0) {
+        pcs_ptr->past_altref_nframes = 0;
+        pcs_ptr->future_altref_nframes = 0;
+    } else
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list

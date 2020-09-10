@@ -865,7 +865,11 @@ void svt_av1_apply_filtering_highbd_c(
 }
 
 // Apply filtering to the central picture
+#if TF_CHROMA_BLIND
+static void apply_filtering_central(MeContext *context_ptr, EbByte *pred, uint32_t **accum, uint16_t **count,
+#else
 static void apply_filtering_central(EbByte *pred, uint32_t **accum, uint16_t **count,
+#endif
                                     uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
                                     uint32_t ss_y, int use_planewise_strategy) {
     uint16_t blk_height_y  = blk_height;
@@ -887,6 +891,9 @@ static void apply_filtering_central(EbByte *pred, uint32_t **accum, uint16_t **c
     }
 
     // Chroma
+#if TF_CHROMA_BLIND
+    if(context_ptr->tf_chroma)
+#endif
     for (uint16_t k = 0, i = 0; i < blk_height_ch; i++) {
         for (uint16_t j = 0; j < blk_width_ch; j++) {
             accum[C_U][k] += modifier * pred[C_U][i * blk_stride_ch + j];
@@ -900,7 +907,11 @@ static void apply_filtering_central(EbByte *pred, uint32_t **accum, uint16_t **c
 }
 
 // Apply filtering to the central picture
+#if TF_CHROMA_BLIND
+static void apply_filtering_central_highbd(MeContext *context_ptr, uint16_t **pred_16bit, uint32_t **accum,
+#else
 static void apply_filtering_central_highbd(uint16_t **pred_16bit, uint32_t **accum,
+#endif
                                            uint16_t **count, uint16_t blk_width,
                                            uint16_t blk_height, uint32_t ss_x,
                                            uint32_t ss_y, int use_planewise_strategy) {
@@ -922,6 +933,9 @@ static void apply_filtering_central_highbd(uint16_t **pred_16bit, uint32_t **acc
     }
 
     // Chroma
+#if TF_CHROMA_BLIND //
+    if (context_ptr->tf_chroma)
+#endif
     for (uint16_t k = 0, i = 0; i < blk_height_ch; i++) {
         for (uint16_t j = 0; j < blk_width_ch; j++) {
             accum[C_U][k] += modifier * pred_16bit[C_U][i * blk_stride_ch + j];
@@ -1679,7 +1693,11 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
             mv_x = best_mv_x;
             mv_y = best_mv_y;
             // Perform 1/8 Pel MV Refinement
+#if TF_CHROMA_BLIND
+            if (context_ptr->tf_hp)
+#else
             if (context_ptr->high_precision)
+#endif
             for (signed short i = -1; i <= 1; i++) {
                 for (signed short j = -1; j <= 1; j++) {
                     mv_unit.mv->x = mv_x + i;
@@ -1984,7 +2002,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         mv_x = best_mv_x;
         mv_y = best_mv_y;
         // Perform 1/8 Pel MV Refinement
+#if TF_CHROMA_BLIND
+        if (context_ptr->tf_hp)
+#else
         if (context_ptr->high_precision)
+#endif
         for (signed short i = -1; i <= 1; i++) {
             for (signed short j = -1; j <= 1; j++) {
                 mv_unit.mv->x = mv_x + i;
@@ -2163,7 +2185,11 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
                     &prediction_ptr,
                     local_origin_x,
                     local_origin_y,
+#if TF_CHROMA_BLIND
+                    context_ptr->tf_chroma,
+#else
                     1, //perform_chroma,
+#endif
                     (uint8_t)encoder_bit_depth);
             }
         }
@@ -2226,13 +2252,20 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
             &prediction_ptr,
             local_origin_x,
             local_origin_y,
+#if TF_CHROMA_BLIND
+            context_ptr->tf_chroma,
+#else
             1, //perform_chroma,
+#endif
             (uint8_t)encoder_bit_depth);
         }
     }
 }
-
+#if TF_CHROMA_BLIND
+static void get_final_filtered_pixels(MeContext *context_ptr, EbByte *   src_center_ptr_start,
+#else
 static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
+#endif
                                       uint16_t **altref_buffer_highbd_start, uint32_t **accum,
                                       uint16_t **count, const uint32_t *stride,
                                       int blk_y_src_offset, int blk_ch_src_offset,
@@ -2259,6 +2292,9 @@ static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
             pos += stride[C_Y] - BW;
         }
         // Process chroma
+#if TF_CHROMA_BLIND
+        if(context_ptr->tf_chroma) {
+#endif
         pos = blk_ch_src_offset;
         for (i = 0, k = 0; i < blk_height_ch; i++) {
             for (j = 0; j < blk_width_ch; j++, k++) {
@@ -2282,6 +2318,9 @@ static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
             }
             pos += stride[C_U] - blk_width_ch;
         }
+#if TF_CHROMA_BLIND
+        }
+#endif
     } else {
         // Process luma
         int pos = blk_y_src_offset;
@@ -2300,6 +2339,9 @@ static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
             pos += stride[C_Y] - BW;
         }
         // Process chroma
+#if TF_CHROMA_BLIND
+        if (context_ptr->tf_chroma) {
+#endif
         pos = blk_ch_src_offset;
         for (i = 0, k = 0; i < blk_height_ch; i++) {
             for (j = 0; j < blk_width_ch; j++, k++) {
@@ -2323,6 +2365,9 @@ static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
             }
             pos += stride[C_U] - blk_width_ch;
         }
+#if TF_CHROMA_BLIND
+        }
+#endif
     }
 }
 
@@ -2462,6 +2507,9 @@ static EbErrorType produce_temporally_filtered_pic(
                     if (!is_highbd) {
                         pic_copy_kernel_8bit(
                             src_center_ptr[C_Y], stride[C_Y], pred[C_Y], stride_pred[C_Y], BW, BH);
+#if TF_CHROMA_BLIND //
+                        if (context_ptr->tf_chroma) {
+#endif
                         pic_copy_kernel_8bit(src_center_ptr[C_U],
                                              stride[C_U],
                                              pred[C_U],
@@ -2474,6 +2522,9 @@ static EbErrorType produce_temporally_filtered_pic(
                                              stride_pred[C_V],
                                              blk_width_ch,
                                              blk_height_ch);
+#if TF_CHROMA_BLIND //
+                        }
+#endif
                     } else {
                         pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_Y],
                                               stride[C_Y],
@@ -2481,6 +2532,9 @@ static EbErrorType produce_temporally_filtered_pic(
                                               stride_pred[C_Y],
                                               BW,
                                               BH);
+#if TF_CHROMA_BLIND //
+                        if (context_ptr->tf_chroma) {
+#endif
                         pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_U],
                                               stride[C_U],
                                               pred_16bit[C_U],
@@ -2493,6 +2547,9 @@ static EbErrorType produce_temporally_filtered_pic(
                                               stride_pred[C_V],
                                               blk_width_ch,
                                               blk_height_ch);
+#if TF_CHROMA_BLIND //
+                        }
+#endif
                     }
 
                 } else {
@@ -2580,10 +2637,18 @@ static EbErrorType produce_temporally_filtered_pic(
                     const int use_planewise_strategy = 1;
                     if (!is_highbd)
                         apply_filtering_central(
+#if TF_CHROMA_BLIND
+                            context_ptr, pred, accum, count, BW, BH, ss_x, ss_y, use_planewise_strategy);
+#else
                             pred, accum, count, BW, BH, ss_x, ss_y, use_planewise_strategy);
+#endif
                     else
                         apply_filtering_central_highbd(
+#if TF_CHROMA_BLIND
+                            context_ptr, pred_16bit, accum, count, BW, BH, ss_x, ss_y, use_planewise_strategy);
+#else
                             pred_16bit, accum, count, BW, BH, ss_x, ss_y, use_planewise_strategy);
+#endif
                 } else {
                     // split filtering function into 32x32 blocks
                     // TODO: implement a 64x64 SIMD version
@@ -2615,7 +2680,13 @@ static EbErrorType produce_temporally_filtered_pic(
             }
 
             // Normalize filter output to produce temporally filtered frame
+#if TF_CHROMA_BLIND
+            
+            get_final_filtered_pixels(context_ptr,
+                                      src_center_ptr_start,
+#else
             get_final_filtered_pixels(src_center_ptr_start,
+#endif
                                       altref_buffer_highbd_start,
                                       accum,
                                       count,

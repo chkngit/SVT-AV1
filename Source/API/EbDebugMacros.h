@@ -50,8 +50,13 @@ extern "C" {
 #define PD0_REDUCE_ME_INTER_CAND 0
 /************************************/
 #define PRED_ONLY 0
-#define FASTER_PD0 1
+#define FASTER_PD0 0
 #define ENHANCED_FASTER_PD0 0
+/************************************/
+#define SHUT_TF 0
+#define TF_FASTER_LEVEL 1
+#define TF_OFF_HIGH_NOISE 0
+#define TF_CHROMA_BLIND 1
 /************************************/
 #ifdef __cplusplus
 }
