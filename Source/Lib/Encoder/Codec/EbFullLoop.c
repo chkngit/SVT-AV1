@@ -3372,7 +3372,11 @@ EbBool merge_1d_inter_block(ModeDecisionContext *context_ptr, uint32_t sq_idx, u
     return merge_blocks;
 }
 #endif
+#if MODULAR_CU_PROCESSING
+uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr) {
+#else
 uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t d1_block_itr) {
+#endif
     //compute total cost for the whole block partition
     uint64_t tot_cost = 0;
     uint32_t first_blk_idx =
@@ -3416,7 +3420,11 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
         tot_cost += split_cost;
     }
 #if SHUT_MERGE_1D_INTER_BLOCK
+#if MODULAR_CU_PROCESSING
+    if ((context_ptr->blk_geom->shape == PART_N) || (tot_cost < context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)) {
+#else
     if ((d1_block_itr == 0) || (tot_cost < context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)) {
+#endif
 #else
     if (merge_block_cnt == context_ptr->blk_geom->totns) merge_block_flag = EB_TRUE;
     if (d1_block_itr == 0 ||

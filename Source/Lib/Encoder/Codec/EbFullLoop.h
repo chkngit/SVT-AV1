@@ -64,7 +64,11 @@ extern void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr,
                                         uint32_t above_depth_mds,
                                         uint32_t step, uint64_t *above_depth_cost,
                                         uint64_t *curr_depth_cost);
+#if MODULAR_CU_PROCESSING
+uint64_t    d1_non_square_block_decision(ModeDecisionContext *context_ptr);
+#else
 uint64_t    d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t d1_block_itr);
+#endif
 
 #ifdef __cplusplus
 }

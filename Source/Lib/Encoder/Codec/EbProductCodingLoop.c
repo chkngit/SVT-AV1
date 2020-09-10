@@ -16403,7 +16403,7 @@ EbBool skip_next_block(SequenceControlSet *scs_ptr,
 void init_cu_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                   const EbMdcLeafData *const leaf_data_ptr, SuperBlock *sb_ptr,
                   uint16_t sb_origin_x, uint16_t sb_origin_y,
-                  uint32_t blk_idx_mds, uint32_t d1_first_block) {
+                  uint32_t blk_idx_mds) {
 
     const BlockGeom *blk_geom = context_ptr->blk_geom;
     BlkStruct *     blk_ptr = context_ptr->blk_ptr;
@@ -16441,7 +16441,7 @@ void init_cu_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 
     if (leaf_data_ptr->tot_d1_blocks != 1) {
         // We need to get the index of the sq_block for each NSQ branch
-        if (d1_first_block) {
+        if (blk_geom->shape == PART_N) {
             copy_neighbour_arrays( //save a clean neigh in [1], encode uses [0], reload the clean in [0] after done last ns block in a partition
                 pcs_ptr,
                 context_ptr,
@@ -16478,14 +16478,13 @@ void check_curr_to_parent_cost(SequenceControlSet *scs_ptr,
     PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr,
     uint32_t sb_addr,
-    uint32_t d1_block_itr,
     uint32_t* next_non_skip_blk_idx_mds,
     EbBool* md_early_exit_sq) {
 
     const BlockGeom *blk_geom = context_ptr->blk_geom;
     BlkStruct *     blk_ptr = context_ptr->blk_ptr;
 
-    if (blk_geom->quadi > 0 && d1_block_itr == 0 && !(*md_early_exit_sq)) {
+    if (blk_geom->quadi > 0 && blk_geom->shape == PART_N && !(*md_early_exit_sq)) {
         uint64_t parent_depth_cost = 0, current_depth_cost = 0;
 
         // from a given child index, derive the index of the parent
@@ -16533,8 +16532,8 @@ void check_curr_to_parent_cost(SequenceControlSet *scs_ptr,
 // Update d1 data (including d1 decision) after each processed block, determine if should use early exit
 void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     uint16_t sb_origin_x, uint16_t sb_origin_y,
-                    uint32_t blk_idx_mds, uint32_t* d1_block_itr,
-                    EbBool* skip_next_nsq, uint64_t nsq_cost[NUMBER_OF_SHAPES]) {
+                    uint32_t blk_idx_mds, EbBool* skip_next_nsq,
+                    uint64_t nsq_cost[NUMBER_OF_SHAPES]) {
 
     const BlockGeom *blk_geom = context_ptr->blk_geom;
     BlkStruct *     blk_ptr = context_ptr->blk_ptr;
@@ -16542,10 +16541,9 @@ void update_d1_data(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     *skip_next_nsq = 0;
     if (blk_geom->nsi + 1 == blk_geom->totns) {
         nsq_cost[blk_geom->shape] =
-            d1_non_square_block_decision(context_ptr, *d1_block_itr);
-        (*d1_block_itr)++;
+            d1_non_square_block_decision(context_ptr);
     }
-    else if (*d1_block_itr) {
+    else {
         uint64_t tot_cost = 0;
         uint32_t first_blk_idx = blk_ptr->mds_idx - (blk_geom->nsi); //index of first block in this partition
         for (int blk_it = 0; blk_it < blk_geom->nsi + 1; blk_it++)
@@ -16618,6 +16616,68 @@ void update_d2_decision(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
             sb_origin_y);
     }
 }
+#if ADD_CU_PROCESSING_FUNC
+void process_cu(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr,
+    const EbMdcLeafData *const leaf_data_ptr,
+    EbPictureBufferDesc *input_picture_ptr, ModeDecisionCandidateBuffer *bestcandidate_buffers[5],
+    SuperBlock *sb_ptr, uint32_t sb_addr,
+    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t blk_idx_mds,
+    uint32_t* next_non_skip_blk_idx_mds, EbBool* md_early_exit_sq, EbBool* md_early_exit_nsq) {
+
+    const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_idx_mds);
+    BlkStruct *     blk_ptr = context_ptr->blk_ptr = &context_ptr->md_blk_arr_nsq[blk_idx_mds];
+
+    init_cu_data(pcs_ptr,
+        context_ptr,
+        leaf_data_ptr,
+        sb_ptr,
+        sb_origin_x,
+        sb_origin_y,
+        blk_idx_mds);
+
+    // Reset settings, in case they were over-written by previous block
+    signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, 0);
+    signal_derivation_block(pcs_ptr, context_ptr, 0);
+
+    // Check current depth cost; if larger than parent, exit early
+    check_curr_to_parent_cost(scs_ptr,
+        pcs_ptr,
+        context_ptr,
+        sb_addr,
+        next_non_skip_blk_idx_mds,
+        md_early_exit_sq);
+
+    // encode the current block only if it's not redundant
+    if (!update_redundant(context_ptr)) {
+
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
+            !(*md_early_exit_nsq) &&
+            !(*md_early_exit_sq) &&
+            !context_ptr->blk_ptr->do_not_process_block &&
+            !skip_next_block(scs_ptr, pcs_ptr, context_ptr, blk_idx_mds)) {
+
+            md_encode_block(pcs_ptr,
+                context_ptr,
+                input_picture_ptr,
+                bestcandidate_buffers);
+        }
+        else if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {
+            // If the block is out of the boundaries, md is not performed.
+            // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
+            // - For non square blocks, since they can not be splitted further the cost is set to a large value (MAX_MODE_COST >> 4) to make sure they are not selected.
+            //   The value is set to MAX_MODE_COST >> 4 to make sure there is not overflow when adding costs.
+            context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (blk_geom->shape != PART_N) ? (MAX_MODE_COST >> 4) : 0;
+            context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = (blk_geom->shape != PART_N) ? MAX_MODE_COST : 0;
+        }
+        else {
+            // TODO: is there a reason this used to be shifted by 10 for SQ blocks?
+            context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (MAX_MODE_COST >> 4);
+            context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
+        }
+    }
+}
+#endif
 #endif
 EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
@@ -16801,7 +16861,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #else
     blk_index = 0; //index over mdc array
 #endif
+#if !ADD_CU_PROCESSING_FUNC
     uint32_t blk_idx_mds = 0;
+#endif
 #if MODULAR_CU_PROCESSING
     EbBool md_early_exit_sq = 0;
     EbBool md_early_exit_nsq = 0;
@@ -16826,8 +16888,8 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S };
 
 #if MODULAR_CU_PROCESSING
-    uint32_t d1_block_itr = 0;
-    uint32_t d1_first_block = 1;
+    //uint32_t d1_block_itr = 0;
+    //uint32_t d1_first_block = 1; // replaced by check on blk_geom->shape == PART_N
     //CuProcessingData cu_processing_data = {
     //    0, // md_early_exit_sq
     //    0, // next_non_skip_blk_idx_mds
@@ -16891,7 +16953,22 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     continue;
 
                 /////// START PROCESSING /////////
-
+#if ADD_CU_PROCESSING_FUNC
+                process_cu(scs_ptr,
+                           pcs_ptr,
+                           context_ptr,
+                           &mdcResultTbPtr->leaf_data_array[blk_index],
+                           input_picture_ptr,
+                           bestcandidate_buffers,
+                           sb_ptr,
+                           sb_addr,
+                           sb_origin_x,
+                           sb_origin_y,
+                           d1_blk_idx,
+                           &next_non_skip_blk_idx_mds,
+                           &md_early_exit_sq,
+                           &md_early_exit_nsq);
+#else
                 blk_idx_mds = d1_blk_idx; // TODO: remove blk_idx_mds during cleanup; keep only d1_blk_idx
 
                 const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_idx_mds);
@@ -16904,8 +16981,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                              sb_ptr,
                              sb_origin_x,
                              sb_origin_y,
-                             blk_idx_mds,
-                             d1_first_block);
+                             blk_idx_mds);
 
                 // Reset settings, in case they were over-written by previous block
                 signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, 0);
@@ -16916,7 +16992,6 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     pcs_ptr,
                     context_ptr,
                     sb_addr,
-                    d1_block_itr,
                     &next_non_skip_blk_idx_mds,
                     &md_early_exit_sq);
 
@@ -16948,18 +17023,18 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
                     }
                 }
-
+#endif
                 update_d1_data(pcs_ptr,
                                context_ptr,
                                sb_origin_x,
                                sb_origin_y,
+#if ADD_CU_PROCESSING_FUNC
+                               d1_blk_idx,
+#else
                                blk_idx_mds,
-                               &d1_block_itr,
+#endif
                                &md_early_exit_nsq,
                                nsq_cost);
-
-                if (d1_first_block)
-                    d1_first_block = 0;
 
                 ///////  END PROCESSING  /////////
 
@@ -16978,9 +17053,6 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                nsq_cost,
                                nsq_shape_table);
 
-            // reset the d1 index trackers before moving to next d2 level
-            d1_block_itr = 0;
-            d1_first_block = 1;
         } // end d2 loop
 #else
     do {
