@@ -2213,7 +2213,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
+#if SHUT_TXT_B_SLICE
+                context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#endif
+#if SHUT_TXT_ALL
+    context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#endif
+
     uint8_t txt_cycles_reduction_level = 0;
     if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
         txt_cycles_reduction_level = 0;
@@ -2238,6 +2246,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->interpolation_search_level = IFS_MDS1;
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
+
+#if SHUT_IFS
+    context_ptr->interpolation_search_level = IFS_OFF;
+#endif
+
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -2325,6 +2338,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->global_mv_injection = 0;
+
+#if SHUT_GM
+    context_ptr->global_mv_injection = 0;
+#endif
 
     if (pd_pass == PD_PASS_0)
         context_ptr->new_nearest_injection = 0;
@@ -2424,6 +2441,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
     else
             context_ptr->inter_compound_mode = 0;
+#if SHUT_COMPOUND
+    context_ptr->inter_compound_mode = 0;
+#endif
     if (pd_pass == PD_PASS_0) {
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
     }
@@ -2481,6 +2501,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->rdoq_level =
             sequence_control_set_ptr->static_config.rdoq_level;
+
+#if SHUT_RDOQ
+    context_ptr->rdoq_level = EB_FALSE;
+#endif
 
     // Derive redundant block
     if (pd_pass == PD_PASS_0)
@@ -2650,6 +2674,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->md_inter_intra_level = 0;
+    
+#if SHUT_COMPOUND
+    context_ptr->md_inter_intra_level = 0;
+#endif
 
     // Set enable_paeth @ MD
     if (pd_pass == PD_PASS_0)
@@ -2776,6 +2804,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_sq_mv_search_level = 3;
         else
             context_ptr->md_sq_mv_search_level = 4;
+#if SHUT_ADAPT_ME
+    context_ptr->md_sq_mv_search_level = 0;
+#endif
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_nsq_mv_search_level = 0;
@@ -2802,6 +2833,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 2;
         else
             context_ptr->md_pme_level = 3;
+
+#if SHUT_PME
+    context_ptr->md_pme_level = 0;
+#endif
+
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 
     if (pd_pass == PD_PASS_0)
@@ -2814,6 +2850,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_subpel_me_level = 2;
 
+#if SHUT_SUBPEL_ME
+    context_ptr->md_subpel_me_level = 0;
+#endif
+
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     if (pd_pass == PD_PASS_0)
@@ -2825,6 +2865,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_subpel_pme_level = 1;
         else
             context_ptr->md_subpel_pme_level = 2;
+
+#if SHUT_SUBPEL_PME
+    context_ptr->md_subpel_pme_level = 0;
+#endif
 
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     // Set max_ref_count @ MD
@@ -3682,6 +3726,22 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 if (pcs_ptr->enc_mode <= ENC_M9) {
                                     s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
                                     e_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#if PRED_ONLY_B_SLICE
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
+#if END_ZERO
+                                    s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
+#if START_ZERO
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
+                                    e_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
+#if PRED_ONLY_ALL
+                                    s_depth = 0;
+                                    e_depth = 0;
+#endif
                             }
                                 else {
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;

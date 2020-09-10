@@ -178,6 +178,10 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
 
+#if SHUT_REST
+    scs_ptr->seq_header.enable_restoration = 0;
+#endif
+
     if (scs_ptr->static_config.cdef_level == DEFAULT)
         scs_ptr->seq_header.cdef_level = 1;
     else
@@ -829,6 +833,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
+
+#if SHUT_COMPOUND
+            scs_ptr->compound_mode = 0;
+#endif
 
 #if M8_NEW_REF
                 scs_ptr->compound_mode = 1 ;

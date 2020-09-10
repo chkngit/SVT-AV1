@@ -800,6 +800,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_0;
+#if BYPASS_PD0
+    pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
+#endif
 
 
     // Set disallow_nsq
@@ -898,6 +901,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
                 pcs_ptr->palette_level = 0;
 
+#if SHUT_PALETTE
+    pcs_ptr->palette_level = 0;
+#endif
+
     assert(pcs_ptr->palette_level < 7);
 
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
@@ -930,6 +937,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->cdef_level = 0;
 
+#if SHUT_CDEF
+    pcs_ptr->cdef_level = 0;
+#endif
+
     // SG Level                                    Settings
     // 0                                            OFF
     // 1                                            0 step refinement
@@ -947,6 +958,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         cm->sg_filter_mode = scs_ptr->static_config.sg_filter_mode;
 
+#if SHUT_REST
+    cm->sg_filter_mode = 0;
+#endif
+
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
@@ -961,6 +976,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         cm->wn_filter_mode = scs_ptr->static_config.wn_filter_mode;
+
+#if SHUT_REST
+    cm->wn_filter_mode = 0;
+#endif
 
     // Intra prediction modes                       Settings
     // 0                                            FULL
@@ -996,6 +1015,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->tx_size_search_mode = 0;
 
+#if SHUT_TXS
+        pcs_ptr->tx_size_search_mode = 0;
+#endif
+
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
@@ -1020,6 +1043,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_DOWN;
     else
         pcs_ptr->gm_level = GM_DOWN16;
+#if SHUT_GM
+    pcs_ptr->gm_level = GM_DOWN;
+#endif
         //Exit TX size search when all coefficients are zero
         // 0: OFF
         // 1: ON
@@ -1072,6 +1098,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         context_ptr->tf_level = 0;
+#if SHUT_TF
+    context_ptr->tf_level = 0;
+#endif
     set_tf_controls(context_ptr, context_ptr->tf_level);
 
     if (pcs_ptr->enc_mode <= ENC_M4)

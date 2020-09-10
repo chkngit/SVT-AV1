@@ -4518,6 +4518,10 @@ void  inject_intra_candidates(
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
 
+#if SHUT_CFL
+    disable_cfl_flag = EB_TRUE;
+#endif
+
     uint8_t     angle_delta_shift = 1;
     if (context_ptr->disable_angle_z2_intra_flag) {
         disable_angle_prediction = 1;
@@ -4722,6 +4726,10 @@ void  inject_filter_intra_candidates(
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
 
+#if SHUT_CFL
+    disable_cfl_flag = EB_TRUE;
+#endif
+
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     for (filter_intra_mode = intra_mode_start; filter_intra_mode < intra_mode_end ; ++filter_intra_mode) {
@@ -4881,6 +4889,10 @@ void  inject_palette_candidates(
     if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+
+#if SHUT_CFL
+    disable_cfl_flag = EB_TRUE;
+#endif
 
     search_palette_luma(
         pcs_ptr,

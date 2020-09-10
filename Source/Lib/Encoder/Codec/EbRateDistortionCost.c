@@ -614,6 +614,10 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
             // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
             is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
 
+#if SHUT_CFL
+        is_cfl_allowed = EB_FALSE;
+#endif
+
         // In fast loop CFL alphas are not know yet. The chroma mode bits are calculated based on DC Mode, and if CFL is the winner compared to CFL, ChromaBits are updated
         uint32_t chroma_mode = candidate_ptr->intra_chroma_mode == UV_CFL_PRED
                                    ? UV_DC_PRED

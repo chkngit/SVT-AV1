@@ -2072,6 +2072,10 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
 
+#if SHUT_OBMC
+    pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
+#endif
+
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;

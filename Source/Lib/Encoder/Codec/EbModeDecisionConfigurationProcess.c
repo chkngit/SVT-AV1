@@ -738,6 +738,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             pcs_ptr->update_cdf = 1;
         else
             pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#if SHUT_RATE_EST
+        pcs_ptr->update_cdf = 0;
+#endif
     //Filter Intra Mode : 0: OFF  1: ON
     // pic_filter_intra_level specifies whether filter intra would be active
     // for a given picture.
@@ -757,12 +760,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     else
         pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
+#if SHUT_FILTER_INTRA
+    pcs_ptr->pic_filter_intra_level = 0;
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv =
                 frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
                 (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
             ? 1
             : 0;
+#if SHUT_HIGH_PREC
+    frm_hdr->allow_high_precision_mv = 0;
+#endif
     EbBool enable_wm;
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
         enable_wm = EB_TRUE;
@@ -773,6 +782,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
+
+#if SHUT_WARP
+    enable_wm = EB_FALSE;
+#endif
 
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
@@ -802,6 +815,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->static_config.obmc_level;
+
+#if SHUT_OBMC
+    pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
+#endif
 
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||

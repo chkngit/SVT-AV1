@@ -333,6 +333,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 
+#if SHUT_GM
+    context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#endif
+
     // Set hme/me based reference pruning level (0-4)
     if (enc_mode <= ENC_MR)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);

@@ -1363,9 +1363,22 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                         (pcs_ptr->slice_type == I_SLICE) ? 8 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
 
+#if SET_NIC_1
+                    context_ptr->md_stage_1_count[CAND_CLASS_0] = 1;
+                    context_ptr->md_stage_1_count[CAND_CLASS_1] = 1;
+                    context_ptr->md_stage_1_count[CAND_CLASS_2] = 1;
+                    context_ptr->md_stage_1_count[CAND_CLASS_3] = 1;
+
+                    context_ptr->md_stage_2_count[CAND_CLASS_0] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_1] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_2] = 1;
+                    context_ptr->md_stage_2_count[CAND_CLASS_3] = 1;
+#endif
                 // no NIC setting should be done beyond this point
                 // scale nics
-            scale_nics (pcs_ptr,context_ptr);
+#if !SET_NIC_1
+                    scale_nics(pcs_ptr, context_ptr);
+#endif
 
         }
         // Set md_stage_3 NICs
@@ -1378,6 +1391,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             (context_ptr->md_stage_2_count[CAND_CLASS_2] + 1) >> 1;
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
+
+#if SET_NIC_1
+        context_ptr->md_stage_3_count[CAND_CLASS_0] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_1] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_2] = 1;
+        context_ptr->md_stage_3_count[CAND_CLASS_3] = 1;
+#endif
     }
 
     uint8_t use_nic_1_last_stage;
@@ -1390,6 +1410,15 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     if (use_nic_1_last_stage) {
         for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+#if BYPASS_MDS1
+            if (context_ptr->bypass_md_stage_1[cidx] && context_ptr->bypass_md_stage_2[cidx]) {
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+            }
+            else
+#endif
             if (context_ptr->bypass_md_stage_2[cidx]) {
                 context_ptr->md_stage_2_count[cidx] = 1;
                 context_ptr->md_stage_2_count[cidx] = 1;
@@ -1404,6 +1433,16 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
         }
     }
+
+#if NIC_1_MDS1
+    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+        context_ptr->md_stage_1_count[cidx] = 1;
+        context_ptr->md_stage_1_count[cidx] = 1;
+        context_ptr->md_stage_1_count[cidx] = 1;
+        context_ptr->md_stage_1_count[cidx] = 1;
+    }
+#endif
+
     // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC
     // setting should be done beyond this point)
     context_ptr->md_stage_2_count[CAND_CLASS_0] = context_ptr->bypass_md_stage_1[CAND_CLASS_0]
