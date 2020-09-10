@@ -4572,7 +4572,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 
 #if TX_TYPE_EVAL
-    EbBool use_dct = EB_FALSE;
+    EbBool use_only_dct = EB_FALSE;
     int32_t desired_type;
 #endif
 
@@ -4595,7 +4595,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     desired_type = DCT_FLIPADST;
 #endif
 #if ENABLE_FLIPADST_FLIPADST_ONLY
-    desierd_type = FLIPADST_FLIPADST;
+    desired_type = FLIPADST_FLIPADST;
 #endif
 #if ENABLE_ADST_FLIPADST_ONLY
     desired_type = ADST_FLIPADST;
@@ -4610,7 +4610,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     desired_type = V_DCT;
 #endif
 #if ENABLE_H_DCT_ONLY
-    desierd_type = H_DCT;
+    desired_type = H_DCT;
 #endif
 #if ENABLE_V_ADST_ONLY
     desired_type = V_ADST;
@@ -4636,14 +4636,14 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             // eset == 0 should correspond to a set with only DCT_DCT and there
             // is no need to send the tx_type
             if (eset <= 0)
-                use_dct = EB_TRUE;
+                use_only_dct = EB_TRUE;
             else if (av1_ext_tx_used[tx_set_type_inter][desired_type] == 0)
-                use_dct = EB_TRUE;
+                use_only_dct = EB_TRUE;
             else if (context_ptr->blk_geom
                 ->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 ||
                 context_ptr->blk_geom
                 ->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32)
-                use_dct = EB_TRUE;
+                use_only_dct = EB_TRUE;
         }
         int32_t eset = get_ext_tx_set(
             context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
@@ -4652,14 +4652,14 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
         if (eset <= 0)
-            use_dct = EB_TRUE;
+            use_only_dct = EB_TRUE;
         else if (av1_ext_tx_used[tx_set_type][desired_type] == 0)
-            use_dct = EB_TRUE;
+            use_only_dct = EB_TRUE;
         else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >
             32 ||
             context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >
             32)
-            use_dct = EB_TRUE;
+            use_only_dct = EB_TRUE;
     }
 #endif
 
@@ -4669,10 +4669,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 continue;
 
 #if TX_TYPE_EVAL
-        if (use_dct && tx_type != DCT_DCT)
+        if (use_only_dct && tx_type != DCT_DCT)
             continue;
 
-        if (!use_dct && tx_type != desired_type)
+        if (!use_only_dct && tx_type != desired_type)
             continue;
 #endif
 
