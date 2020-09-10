@@ -4572,109 +4572,75 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 
 #if TX_TYPE_EVAL
-    EbBool use_only_dct = EB_FALSE;
-    int32_t desired_type;
+    EbBool tx_type_done = EB_FALSE;
+    uint32_t tx_type_array[TX_TYPES];
+
+    uint32_t tx_type_array_counter = 0;
 #endif
 
-#if ENABLE_DCT_DCT_ONLY
-    desired_type = DCT_DCT;
-#endif
 #if ENABLE_ADST_DCT_ONLY
-    desired_type = ADST_DCT;
+    tx_type_array[tx_type_array_counter++] = ADST_DCT;
 #endif
 #if ENABLE_DCT_ADST_ONLY
-    desired_type = DCT_ADST;
+    tx_type_array[tx_type_array_counter++] = DCT_ADST;
 #endif
 #if ENABLE_ADST_ADST_ONLY
-    desired_type = ADST_ADST;
+    tx_type_array[tx_type_array_counter++] = ADST_ADST;
 #endif
 #if ENABLE_FLIPADST_DCT_ONLY
-    desired_type = FLIPADST_DCT;
+    tx_type_array[tx_type_array_counter++] = FLIPADST_DCT;
 #endif
 #if ENABLE_DCT_FLIPADST_ONLY
-    desired_type = DCT_FLIPADST;
+    tx_type_array[tx_type_array_counter++] = DCT_FLIPADST;
 #endif
 #if ENABLE_FLIPADST_FLIPADST_ONLY
-    desired_type = FLIPADST_FLIPADST;
+    tx_type_array[tx_type_array_counter++] = FLIPADST_FLIPADST;
 #endif
 #if ENABLE_ADST_FLIPADST_ONLY
-    desired_type = ADST_FLIPADST;
+    tx_type_array[tx_type_array_counter++] = ADST_FLIPADST;
 #endif
 #if ENABLE_FLIPADST_ADST_ONLY
-    desired_type = FLIPADST_ADST;
+    tx_type_array[tx_type_array_counter++] = FLIPADST_ADST;
 #endif
 #if ENABLE_IDTX_ONLY
-    desired_type = IDTX;
+    tx_type_array[tx_type_array_counter++] = IDTX;
 #endif
 #if ENABLE_V_DCT_ONLY
-    desired_type = V_DCT;
+    tx_type_array[tx_type_array_counter++] = V_DCT;
 #endif
 #if ENABLE_H_DCT_ONLY
-    desired_type = H_DCT;
+    tx_type_array[tx_type_array_counter++] = H_DCT;
 #endif
 #if ENABLE_V_ADST_ONLY
-    desired_type = V_ADST;
+    tx_type_array[tx_type_array_counter++] = V_ADST;
 #endif
 #if ENABLE_H_ADST_ONLY
-    desired_type = H_ADST;
+    tx_type_array[tx_type_array_counter++] = H_ADST;
 #endif
 #if ENABLE_V_FLIPADST_ONLY
-    desired_type = V_FLIPADST;
+    tx_type_array[tx_type_array_counter++] = V_FLIPADST;
 #endif
 #if ENABLE_H_FLIPADST_ONLY
-    desired_type = H_FLIPADST;
+    tx_type_array[tx_type_array_counter++] = H_FLIPADST;
 #endif
 
 #if TX_TYPE_EVAL
-    if (desired_type != DCT_DCT) {
-        if (is_inter) {
-            TxSize          max_tx_size = context_ptr->blk_geom->txsize[0][0];
-            const TxSetType tx_set_type_inter = get_ext_tx_set_type(
-                max_tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
-            int32_t eset = get_ext_tx_set(
-                max_tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
-            // eset == 0 should correspond to a set with only DCT_DCT and there
-            // is no need to send the tx_type
-            if (eset <= 0)
-                use_only_dct = EB_TRUE;
-            else if (av1_ext_tx_used[tx_set_type_inter][desired_type] == 0)
-                use_only_dct = EB_TRUE;
-            else if (context_ptr->blk_geom
-                ->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] > 32 ||
-                context_ptr->blk_geom
-                ->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] > 32)
-                use_only_dct = EB_TRUE;
-        }
-        int32_t eset = get_ext_tx_set(
-            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
-            is_inter,
-            pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
-        // eset == 0 should correspond to a set with only DCT_DCT and there
-        // is no need to send the tx_type
-        if (eset <= 0)
-            use_only_dct = EB_TRUE;
-        else if (av1_ext_tx_used[tx_set_type][desired_type] == 0)
-            use_only_dct = EB_TRUE;
-        else if (context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >
-            32 ||
-            context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >
-            32)
-            use_only_dct = EB_TRUE;
-    }
-#endif
+    tx_type_array[tx_type_array_counter++] = DCT_DCT;
 
+    for (uint8_t tx_index = 0; tx_index < TX_TYPES; ++tx_index) {
+        tx_type = tx_type_array[tx_index];
+
+        if (tx_type_done)
+            break;
+
+        if (tx_index >= tx_type_array_counter)
+            assert(0);
+#else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
+#endif
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
                 continue;
-
-#if TX_TYPE_EVAL
-        if (use_only_dct && tx_type != DCT_DCT)
-            continue;
-
-        if (!use_only_dct && tx_type != desired_type)
-            continue;
-#endif
 
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
@@ -4912,6 +4878,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
         }
+
+#if TX_TYPE_EVAL
+        tx_type_done = EB_TRUE;
+#endif
     }
     context_ptr->md_staging_skip_rdoq = default_md_staging_skip_rdoq;
     context_ptr->md_staging_spatial_sse_full_loop_level = default_md_staging_spatial_sse_full_loop;
