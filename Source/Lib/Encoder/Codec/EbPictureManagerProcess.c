@@ -254,7 +254,7 @@ static uint8_t tpl_setup_me_refs(
                                       curr_poc + tpl_base_minigop - base_poc;
     uint32_t pred_struct_idx = curr_minigop_entry_idx + init_idx;
 
-    // 17/18/19, which is out side of the minigop
+    // 17/18/19, which is out side of the minigop //anaghdin to check
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
 
     // Get the ref entry point of trailing frames, not good here
@@ -275,7 +275,11 @@ static uint8_t tpl_setup_me_refs(
         if (*trailing_frames) {
             ref_list_count = (list_index == REF_LIST_0) ?
                 base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list0.reference_list_count :
+#if TPL_ZERO_LAD
+                0;
+#else
                 base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list1.reference_list_count;
+#endif
             ref_list_count = MIN(ref_list_count, 2); //Jing: limit to 2 refs for trailing frames
         } else {
             ref_list_count = (list_index == REF_LIST_0) ?
@@ -338,6 +342,10 @@ static uint8_t tpl_setup_me_refs(
     pcs_tpl_group_frame_ptr->tpl_ref0_count = *ref0_count;
     pcs_tpl_group_frame_ptr->tpl_ref1_count = *ref1_count;
 #endif
+#if TPL_ZERO_LAD
+    if (*trailing_frames)
+        pcs_tpl_group_frame_ptr->max_number_of_pus_per_sb = pcs_tpl_base_ptr->max_number_of_pus_per_sb;
+#endif
 #if INL_TPL_ME_DBG
     for (int i = REF_LIST_0; i <= REF_LIST_1; i++) {
         int ref_count = (i == 0) ? *ref0_count: *ref1_count;
@@ -348,6 +356,7 @@ static uint8_t tpl_setup_me_refs(
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[i][j].picture_number);
         }
     }
+
 #endif
     return 0;
 }
@@ -369,6 +378,12 @@ static EbErrorType tpl_get_open_loop_me(
             uint8_t ref_list1_count = 0;
             EbBool  is_trailing_tpl_frame = EB_FALSE;
 #if TPL_SETUP_REF
+            pcs_tpl_group_frame_ptr->tpl_ref0_count = 0;
+            pcs_tpl_group_frame_ptr->tpl_ref1_count = 0;
+            EB_MEMSET(pcs_tpl_group_frame_ptr->ref_in_slide_window,
+                0,
+                MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH * sizeof(EbBool));
+
             if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE) {
 #else
             if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE /*&&

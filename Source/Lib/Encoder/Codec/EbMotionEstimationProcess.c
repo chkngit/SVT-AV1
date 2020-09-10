@@ -929,7 +929,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                     pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
 #endif
             }
-            if (scs_ptr->static_config.look_ahead_distance != 0 &&
+            if (
+#if !TPL_ZERO_LAD
+                scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
                 scs_ptr->static_config.enable_tpl_la)
                 for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                      ++y_sb_index)

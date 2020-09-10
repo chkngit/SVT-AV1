@@ -442,8 +442,6 @@ void tpl_mc_flow_dispenser(
                             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_ref1_count))
                             continue;
 
-                        if (!pcs_ptr->ref_in_slide_window[list_index][ref_pic_index] && pcs_ptr->picture_number == 8)
-                            printf("");//anaghdine debug
 #endif
 #if !IN_LOOP_TPL
                         if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->mrp_ctrls.ref_list0_count_try) ||
@@ -971,6 +969,10 @@ EbErrorType tpl_mc_flow(
     pcs_array[0] = pcs_ptr;
 
 #if IN_LOOP_TPL
+#if TPL_ZERO_LAD
+    for (frame_idx = 0; frame_idx < pcs_ptr->tpl_group_size; frame_idx++)
+        pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
+#else
     for (frame_idx = 0; frame_idx < pcs_ptr->tpl_group_size; frame_idx++) {
         PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_ptr->tpl_group[frame_idx];
         // sort to be decode order
@@ -989,6 +991,7 @@ EbErrorType tpl_mc_flow(
                 pcs_array[i] = pcs_tpl_group_frame_ptr;
         }
     }
+#endif
 #else
     // Walk the first N entries in the sliding window
     inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
@@ -1084,8 +1087,8 @@ EbErrorType tpl_mc_flow(
         int32_t sw_length = frames_in_sw;
 #else
         int32_t sw_length = MIN(17, (frames_in_sw));
-#endif
         EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
+#endif
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
         for (frame_idx = 0; frame_idx < sw_length; frame_idx++) {
 #if !IN_LOOP_TPL
@@ -1113,17 +1116,17 @@ EbErrorType tpl_mc_flow(
         for (frame_idx = 0; frame_idx < sw_length; frame_idx++)
         {
             PictureParentControlSet         *pcs_ptr_tmp = pcs_array[frame_idx];
-            Av1Common *cm = pcs_ptr_tmp->av1_cm;
+            Av1Common *cm = pcs_ptr->av1_cm;
             SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
-            //int tpl_stride = tpl_frame->stride;
             int64_t intra_cost_base = 0;
             int64_t mc_dep_cost_base = 0;
-            const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-            const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
+            const int step = 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
+            const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
+            const int shift = pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
 
             for (int row = 0; row < cm->mi_rows; row += step) {
                 for (int col = 0; col < mi_cols_sr; col += step) {
-                    TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
+                    TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
                     int64_t mc_dep_delta =
                         RDCOST(pcs_ptr_tmp->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
                     intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
@@ -5890,9 +5893,9 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE)
             q_adj_factor -= 0.15;
         // Make a further adjustment based on the kf zero motion measure.
-        q_adj_factor +=
-            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+        //q_adj_factor += //anaghdin debug
+        //    0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
+        //                        ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -5900,6 +5903,9 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+        //if (pcs_ptr->picture_number == 64) //anaghdin debug
+         //   pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 * 180 / 100;
+        //int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size;
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
         rc->arf_boost_factor =
@@ -7162,7 +7168,10 @@ void *rate_control_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
 #if IN_LOOP_TPL
-            if (scs_ptr->static_config.look_ahead_distance != 0 &&
+            if (
+#if !TPL_ZERO_LAD
+                scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
@@ -7270,12 +7279,18 @@ void *rate_control_kernel(void *input_ptr) {
                         // Content adaptive qp assignment
                         // 1pass QPS with tpl_la
                             if (!use_input_stat(scs_ptr) &&
+#if !TPL_ZERO_LAD
                                  scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
                                  scs_ptr->static_config.enable_tpl_la)
                             new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
                         else
-                        if (use_input_stat(scs_ptr) &&
-                            scs_ptr->static_config.look_ahead_distance != 0) {
+                        if (use_input_stat(scs_ptr)
+#if !TPL_ZERO_LAD
+                            &&
+                            scs_ptr->static_config.look_ahead_distance != 0
+#endif
+                            ) {
                             int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                             frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
                             if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->parent_pcs_ptr->r0 != 0 &&
@@ -7316,8 +7331,12 @@ void *rate_control_kernel(void *input_ptr) {
             } else {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
-                    if (use_input_stat(scs_ptr) &&
-                        scs_ptr->static_config.look_ahead_distance != 0) {
+                    if (use_input_stat(scs_ptr)
+#if !TPL_ZERO_LAD
+                        &&
+                        scs_ptr->static_config.look_ahead_distance != 0
+#endif 
+                        ) {
                         int32_t new_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                         int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                         frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
@@ -7363,7 +7382,7 @@ void *rate_control_kernel(void *input_ptr) {
                                                      pcs_ptr->picture_qp);
                 if (scs_ptr->static_config.rate_control_mode == 1 &&
                     use_input_stat(scs_ptr) &&
-                    scs_ptr->static_config.look_ahead_distance != 0)
+                    scs_ptr->static_config.look_ahead_distance != 0) //anaghdin what is this?>
                     ;//hack skip base_q_idx writeback for accuracy loss like 89 to 88
                 else
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
@@ -7407,7 +7426,9 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
                 use_input_stat(scs_ptr) &&
+#if !TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
@@ -7416,7 +7437,9 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
                 !use_input_stat(scs_ptr) &&
+#if !TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
@@ -7494,8 +7517,11 @@ void *rate_control_kernel(void *input_ptr) {
                         : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
             if (scs_ptr->static_config.rate_control_mode == 0 &&
-                use_input_stat(scs_ptr) &&
+                use_input_stat(scs_ptr) 
+#if !TPL_ZERO_LAD  
+                &&
                 1//scs_ptr->static_config.look_ahead_distance != 0
+#endif
                 ) {
                 av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                 svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
@@ -7508,14 +7534,22 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)parentpicture_control_set_ptr->total_num_bits -
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
-                if (use_input_stat(scs_ptr) &&
-                    scs_ptr->static_config.look_ahead_distance != 0) {
+                if (use_input_stat(scs_ptr) 
+#if !TPL_ZERO_LAD                    
+                    &&
+                    scs_ptr->static_config.look_ahead_distance != 0
+#endif 
+                    ) {
                     ;
                 } else
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
-                    if (use_input_stat(scs_ptr) &&
-                        scs_ptr->static_config.look_ahead_distance != 0) {
+                    if (use_input_stat(scs_ptr)
+#if !TPL_ZERO_LAD
+                        &&
+                        scs_ptr->static_config.look_ahead_distance != 0
+#endif
+                        ) {
                         av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                         svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
                     } else
