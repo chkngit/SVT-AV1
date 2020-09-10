@@ -4579,63 +4579,63 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             continue;
 #endif
 #if ENABLE_ADST_DCT_ONLY
-        if (tx_type != ADST_DCT)
+        if (tx_type != ADST_DCT && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_DCT_ADST_ONLY
-        if (tx_type != DCT_ADST)
+        if (tx_type != DCT_ADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_ADST_ADST_ONLY
-        if (tx_type != ADST_ADST)
+        if (tx_type != ADST_ADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_FLIPADST_DCT_ONLY
-        if (tx_type != FLIPADST_DCT)
+        if (tx_type != FLIPADST_DCT && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_DCT_FLIPADST_ONLY
-        if (tx_type != DCT_FLIPADST)
+        if (tx_type != DCT_FLIPADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_FLIPADST_FLIPADST_ONLY
-        if (tx_type != FLIPADST_FLIPADST)
+        if (tx_type != FLIPADST_FLIPADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_ADST_FLIPADST_ONLY
-        if (tx_type != ADST_FLIPADST)
+        if (tx_type != ADST_FLIPADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_FLIPADST_ADST_ONLY
-        if (tx_type != FLIPADST_ADST)
+        if (tx_type != FLIPADST_ADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_IDTX_ONLY
-        if (tx_type != IDTX)
+        if (tx_type != IDTX && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_V_DCT_ONLY
-        if (tx_type != V_DCT)
+        if (tx_type != V_DCT && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_H_DCT_ONLY
-        if (tx_type != H_DCT)
+        if (tx_type != H_DCT && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_V_ADST_ONLY
-        if (tx_type != V_ADST)
+        if (tx_type != V_ADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_H_ADST_ONLY
-        if (tx_type != H_ADST)
+        if (tx_type != H_ADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_V_FLIPADST_ONLY
-        if (tx_type != V_FLIPADST)
+        if (tx_type != V_FLIPADST && tx_type != DCT_DCT)
             continue;
 #endif
 #if ENABLE_H_FLIPADST_ONLY
-        if (tx_type != H_FLIPADST)
+        if (tx_type != H_FLIPADST && tx_type != DCT_DCT)
             continue;
 #endif
         // Perform search selectively based on statistics (DCT_DCT always performed)
