@@ -57,9 +57,12 @@ extern "C" {
 #define TF_FASTER_LEVEL 0
 #define SHUT_TF 0
 /************************************/
-#define SHUT_TXT_STATS 1
-#define REMOVE_TXT_STATS 1
-
+#define OPT_4           0
+/************************************/
+#define SHUT_TXT_STATS 0
+#define REMOVE_TXT_STATS 0
+#define COST_BASED_TXT_EXIT 0
+/************************************/
 #ifdef __cplusplus
 }
 #endif // __cplusplus

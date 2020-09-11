@@ -535,8 +535,10 @@ typedef struct ModeDecisionContext {
     EbPictureBufferDesc *recon_ptr[TX_TYPES];
     uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
     uint16_t part_prob[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
+#if !OPT_4
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
     uint32_t depth_prob[DEPTH_DELTA_NUM];
+#endif
     uint32_t ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
 #if !REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];

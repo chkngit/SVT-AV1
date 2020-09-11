@@ -341,6 +341,7 @@ static const uint8_t intra_txt_cycles_reduction_th[2/*depth*/][3/*depth refineme
         }
     }
 };
+#if !OPT_4
 static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1] = {
 {0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0},
 {630 ,453 ,303 ,99 ,78 ,17 ,17 ,672 ,85},
@@ -348,6 +349,7 @@ static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUM
 {1875 ,962 ,222 ,144 ,171 ,5 ,17 ,1272 ,15},
 {3 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0},
 };
+#endif
 EbErrorType signal_derivation_enc_dec_kernel_oq(
     SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet *pcs_ptr,

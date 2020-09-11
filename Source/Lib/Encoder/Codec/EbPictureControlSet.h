@@ -381,7 +381,9 @@ typedef struct PictureControlSet {
     // pointer to a scratch buffer used by self-guided restoration
     int32_t* rst_tmpbuf;
     uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
+#if !OPT_4
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#endif
 #if !REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif
@@ -449,7 +451,15 @@ typedef struct {
   bool bwd_ref_frame; /*!< Refresh flag for bwd-ref frame */
   bool alt_ref_frame; /*!< Refresh flag for alt-ref frame */
 } RefreshFrameFlagsInfo;
-
+#if TF_CHROMA_BLIND
+typedef struct  TfControls {
+    uint8_t enabled;
+    uint8_t window_size;
+    uint8_t noise_based_window_adjust;
+    uint8_t hp;
+    uint8_t chroma;
+}TfControls;
+#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -798,6 +808,9 @@ typedef struct PictureParentControlSet {
     EbObjectWrapper *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
     unsigned char gf_group_index;
+#if TF_CHROMA_BLIND
+    TfControls tf_ctrls;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {

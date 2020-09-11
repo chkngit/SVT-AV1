@@ -1118,9 +1118,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         pcs_ptr->intra_coded_area           = 0;
         // Init block selection
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
+#if !OPT_4
         // Init pred_depth selection
         memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
-#if !REMOVE_TXT_STATS // ---- here a lot to clean-up
+#endif
+#if !REMOVE_TXT_STATS
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
 #endif

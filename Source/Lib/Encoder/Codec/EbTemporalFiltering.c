@@ -2984,7 +2984,10 @@ EbErrorType svt_av1_init_temporal_filtering(
     MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
     uint8_t *            altref_strength_ptr, index_center;
     EbPictureBufferDesc *central_picture_ptr;
-
+#if TF_CHROMA_BLIND
+    me_context_ptr->me_context_ptr->tf_hp = picture_control_set_ptr_central->tf_ctrls.hp;
+    me_context_ptr->me_context_ptr->tf_chroma = picture_control_set_ptr_central->tf_ctrls.chroma;
+#endif
     altref_strength_ptr = &(picture_control_set_ptr_central->altref_strength);
 
     // index of the central source frame

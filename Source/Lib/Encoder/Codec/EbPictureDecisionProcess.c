@@ -737,11 +737,15 @@ EbErrorType generate_mini_gop_rps(
     }
     return return_error;
 }
+#if TF_CHROMA_BLIND
+void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
 
+    TfControls *tf_ctrls = &pcs_ptr->tf_ctrls;
+#else
 void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
 
     TfControls *tf_ctrls = &context_ptr->tf_ctrls;
-
+#endif
     switch (tf_level)
     {
     case 0:
@@ -751,16 +755,28 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 7;
         tf_ctrls->noise_based_window_adjust = 1;
+#if TF_CHROMA_BLIND
+        tf_ctrls->hp = 1;
+        tf_ctrls->chroma = 1;
+#endif
         break;
     case 2:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 1;
+#if TF_CHROMA_BLIND
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+#endif
         break;
     case 3:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 0;
+#if TF_CHROMA_BLIND
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+#endif
         break;
     default:
         assert(0);
@@ -1093,8 +1109,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if SHUT_TF
     context_ptr->tf_level = 0;
 #endif
+#if TF_CHROMA_BLIND
+    set_tf_controls(pcs_ptr, context_ptr->tf_level);
+#else
     set_tf_controls(context_ptr, context_ptr->tf_level);
-
+#endif
     if (pcs_ptr->enc_mode <= ENC_M4)
         pcs_ptr->tpl_opt_flag = 0;
     else
@@ -3827,7 +3846,9 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->height,
             central_picture_ptr->stride_y,
             encoder_bit_depth);
-
+#if TF_CHROMA_BLIND
+        if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
             (central_picture_ptr->width >> 1),
             (central_picture_ptr->height >> 1),
@@ -3839,13 +3860,16 @@ EbErrorType derive_tf_window_params(
             (central_picture_ptr->height >> 1),
             central_picture_ptr->stride_cb,
             encoder_bit_depth);
-
+#if TF_CHROMA_BLIND
+        }
+#endif
 
     }
     else {
         EbByte buffer_y = central_picture_ptr->buffer_y +
             central_picture_ptr->origin_y * central_picture_ptr->stride_y +
             central_picture_ptr->origin_x;
+
         EbByte buffer_u =
             central_picture_ptr->buffer_cb +
             (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_cb +
@@ -3859,7 +3883,9 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->width,
             central_picture_ptr->height,
             central_picture_ptr->stride_y);
-
+#if TF_CHROMA_BLIND
+        if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise(buffer_u, // U
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
@@ -3869,6 +3895,9 @@ EbErrorType derive_tf_window_params(
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cr);
+#if TF_CHROMA_BLIND
+        }
+#endif
 
     }
 
@@ -3879,7 +3908,11 @@ EbErrorType derive_tf_window_params(
     // we will not change the number of frames for key frame filtering, which is
     // to avoid visual quality drop.
     int adjust_num = 0;
+#if TF_CHROMA_BLIND
+    if (pcs_ptr->tf_ctrls.noise_based_window_adjust) {
+#else
     if (context_ptr->tf_ctrls.noise_based_window_adjust) {
+#endif
     if (noise_levels[0] < 0.5) {
         adjust_num = 6;
     }
@@ -3900,8 +3933,11 @@ EbErrorType derive_tf_window_params(
     }
     }
 #endif
+#if TF_CHROMA_BLIND
+    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, pcs_ptr->tf_ctrls.window_size + adjust_num);
+#else
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
-
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -4895,7 +4931,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
+#if TF_CHROMA_BLIND
+                            if (pcs_ptr->tf_ctrls.enabled) {
+#else
                             if(context_ptr->tf_ctrls.enabled) {
+#endif
                                 derive_tf_window_params(
                                     scs_ptr,
                                     encode_context_ptr,

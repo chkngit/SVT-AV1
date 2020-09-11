@@ -1614,8 +1614,10 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                     ->ref_part_cnt, pcs_ptr->part_cnt, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM *SSEG_NUM);
+#if !OPT_4
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+#endif
 #if !REMOVE_TXT_STATS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->ref_txt_cnt, pcs_ptr->txt_cnt, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM *TX_TYPES);
@@ -3408,6 +3410,7 @@ void generate_statistics_depth(
             ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
 }
+#if !OPT_4
 /******************************************************
 * Generate probabilities for the depth_cycles_reduction
 ******************************************************/
@@ -3460,6 +3463,7 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
         memcpy(context_ptr->ad_md_prob, intra_adaptive_md_cycles_reduction_th, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
     }
 }
+#endif
 /******************************************************
 * Generate probabilities for the nsq_cycles_reduction
 ******************************************************/
@@ -4210,8 +4214,10 @@ void *mode_decision_kernel(void *input_ptr) {
 
         memset(context_ptr->md_context->part_cnt, 0, sizeof(uint32_t) * SSEG_NUM * (NUMBER_OF_SHAPES-1) * FB_NUM);
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
+#if !OPT_4
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
+#endif
 #if !REMOVE_TXT_STATS
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
@@ -4522,11 +4528,12 @@ void *mode_decision_kernel(void *input_ptr) {
             for (uint8_t band = 0; band < FB_NUM; band++)
                 for (uint8_t sse_idx = 0; sse_idx < SSEG_NUM; sse_idx++)
                     pcs_ptr->part_cnt[partidx][band][sse_idx] += context_ptr->md_context->part_cnt[partidx][band][sse_idx];
-
+#if !OPT_4
         // Accumulate pred depth selection
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++)
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)
                 pcs_ptr->pred_depth_count[pred_depth][part_idx] += context_ptr->md_context->pred_depth_count[pred_depth][part_idx];
+#endif
 #if !REMOVE_TXT_STATS
         // Accumulate tx_type selection
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++)
