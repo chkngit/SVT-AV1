@@ -382,7 +382,9 @@ typedef struct PictureControlSet {
     int32_t* rst_tmpbuf;
     uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#if !REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size

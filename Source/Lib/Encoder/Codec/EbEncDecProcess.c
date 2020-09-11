@@ -1616,8 +1616,10 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
                     ->ref_part_cnt, pcs_ptr->part_cnt, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM *SSEG_NUM);
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+#if !REMOVE_TXT_STATS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->ref_txt_cnt, pcs_ptr->txt_cnt, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM *TX_TYPES);
+#endif
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->intra_coded_area = 0;
 
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -2138,6 +2140,7 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         break;
     }
 }
+#if !REMOVE_TXT_STATS
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode) {
 
     TxtCycleRControls* txt_cycle_red_ctrls = &mdctxt->txt_cycles_red_ctrls;
@@ -2179,6 +2182,7 @@ void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_c
         break;
     }
 }
+#endif
 void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_cycles_red_mode) {
 
     TxsCycleRControls* txs_cycle_red_ctrls = &mdctxt->txs_cycles_red_ctrls;
@@ -2265,6 +2269,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#if !REMOVE_TXT_STATS
     uint8_t txt_cycles_reduction_level = 0;
     if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
         txt_cycles_reduction_level = 0;
@@ -2279,7 +2284,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             txt_cycles_reduction_level = 5;
     }
+#if SHUT_TXT_STATS
+    txt_cycles_reduction_level = 0;
+#endif
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
+#endif
     if (pd_pass == PD_PASS_0)
         context_ptr->interpolation_search_level = IFS_OFF;
     else if (pd_pass == PD_PASS_1)
@@ -3260,6 +3269,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         }
     }
 }
+#if !REMOVE_TXT_STATS
 void generate_statistics_txt(
     SequenceControlSet  *scs_ptr,
     PictureControlSet   *pcs_ptr,
@@ -3354,6 +3364,7 @@ void generate_statistics_txt(
         for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
             context_ptr->txt_cnt[depth_delta][txs_idx] += part_cnt[depth_delta][txs_idx];
 }
+#endif
 Part part_to_shape[NUMBER_OF_SHAPES] = {
     PART_N,
     PART_H,
@@ -3581,7 +3592,7 @@ void generate_statistics_nsq(
         }
     }
 }
-
+#if !REMOVE_TXT_STATS
 /******************************************************
 * Generate probabilities for the txt_cycles_reduction
 ******************************************************/
@@ -3620,6 +3631,7 @@ void generate_txt_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_
         }
     }
 }
+#endif
 const uint32_t sb_class_th[NUMBER_OF_SB_CLASS] = { 0,85,75,65,60,55,50,45,40,
                                                    35,30,25,20,17,14,10,6,3,0 };
 static uint8_t determine_sb_class(
@@ -4200,9 +4212,10 @@ void *mode_decision_kernel(void *input_ptr) {
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
+#if !REMOVE_TXT_STATS
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
-
+#endif
         // Segment-loop
         while (assign_enc_dec_segments(segments_ptr,
                                        &segment_index,
@@ -4471,7 +4484,9 @@ void *mode_decision_kernel(void *input_ptr) {
                                      context_ptr->md_context);
                     generate_statistics_nsq(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
                     generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#if !REMOVE_TXT_STATS
                     generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
 
 #if NO_ENCDEC
                     no_enc_dec_pass(scs_ptr,
@@ -4512,11 +4527,12 @@ void *mode_decision_kernel(void *input_ptr) {
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++)
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)
                 pcs_ptr->pred_depth_count[pred_depth][part_idx] += context_ptr->md_context->pred_depth_count[pred_depth][part_idx];
+#if !REMOVE_TXT_STATS
         // Accumulate tx_type selection
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++)
             for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
                 pcs_ptr->txt_cnt[depth_delta][txs_idx] += context_ptr->md_context->txt_cnt[depth_delta][txs_idx];
-
+#endif
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
         eb_release_mutex(pcs_ptr->intra_mutex);

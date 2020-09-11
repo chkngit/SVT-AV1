@@ -50,7 +50,9 @@ typedef struct EbReferenceObject {
     double               r0;
     uint32_t ref_part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
     uint32_t ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#if !REMOVE_TXT_STATS
     uint32_t ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
 } EbReferenceObject;

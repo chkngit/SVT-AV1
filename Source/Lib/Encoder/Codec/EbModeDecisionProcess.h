@@ -141,11 +141,13 @@ typedef struct  AMdCycleRControls {
     uint16_t switch_mode_th;
     uint8_t mode_offset;
 }AMdCycleRControls;
+#if !REMOVE_TXT_STATS
 typedef struct  TxtCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th;  // Threshold to bypass inter TXT <the higher th the higher speed>
 }TxtCycleRControls;
+#endif
 typedef struct  TxsCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXS <the higher th the higher speed>
@@ -515,7 +517,9 @@ typedef struct ModeDecisionContext {
     PdPass pd_pass;
 
     EbBool        md_disable_cfl;
+#if !REMOVE_TXT_STATS
     TxtCycleRControls txt_cycles_red_ctrls;
+#endif
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
     uint8_t disallow_4x4;
@@ -534,8 +538,10 @@ typedef struct ModeDecisionContext {
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
     uint32_t depth_prob[DEPTH_DELTA_NUM];
     uint32_t ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#if !REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint32_t txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
     uint8_t skip_intra;
     EbPictureBufferDesc* temp_residual_ptr;
     EbPictureBufferDesc* temp_recon_ptr;

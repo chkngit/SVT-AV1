@@ -54,10 +54,12 @@ extern "C" {
 #define ENHANCED_FASTER_PD0 0
 /************************************/
 #define TF_CHROMA_BLIND 1
-#define TF_FASTER_LEVEL 1
-
+#define TF_FASTER_LEVEL 0
 #define SHUT_TF 0
 /************************************/
+#define SHUT_TXT_STATS 1
+#define REMOVE_TXT_STATS 0
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
