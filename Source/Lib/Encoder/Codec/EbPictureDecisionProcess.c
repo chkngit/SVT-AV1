@@ -3892,13 +3892,10 @@ EbErrorType derive_tf_window_params(
     }
 #if TF_FASTER_LEVEL
     else {
-    if (noise_levels[0] < 0.25) {
-        adjust_num = 6;
-    }
-    else if (noise_levels[0] < 0.75) {
+   if (noise_levels[0] < 0.5) {
         adjust_num = 4;
     }
-    else if (noise_levels[0] < 1.75) {
+    else if (noise_levels[0] < 1.5) {
         adjust_num = 2;
     }
     }
