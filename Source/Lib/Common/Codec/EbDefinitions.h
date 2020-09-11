@@ -68,6 +68,7 @@ extern "C" {
 #define TPL_REC_BUFFER 1
 #define TPL_SETUP_REF 1
 #define TPL_ZERO_LAD 1
+#define TPL_TUNING 1
 #endif
 
 

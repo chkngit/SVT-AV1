@@ -3914,6 +3914,7 @@ void store_tpl_pictures(
     else {
         memcpy(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
+#if !TPL_TUNING
         //add 3 future pictures from PD future window
         for (uint32_t pic_i = 0; pic_i < 3; ++pic_i) {
             if (pcs->pd_window[2 + pic_i]) {
@@ -3923,7 +3924,7 @@ void store_tpl_pictures(
             else
                 break;
         }
-
+#endif
 #if NEW_DELAY_DBG_MSG
         for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i)
             printf("TPL group Base %ld  \n", ((PictureParentControlSet *)pcs->tpl_group[pic_i])->picture_number);

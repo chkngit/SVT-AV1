@@ -506,7 +506,11 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
+#if TPL_REC_BUFFER
+                            best_ref_poc = pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
+#else
                             best_ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
+#endif
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
@@ -1110,7 +1114,7 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
         generate_r0beta(pcs_array[0]);
 
-#if 0 //AMIR_PRINTS
+#if 1 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
         for (frame_idx = 0; frame_idx < sw_length; frame_idx++)
@@ -5893,10 +5897,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE)
             q_adj_factor -= 0.15;
         // Make a further adjustment based on the kf zero motion measure.
-        //q_adj_factor += //anaghdin debug
-        //    0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-        //                        ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
-
+#if !TPL_TUNING
+        q_adj_factor +=
+            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
+                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
+#endif
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
         q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
@@ -5905,8 +5910,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
         //if (pcs_ptr->picture_number == 64) //anaghdin debug
          //   pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 * 180 / 100;
-        //int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size;
+#if TPL_TUNING
+        int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+#else
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+#endif
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
         rc->arf_boost_factor =
             (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&

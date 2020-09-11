@@ -934,7 +934,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
 #if IN_LOOP_TPL
-                !scs_ptr->in_loop_me &&
+                (!scs_ptr->in_loop_me || pcs_ptr->slice_type == I_SLICE) &&
 #endif
                 scs_ptr->static_config.enable_tpl_la)
                 for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
@@ -944,6 +944,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                         uint32_t sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
                         open_loop_intra_search_mb(pcs_ptr, sb_index, input_picture_ptr);
                     }
+
             // ZZ SADs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
 #if INL_ME
