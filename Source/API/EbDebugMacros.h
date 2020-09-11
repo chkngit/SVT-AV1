@@ -57,7 +57,6 @@ extern "C" {
 #define TF_FASTER_LEVEL 1
 
 #define SHUT_TF 0
-#define TF_OFF_HIGH_NOISE 0
 /************************************/
 #ifdef __cplusplus
 }

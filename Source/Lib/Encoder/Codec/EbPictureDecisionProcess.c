@@ -3889,22 +3889,22 @@ EbErrorType derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
-#if TF_OFF_HIGH_NOISE
-    else if (noise_levels[0] < 3.0) {
-        adjust_num = 0;
     }
-    else if (noise_levels[0] > 2.0) {
-        adjust_num = -4;
+#if TF_FASTER_LEVEL
+    else {
+    if (noise_levels[0] < 0.25) {
+        adjust_num = 6;
+    }
+    else if (noise_levels[0] < 0.75) {
+        adjust_num = 4;
+    }
+    else if (noise_levels[0] < 1.75) {
+        adjust_num = 2;
+    }
     }
 #endif
-    }
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
-#if TF_OFF_HIGH_NOISE
-    if (altref_nframes <= 0) {
-        pcs_ptr->past_altref_nframes = 0;
-        pcs_ptr->future_altref_nframes = 0;
-    } else
-#endif
+
     if (pcs_ptr->idr_flag) {
 
         //initilize list
