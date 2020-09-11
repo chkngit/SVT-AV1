@@ -5908,9 +5908,9 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
-        //if (pcs_ptr->picture_number == 64) //anaghdin debug
-         //   pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 * 180 / 100;
 #if TPL_TUNING
+        if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 3)
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 #else
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
@@ -7343,7 +7343,7 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TPL_ZERO_LAD
                         &&
                         scs_ptr->static_config.look_ahead_distance != 0
-#endif 
+#endif
                         ) {
                         int32_t new_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                         int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
@@ -7525,8 +7525,8 @@ void *rate_control_kernel(void *input_ptr) {
                         : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
             if (scs_ptr->static_config.rate_control_mode == 0 &&
-                use_input_stat(scs_ptr) 
-#if !TPL_ZERO_LAD  
+                use_input_stat(scs_ptr)
+#if !TPL_ZERO_LAD
                 &&
                 1//scs_ptr->static_config.look_ahead_distance != 0
 #endif
@@ -7542,11 +7542,11 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)parentpicture_control_set_ptr->total_num_bits -
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
-                if (use_input_stat(scs_ptr) 
-#if !TPL_ZERO_LAD                    
+                if (use_input_stat(scs_ptr)
+#if !TPL_ZERO_LAD
                     &&
                     scs_ptr->static_config.look_ahead_distance != 0
-#endif 
+#endif
                     ) {
                     ;
                 } else
