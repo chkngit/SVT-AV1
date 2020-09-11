@@ -58,7 +58,7 @@ extern "C" {
 #define SHUT_TF 0
 /************************************/
 #define SHUT_TXT_STATS 1
-#define REMOVE_TXT_STATS 0
+#define REMOVE_TXT_STATS 1
 
 #ifdef __cplusplus
 }
