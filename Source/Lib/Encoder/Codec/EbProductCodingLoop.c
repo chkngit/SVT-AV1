@@ -17104,6 +17104,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #else
                 // reset any variables/buffers before second pass
                 blk_index = starting_leaf_blk;
+                md_early_exit_sq = starting_md_early_exit_sq;
                 // reset arrays tracking best costs/shapes - may need to add when you're skipping some partitions
                 //for (Part i = 0; i < NUMBER_OF_SHAPES; i++) {
                 //    nsq_cost[i] = MAX_CU_COST;

@@ -702,7 +702,7 @@ extern "C" {
 #define ADD_CU_PROCESSING_FUNC           1 // Add func to process CU, separate from d1/d2 decision
 #define REMOVE_DEPTH_COST_ARRAY          1 // remove unused array tracking depth cost
 #define ADD_SECOND_BLOCK_PASS            1 // Add second pass over d1 blocks
-#define ADD_SHAPE_REFINEMENT             1 // Add ability to choose between 1/2 block passes and # of shapes in second pass
+#define ADD_SHAPE_REFINEMENT             0 // Add ability to choose between 1/2 block passes and # of shapes in second pass
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
