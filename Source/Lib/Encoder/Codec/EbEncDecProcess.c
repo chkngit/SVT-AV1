@@ -2267,10 +2267,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M6)
             context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
         else
+#if TXT_SET_0
+            context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#else
             if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#endif
 #if !REMOVE_TXT_STATS
     uint8_t txt_cycles_reduction_level = 0;
     if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {

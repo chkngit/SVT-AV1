@@ -58,12 +58,12 @@ extern "C" {
 /************************************/
 #define OPT_4           0
 /************************************/
-#define SHUT_TXT_STATS 1 // set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
+#define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define REMOVE_TXT_STATS 0
 #define COST_BASED_TXT_EXIT 0
-
-#define TXT_SET_1 0 // DCT - DCT + H - DCT + V - DCT + ADST - ADST
-#define TXT_SET_2 0 // DCT - DCT + H - DCT + V - DCT + ADST - ADST + ADST - DCT + DCT - ADST
+#define TXT_SET_0 1 // SET_0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
+#define TXT_SET_1 0 // SET_1:DCT - DCT + H - DCT + V - DCT + ADST - ADST
+#define TXT_SET_2 0 // SET_2:DCT - DCT + H - DCT + V - DCT + ADST - ADST + ADST - DCT + DCT - ADST
 
 /************************************/
 #ifdef __cplusplus
