@@ -4605,7 +4605,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
+#if TXT_SET_1
+            if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT && tx_type != ADST_ADST)
+#else
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
+#endif
                 continue;
 #if !REMOVE_TXT_STATS 
         // Perform search selectively based on statistics (DCT_DCT always performed)
