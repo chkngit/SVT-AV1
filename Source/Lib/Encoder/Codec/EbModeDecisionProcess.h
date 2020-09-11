@@ -456,6 +456,15 @@ typedef struct NicCtrls {
     uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
 }NicCtrls;
 #endif
+#if ADD_SHAPE_REFINEMENT
+// mulit-pass block decision controls
+typedef struct MpbdCtrls {
+    EbBool use_1st_pass;
+    EbBool use_2nd_pass;
+    uint8_t first_pass_mode_offset;     // mode offset to use for encoding first pass
+    uint8_t num_best_parts_2nd_pass;    // choose the best <n> partitions from first pass to consider in second pass
+} MpbdCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -1062,6 +1071,9 @@ typedef struct ModeDecisionContext {
 #endif
 #if FP_MV_COST
     MV ref_mv;
+#endif
+#if ADD_SHAPE_REFINEMENT
+    MpbdCtrls mpbd_ctrls;
 #endif
 } ModeDecisionContext;
 #if USE_GF_UPDATE_FOR_LAMBDA

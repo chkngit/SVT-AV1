@@ -6779,6 +6779,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // If using a mode offset, do not modify the NSQ-targeting features
     if (!mode_offset) {
 #endif
+#if ADD_SHAPE_REFINEMENT
+        if (pd_pass == PD_PASS_0) {
+            context_ptr->mpbd_ctrls.use_1st_pass = 0;
+            context_ptr->mpbd_ctrls.use_2nd_pass = 1;
+            context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
+            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = NUMBER_OF_SHAPES;
+        }
+        else {
+            context_ptr->mpbd_ctrls.use_1st_pass = 1;
+            context_ptr->mpbd_ctrls.use_2nd_pass = 1;
+            context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
+            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 5;// NUMBER_OF_SHAPES; // lossless if 4
+        }
+#endif
 #if MULTI_BAND_ACTIONS
     if (pd_pass == PD_PASS_0)
         context_ptr->coeff_area_based_bypass_nsq_th = 0;
