@@ -3002,7 +3002,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PD0_SHUT_SKIP_DC_SIGN_UPDATE
     // Shut skip_context and dc_sign update for rate estimation
     if (pd_pass == PD_PASS_0)
-        context_ptr->shut_skip_ctx_dc_sign_update = EB_TRUE;
+        context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M7 ? EB_FALSE : EB_TRUE;
     else if (pd_pass == PD_PASS_1)
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
     else
@@ -3410,7 +3410,7 @@ void generate_statistics_depth(
             ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
 }
-#if !OPT_4
+
 /******************************************************
 * Generate probabilities for the depth_cycles_reduction
 ******************************************************/
@@ -3463,7 +3463,7 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
         memcpy(context_ptr->ad_md_prob, intra_adaptive_md_cycles_reduction_th, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
     }
 }
-#endif
+
 /******************************************************
 * Generate probabilities for the nsq_cycles_reduction
 ******************************************************/

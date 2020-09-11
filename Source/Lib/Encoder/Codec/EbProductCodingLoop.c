@@ -639,7 +639,7 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
         mode_decision_update_neighbor_arrays(
             pcs_ptr, context_ptr, last_blk_index_mds);
 #if LOSSLESS_OPT
-        if(!context_ptr->shut_fast_rate)
+        if(!context_ptr->shut_skip_ctx_dc_sign_update)
 #endif
         update_mi_map(context_ptr,
                       context_ptr->blk_ptr,

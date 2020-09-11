@@ -766,16 +766,20 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->noise_based_window_adjust = 1;
 #if TF_CHROMA_BLIND
         tf_ctrls->hp = 0;
-        tf_ctrls->chroma = 0;
+        tf_ctrls->chroma = 1;
 #endif
         break;
     case 3:
+#if TF_CHROMA_BLIND
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 1;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+#else
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 0;
-#if TF_CHROMA_BLIND
-        tf_ctrls->hp = 0;
-        tf_ctrls->chroma = 0;
 #endif
         break;
     default:
@@ -1072,7 +1076,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 context_ptr->tf_level = 0;
         }
-#if TF_FASTER_LEVEL
+#if TF_CHROMA_BLIND
         else if (pcs_ptr->enc_mode <= ENC_M7) {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
@@ -1080,9 +1084,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 context_ptr->tf_level = 0;
         }
         else {
-            if(pcs_ptr->slice_type == I_SLICE)
-                context_ptr->tf_level = 2;
-            else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;
@@ -3923,16 +3925,6 @@ EbErrorType derive_tf_window_params(
         adjust_num = 2;
     }
     }
-#if TF_FASTER_LEVEL
-    else {
-   if (noise_levels[0] < 0.5) {
-        adjust_num = 4;
-    }
-    else if (noise_levels[0] < 1.5) {
-        adjust_num = 2;
-    }
-    }
-#endif
 #if TF_CHROMA_BLIND
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, pcs_ptr->tf_ctrls.window_size + adjust_num);
 #else
