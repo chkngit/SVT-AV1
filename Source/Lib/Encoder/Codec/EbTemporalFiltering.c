@@ -986,11 +986,16 @@ void svt_av1_apply_temporal_filter_planewise_c(
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(
         y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se, block_width, block_height);
+#if TF_CHROMA_BLIND //
+    if (context_ptr->tf_chroma) {
+#endif
     calculate_squared_errors(
         u_src, uv_src_stride, u_pre, uv_pre_stride, u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors(
         v_src, uv_src_stride, v_pre, uv_pre_stride, v_diff_se, uv_block_width, uv_block_height);
-
+#if TF_CHROMA_BLIND //
+    }
+#endif
     // Get window size for pixel-wise filtering.
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH % 2 == 1);
     const int half_window = TF_PLANEWISE_FILTER_WINDOW_LENGTH >> 1;
@@ -1064,6 +1069,9 @@ void svt_av1_apply_temporal_filter_planewise_c(
             y_accum[k] += adjusted_weight * pixel_value;
 
             // Process chroma component
+#if TF_CHROMA_BLIND //
+            if (context_ptr->tf_chroma)
+#endif
             if (!(i & ss_y) && !(j & ss_x)) {
                 const int u_pixel_value = u_pre[uv_r * uv_pre_stride + uv_c];
                 const int v_pixel_value = v_pre[uv_r * uv_pre_stride + uv_c];
@@ -1171,11 +1179,16 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors_highbd(
         y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se, block_width, block_height);
+#if TF_CHROMA_BLIND //
+    if (context_ptr->tf_chroma) {
+#endif
     calculate_squared_errors_highbd(
         u_src, uv_src_stride, u_pre, uv_pre_stride, u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors_highbd(
         v_src, uv_src_stride, v_pre, uv_pre_stride, v_diff_se, uv_block_width, uv_block_height);
-
+#if TF_CHROMA_BLIND //
+    }
+#endif
     // Get window size for pixel-wise filtering.
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH % 2 == 1);
     const int half_window = TF_PLANEWISE_FILTER_WINDOW_LENGTH >> 1;
@@ -1253,6 +1266,9 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             y_accum[k] += adjusted_weight * pixel_value;
 
             // Process chroma component
+#if TF_CHROMA_BLIND //
+            if (context_ptr->tf_chroma)
+#endif
             if (!(i & ss_y) && !(j & ss_x)) {
                 const int u_pixel_value = u_pre[uv_r * uv_pre_stride + uv_c];
                 const int v_pixel_value = v_pre[uv_r * uv_pre_stride + uv_c];
