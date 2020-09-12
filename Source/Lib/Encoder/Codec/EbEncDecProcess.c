@@ -2869,7 +2869,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->block_based_depth_refinement_level = 0;
         }
         else {
-            context_ptr->block_based_depth_refinement_level = 2;
+            context_ptr->block_based_depth_refinement_level = 3;
         }
 #else
         context_ptr->block_based_depth_refinement_level = 0;
@@ -2880,7 +2880,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->block_based_depth_refinement_level = 0;
         }
         else {
-            context_ptr->block_based_depth_refinement_level = 2;
+            context_ptr->block_based_depth_refinement_level = 3;
         }
 #else
         if (pcs_ptr->slice_type == I_SLICE) {
