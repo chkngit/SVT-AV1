@@ -4616,9 +4616,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
 #if COST_BASED_TXT
 
-        uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
-        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
-        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+        uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
+        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
 
         if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_2)
             continue;

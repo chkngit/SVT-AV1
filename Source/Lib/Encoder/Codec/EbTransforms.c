@@ -3202,9 +3202,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
         break;
     default: assert(0); break;
     }
-#if SHUT_THREE_QUAD_ENERGY
-    *three_quad_energy = 0;
-#endif
+
     return return_error;
 }
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff,
