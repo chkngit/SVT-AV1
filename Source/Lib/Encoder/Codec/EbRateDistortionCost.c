@@ -1877,11 +1877,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                         ->skip_fac_bits[blk_ptr->skip_coeff_context][1]),
                    (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
         if ((candidate_buffer_ptr->candidate_ptr->block_has_coeff == 0) ||
-#if TOWARDS_MORE_SKIP
-            (((skip_cost * 75) / 100) < non_skip_cost)) {
-#else
             (skip_cost < non_skip_cost)) {
-#endif
             y_distortion[0]                                      = y_distortion[1];
             cb_distortion[0]                                     = cb_distortion[1];
             cr_distortion[0]                                     = cr_distortion[1];
