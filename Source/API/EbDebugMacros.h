@@ -64,8 +64,10 @@ extern "C" {
 #define TXT_SET_0 0 // For I_SLICE - SET_0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define TXT_SET_1 1 // SET_1:DCT - DCT + H - DCT + V - DCT + ADST - ADST
 #define TXT_SET_2 0 // SET_2:DCT - DCT + H - DCT + V - DCT + ADST - ADST + ADST - DCT + DCT - ADST
+
+#define COST_BASED_TXT 1
 /************************************/
-#define SHUT_THREE_QUAD_ENERGY 1
+#define SHUT_THREE_QUAD_ENERGY 0
 /************************************/
 #ifdef __cplusplus
 }

@@ -4613,6 +4613,16 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
 #endif
                 continue;
+
+#if COST_BASED_TXT
+
+        uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
+        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+
+        if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_2)
+            continue;
+#endif
 #if !REMOVE_TXT_STATS 
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
