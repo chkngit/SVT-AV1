@@ -2869,18 +2869,27 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->block_based_depth_refinement_level = 0;
         }
         else {
-            context_ptr->block_based_depth_refinement_level = 1;
+            context_ptr->block_based_depth_refinement_level = 2;
         }
 #else
         context_ptr->block_based_depth_refinement_level = 0;
 #endif
     else if (enc_mode <= ENC_M6) {
+#if TEST_BLOCK_BASED
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 0;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 2;
+        }
+#else
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 0;
         }
         else {
             context_ptr->block_based_depth_refinement_level = 1;
         }
+#endif
     }
     else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->slice_type == I_SLICE) {
