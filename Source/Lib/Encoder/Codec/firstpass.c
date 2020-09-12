@@ -1500,6 +1500,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                         src_ptr + j * input_picture_ptr->stride_y,
                         context_ptr->blk_geom->bwidth * sizeof(uint8_t));
             }
+#if !FIX_VBR_BUG
     //copy neigh recon data in blk_ptr
     {
         uint32_t             j;
@@ -1611,6 +1612,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
             }
         }
     }
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
 
