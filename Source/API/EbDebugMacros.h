@@ -67,7 +67,7 @@ extern "C" {
 #endif
 #define COST_BASED_TXT 0
 /************************************/
-#define TEST_BLOCK_BASED 0
+#define TEST_BLOCK_BASED 1
 /************************************/
 #ifdef __cplusplus
 }
