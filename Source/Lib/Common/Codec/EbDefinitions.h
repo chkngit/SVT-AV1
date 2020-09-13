@@ -744,7 +744,17 @@ typedef enum ATTRIBUTE_PACKED {
     H_FLIPADST,
     TX_TYPES,
 } TxType;
-
+#if TX_TYPE_GROUPING
+#define MAX_TX_TYPE_GROUP 6
+static const TxType tx_type_pgroup[MAX_TX_TYPE_GROUP][TX_TYPES] = {
+    { DCT_DCT },
+    { V_DCT, H_DCT },
+    { ADST_ADST},
+    { ADST_DCT, DCT_ADST},
+    { FLIPADST_FLIPADST, IDTX},
+    { FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST}
+};
+#endif
 typedef enum ATTRIBUTE_PACKED {
     // DCT only
     EXT_TX_SET_DCTONLY,

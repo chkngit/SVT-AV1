@@ -58,7 +58,7 @@ extern "C" {
 /************************************/
 #define OPT_4           0
 /************************************/
-#if 0
+#if 1
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define REMOVE_TXT_STATS 0
 #define TXT_SET_0 0 // For I_SLICE - SET_0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
@@ -66,8 +66,9 @@ extern "C" {
 #define TXT_SET_2 0 // SET_2:DCT - DCT + H - DCT + V - DCT + ADST - ADST + ADST - DCT + DCT - ADST
 #endif
 #define COST_BASED_TXT 0
+#define TX_TYPE_GROUPING 1
 /************************************/
-#define TEST_BLOCK_BASED 1
+#define TEST_BLOCK_BASED 0
 /************************************/
 #ifdef __cplusplus
 }
