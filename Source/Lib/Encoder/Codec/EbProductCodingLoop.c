@@ -4528,7 +4528,11 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
 #endif
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     ModeDecisionCandidateBuffer *candidate_buffer,
+#if TX_TYPE_GROUPING
+        uint32_t qindex, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#else
         uint32_t qindex, uint8_t tx_search_skip_flag ,uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#endif
         uint64_t *y_full_distortion) {
     EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
         ? pcs_ptr->input_frame16bit
@@ -4550,6 +4554,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                         candidate_buffer->candidate_ptr->use_intrabc)
         ? EB_TRUE
         : EB_FALSE;
+#if !TX_TYPE_GROUPING
     // Tunr OFF TXT search for disallowed cases
     // Do not turn ON TXT search beyond this point
     if (get_ext_tx_types(tx_size,is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
@@ -4557,6 +4562,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
     TxType   txk_start           = DCT_DCT;
     TxType   txk_end             = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
+#endif
     uint64_t best_cost_tx_search = (uint64_t)~0;
     int32_t  tx_type;
     const TxSetType tx_set_type = get_ext_tx_set_type(
@@ -4603,7 +4609,13 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint32_t y_count_non_zero_coeffs_txt[TX_TYPES]= { 0 };
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
+#if TX_TYPE_GROUPING
+    for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->tx_search_level; ++tx_type_group_idx) {
+        for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE; ++tx_type_idx) {
+            tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
+#else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
+
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
 #if TXT_SET_2
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT && tx_type != ADST_ADST && tx_type != DCT_ADST)
@@ -4613,7 +4625,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
 #endif
                 continue;
-
+#endif
 #if COST_BASED_TXT
 
         uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
@@ -4638,11 +4650,19 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
      // Do not use temporary buffers when TXT is OFF
     EbPictureBufferDesc *recon_coeff_ptr =
+#if TX_TYPE_GROUPING
+            (context_ptr->tx_search_level == 0)
+#else
             (tx_search_skip_flag)
+#endif
                 ? candidate_buffer->recon_coeff_ptr
                 : context_ptr->recon_coeff_ptr[tx_type];
     EbPictureBufferDesc *recon_ptr =
+#if TX_TYPE_GROUPING
+            (context_ptr->tx_search_level == 0)
+#else
             (tx_search_skip_flag)
+#endif
                 ? candidate_buffer->recon_ptr
                 : context_ptr->recon_ptr[tx_type];
 
@@ -4862,6 +4882,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             best_tx_type        = tx_type;
         }
     }
+#if TX_TYPE_GROUPING
+    }
+#endif
     context_ptr->md_staging_skip_rdoq = default_md_staging_skip_rdoq;
     context_ptr->md_staging_spatial_sse_full_loop_level = default_md_staging_spatial_sse_full_loop;
     //  Best Tx Type Pass
@@ -4877,7 +4900,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
     // Do not copy when TXT is OFF
     // Data is already in candidate_buffer
+#if TX_TYPE_GROUPING
+    if (context_ptr->tx_search_level > 0) {
+#else
    if (!tx_search_skip_flag) {
+#endif
        // copy best_tx_type data
        copy_txt_data(candidate_buffer, context_ptr, txb_origin_index, best_tx_type);
     }
@@ -5587,11 +5614,13 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     uint64_t best_cost_search  = (uint64_t)~0;
     uint8_t  is_best_has_coeff = 1;
     init_tx_candidate_buffer(candidate_buffer, context_ptr, end_tx_depth);
+#if !TX_TYPE_GROUPING
     uint8_t tx_search_skip_flag;
     if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_flag = EB_TRUE;
     else
         tx_search_skip_flag = context_ptr->tx_search_level != TX_SEARCH_DCT_DCT_ONLY ? EB_FALSE : EB_TRUE;
+#endif
     // Transform Depth Loop
     for (context_ptr->tx_depth = start_tx_depth; context_ptr->tx_depth <= end_tx_depth;
          context_ptr->tx_depth++) {
@@ -5657,7 +5686,9 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             tx_type_search(pcs_ptr, context_ptr,
                 tx_candidate_buffer,
                 qindex,
+#if !TX_TYPE_GROUPING
                 tx_search_skip_flag,
+#endif
                 &(tx_y_count_non_zero_coeffs[0]),
                 &tx_y_coeff_bits,
                 &tx_y_full_distortion[0]);

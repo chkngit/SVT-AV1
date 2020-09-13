@@ -2255,6 +2255,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
+#if TX_TYPE_GROUPING
+    if (pd_pass == PD_PASS_0)
+        context_ptr->tx_search_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->tx_search_level = 0;
+    else
+        if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
+            context_ptr->tx_search_level = 5;// 5;
+        else
+            context_ptr->tx_search_level = 2;// 2;
+
+#else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
     // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
@@ -2274,6 +2286,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#endif
 #endif
 #if !REMOVE_TXT_STATS
     uint8_t txt_cycles_reduction_level = 0;

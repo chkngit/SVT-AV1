@@ -1822,11 +1822,15 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 4                    TH 50%
     // 5                    TH 40%
     context_ptr->enable_area_based_cycles_allocation = 0;
+#if TX_TYPE_GROUPING
+    context_ptr->tx_search_level = 0;
+#else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
     // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
     // TX_SEARCH_ALL_TX_TYPES                         Tx search all type(s)
     context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#endif
 #if !REMOVE_TXT_STATS
     uint8_t txt_cycles_reduction_level = 0;
 #if SHUT_TXT_STATS
