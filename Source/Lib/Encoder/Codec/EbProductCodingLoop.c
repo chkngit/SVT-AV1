@@ -4635,6 +4635,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
         uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
 
+        if(is_inter)
         if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_2)
             continue;
 #endif
