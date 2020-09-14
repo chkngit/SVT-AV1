@@ -446,7 +446,9 @@ typedef struct ModeDecisionContext {
     // full_loop_core signals
     EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
-#if !TX_TYPE_GROUPING
+#if TX_TYPE_GROUPING
+    EbBool md_staging_txt_level;
+#else
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
 #endif
     EbBool md_staging_skip_full_chroma;
@@ -484,7 +486,11 @@ typedef struct ModeDecisionContext {
     uint8_t      src_to_pred_decision; // Use src-to-pred distortion only (i.e. only md_stage_0() data)
 #endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
+#if TX_TYPE_GROUPING
+    uint8_t      md_txt_level;
+#else
     uint8_t      tx_search_level;
+#endif
     uint8_t      interpolation_search_level;
     uint8_t      md_tx_size_search_mode;
     uint8_t      md_pic_obmc_level;

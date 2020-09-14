@@ -2257,14 +2257,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
 #if TX_TYPE_GROUPING
     if (pd_pass == PD_PASS_0)
-        context_ptr->tx_search_level = 0;
+        context_ptr->md_txt_level = 0;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->tx_search_level = 0;
+        context_ptr->md_txt_level = 0;
     else
         if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
-            context_ptr->tx_search_level = 5;// 5;
+            context_ptr->md_txt_level = 5;// 5;
         else
-            context_ptr->tx_search_level = 2;// 2;
+            context_ptr->md_txt_level = 2;// 2;
 
 #else
     // Tx_search Level for Luma                       Settings

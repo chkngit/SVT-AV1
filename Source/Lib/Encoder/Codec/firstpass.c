@@ -1823,7 +1823,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 5                    TH 40%
     context_ptr->enable_area_based_cycles_allocation = 0;
 #if TX_TYPE_GROUPING
-    context_ptr->tx_search_level = 0;
+    context_ptr->md_staging_txt_level = 0;
 #else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only

@@ -4559,7 +4559,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     // Do not turn ON TXT search beyond this point
     if (get_ext_tx_types(tx_size,is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
 #if TX_TYPE_GROUPING
-        context_ptr->tx_search_level = 0;
+        context_ptr->md_staging_txt_level = 0;
 #else
             tx_search_skip_flag =1 ;
 #endif
@@ -4614,7 +4614,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
-    for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->tx_search_level; ++tx_type_group_idx) {
+    for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->md_staging_txt_level; ++tx_type_group_idx) {
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE; ++tx_type_idx) {
             tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
 #else
@@ -4655,7 +4655,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
      // Do not use temporary buffers when TXT is OFF
     EbPictureBufferDesc *recon_coeff_ptr =
 #if TX_TYPE_GROUPING
-            (context_ptr->tx_search_level == 0)
+            (context_ptr->md_staging_txt_level == 0)
 #else
             (tx_search_skip_flag)
 #endif
@@ -4663,7 +4663,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 : context_ptr->recon_coeff_ptr[tx_type];
     EbPictureBufferDesc *recon_ptr =
 #if TX_TYPE_GROUPING
-            (context_ptr->tx_search_level == 0)
+            (context_ptr->md_staging_txt_level == 0)
 #else
             (tx_search_skip_flag)
 #endif
@@ -4905,7 +4905,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     // Do not copy when TXT is OFF
     // Data is already in candidate_buffer
 #if TX_TYPE_GROUPING
-    if (context_ptr->tx_search_level) {
+    if (context_ptr->md_staging_txt_level) {
 #else
    if (!tx_search_skip_flag) {
 #endif
@@ -6425,7 +6425,9 @@ static void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
     // Set MD Staging full_loop_core settings
     context_ptr->md_staging_tx_size_mode          = 0;
-#if !TX_TYPE_GROUPING
+#if TX_TYPE_GROUPING
+    context_ptr->md_staging_txt_level = 0;
+#else
     context_ptr->md_staging_tx_search             = 0;
 #endif
     context_ptr->md_staging_skip_full_chroma      = EB_TRUE;
@@ -6486,7 +6488,9 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         ModeDecisionCandidate *      candidate_ptr    = candidate_buffer->candidate_ptr;
 
         context_ptr->md_staging_tx_size_mode = 0;
-#if !TX_TYPE_GROUPING
+#if TX_TYPE_GROUPING
+        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+#else
         context_ptr->md_staging_tx_search = 1;
 #endif
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
@@ -6639,7 +6643,9 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         else
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
-#if !TX_TYPE_GROUPING
+#if TX_TYPE_GROUPING
+        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+#else
         context_ptr->md_staging_tx_search = 1;
 #endif
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
