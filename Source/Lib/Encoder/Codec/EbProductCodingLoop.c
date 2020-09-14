@@ -4625,15 +4625,8 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 continue;
 #else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
-
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
-#if TXT_SET_2
-            if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT && tx_type != ADST_ADST && tx_type != DCT_ADST)
-#elif TXT_SET_1
-            if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT && tx_type != ADST_ADST)
-#else
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
-#endif
                 continue;
 #endif
 #if COST_BASED_TXT
@@ -6495,7 +6488,9 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
         context_ptr->md_staging_tx_size_mode = 0;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
+            ? context_ptr->md_txt_level_intra
+            : context_ptr->md_txt_level_inter;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
@@ -6650,7 +6645,9 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3 ) 
+            ? context_ptr->md_txt_level_intra 
+            : context_ptr->md_txt_level_inter ;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
