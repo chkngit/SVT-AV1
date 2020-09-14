@@ -2270,7 +2270,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_txt_level_inter = 5;
         }
         else {
-            context_ptr->md_txt_level_intra = 1;
+            context_ptr->md_txt_level_intra = 5;
             context_ptr->md_txt_level_inter = 1;
         }
 #else
