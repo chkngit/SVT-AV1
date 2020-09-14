@@ -6790,7 +6790,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->mpbd_ctrls.use_1st_pass = 1;
             context_ptr->mpbd_ctrls.use_2nd_pass = 1;
             context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
-            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 5;// NUMBER_OF_SHAPES; // lossless if 4
+            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 1;// NUMBER_OF_SHAPES; // lossless if 4
         }
 #endif
 #if MULTI_BAND_ACTIONS

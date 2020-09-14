@@ -16975,12 +16975,16 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if ADD_SECOND_BLOCK_PASS
             uint32_t starting_leaf_blk = blk_index;
             EbBool starting_md_early_exit_sq = md_early_exit_sq;
+            uint32_t starting_next_non_skip_blk_idx_mds = next_non_skip_blk_idx_mds;
+            for (Part i = 0; i < NUMBER_OF_SHAPES; i++) {
+                nsq_cost[i] = MAX_CU_COST;
+                nsq_shape_table[i] = i;
+            }
 #endif
 #if ADD_SHAPE_REFINEMENT
             if (context_ptr->mpbd_ctrls.use_1st_pass) {
 #endif
                 // iterate over all blocks within the parent's d1 dimension
-                //mdcResultTbPtr->leaf_data_array[parent_blk_idx].tot_d1_blocks
                 for (uint32_t d1_blk_idx = parent_blk_idx;
                     (d1_blk_idx < parent_blk_idx + d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][parent_blk_geom->depth]) && blk_index < leaf_count;
                     d1_blk_idx++) {
@@ -17092,8 +17096,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 if (context_ptr->mpbd_ctrls.use_1st_pass) {
                     blk_index = starting_leaf_blk;
                     md_early_exit_sq = starting_md_early_exit_sq;
-                    //md_early_exit_sq = 0;
-                    md_early_exit_nsq = 0;
+                    next_non_skip_blk_idx_mds = starting_next_non_skip_blk_idx_mds;
+                    //md_early_exit_nsq = 0;
+
                     order_partitions(nsq_cost, nsq_shape_table);
                     // reset arrays tracking best costs/shapes - may need to add when you're skipping some partitions
                     for (Part i = 0; i < NUMBER_OF_SHAPES; i++) {
@@ -17123,45 +17128,18 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     if (d1_blk_idx != leaf_data_array[blk_index].mds_idx)
                         continue;
 
-
 #if ADD_SHAPE_REFINEMENT
                     if (context_ptr->mpbd_ctrls.use_1st_pass) {
-                        const BlockGeom *blk_geom = get_blk_geom_mds(d1_blk_idx);
-                        BlkStruct *     blk_ptr = &context_ptr->md_blk_arr_nsq[d1_blk_idx];
+                        const BlockGeom* blk_geom = get_blk_geom_mds(d1_blk_idx);
+
+                        context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag = EB_FALSE;
+                        context_ptr->md_local_blk_unit[d1_blk_idx].cost = (MAX_MODE_COST >> 4);
+                        context_ptr->md_local_blk_unit[d1_blk_idx].default_cost = MAX_MODE_COST;
+
                         if (blk_geom->shape != PART_N && !shape_is_best_n(nsq_shape_table, blk_geom->shape, context_ptr->mpbd_ctrls.num_best_parts_2nd_pass)) {
-                        //if (blk_geom->shape != PART_N && blk_geom->shape != PART_H && blk_geom->shape != PART_V) {
 
-                            context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag = EB_FALSE;
-                            context_ptr->md_local_blk_unit[d1_blk_idx].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
-                            context_ptr->md_local_blk_unit[d1_blk_idx].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
-
-                            if (context_ptr->md_disallow_nsq == EB_FALSE)
-                                for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
-                                    context_ptr->md_local_blk_unit[d1_blk_idx].sse_gradian_band[shape_idx] = 1;
-
-                            if (blk_geom->shape == PART_N) {
-                                context_ptr->md_blk_arr_nsq[d1_blk_idx].split_flag = EB_TRUE;
-                                context_ptr->md_blk_arr_nsq[d1_blk_idx].part = PARTITION_SPLIT;
-                                context_ptr->md_local_blk_unit[d1_blk_idx].tested_blk_flag = EB_FALSE;
-                            }
-
-                            context_ptr->md_blk_arr_nsq[d1_blk_idx].do_not_process_block = 0;
-
-                            if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {
-                                // If the block is out of the boundaries, md is not performed.
-                                // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
-                                // - For non square blocks, since they can not be splitted further the cost is set to a large value (MAX_MODE_COST >> 4) to make sure they are not selected.
-                                //   The value is set to MAX_MODE_COST >> 4 to make sure there is not overflow when adding costs.
-                                context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (blk_geom->shape != PART_N) ? (MAX_MODE_COST >> 4) : 0;
-                                context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = (blk_geom->shape != PART_N) ? MAX_MODE_COST : 0;
-                            }
-                                else {
-                                // TODO: is there a reason this used to be shifted by 10 for SQ blocks?
-                                context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (MAX_MODE_COST >> 4);
-                                context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
-                            }
-
-                            continue;// md_early_exit_nsq = 1;
+                            //blk_index++;
+                            md_early_exit_nsq = 1; // TODO: debug ability to use continue here
                         }
                     }
 #endif
