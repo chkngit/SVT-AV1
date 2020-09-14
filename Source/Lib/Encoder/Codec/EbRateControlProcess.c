@@ -5909,7 +5909,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 #if TPL_TUNING
-        if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 3)
+        if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 #else
@@ -5918,7 +5918,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
         rc->arf_boost_factor =
             (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
+#if TPL_TUNING
+                pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.08)
+#else
                 pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.1)
+#endif
             ? (float_t)1.3
             : (float_t)1;
         q = active_worst_quality;
@@ -6329,6 +6333,13 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 min_boost_factor, MAX_BOOST_COMBINE_FACTOR, rc->gfu_boost,
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
+#if TPL_TUNING
+        if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
+   //     int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+#else
+
+#endif
         rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
                                                   MAX_GFUBOOST_FACTOR,
                                                   pcs_ptr->parent_pcs_ptr->r0,
@@ -6402,8 +6413,12 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
         if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE)
             q_adj_factor -= 0.15;
         // Make a further adjustment based on the kf zero motion measure.
+#if TPL_TUNING
+        q_adj_factor += 0.05 - (0.001 * (double)twopass->kf_zeromotion_pct);
+#else
         q_adj_factor +=
             0.05 - (0.001 * (double)MAX(twopass->kf_zeromotion_pct, pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct));
+#endif
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -6477,7 +6492,11 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr,
 
     rc->arf_boost_factor =
         (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
+#if TPL_TUNING
+            pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.08)
+#else
             pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.1)
+#endif
         ? (float_t)1.3
         : (float_t)1;
     active_best_quality = min_boost - (int)(boost * rc->arf_boost_factor);
