@@ -4554,12 +4554,16 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                         candidate_buffer->candidate_ptr->use_intrabc)
         ? EB_TRUE
         : EB_FALSE;
-#if !TX_TYPE_GROUPING
+
     // Tunr OFF TXT search for disallowed cases
     // Do not turn ON TXT search beyond this point
     if (get_ext_tx_types(tx_size,is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
+#if TX_TYPE_GROUPING
+        context_ptr->tx_search_level = 0;
+#else
             tx_search_skip_flag =1 ;
-
+#endif
+#if !TX_TYPE_GROUPING
     TxType   txk_start           = DCT_DCT;
     TxType   txk_end             = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
 #endif
@@ -5614,7 +5618,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     uint64_t best_cost_search  = (uint64_t)~0;
     uint8_t  is_best_has_coeff = 1;
     init_tx_candidate_buffer(candidate_buffer, context_ptr, end_tx_depth);
-#if !TX_TYPE_GROUPING
+#if TX_TYPE_GROUPING
+    uint8_t tx_search_skip_flag;
+    if (context_ptr->md_staging_tx_search == 0)
+        context_ptr->tx_search_level = 0;
+#else
     uint8_t tx_search_skip_flag;
     if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_flag = EB_TRUE;

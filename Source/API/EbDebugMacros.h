@@ -66,7 +66,7 @@ extern "C" {
 #define TXT_SET_2 0 // SET_2:DCT - DCT + H - DCT + V - DCT + ADST - ADST + ADST - DCT + DCT - ADST
 #endif
 #define COST_BASED_TXT 0
-#define TX_TYPE_GROUPING 0
+#define TX_TYPE_GROUPING 1
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
