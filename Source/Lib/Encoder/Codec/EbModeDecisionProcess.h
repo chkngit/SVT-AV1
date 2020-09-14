@@ -446,7 +446,9 @@ typedef struct ModeDecisionContext {
     // full_loop_core signals
     EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
+#if !TX_TYPE_GROUPING
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
+#endif
     EbBool md_staging_skip_full_chroma;
     EbBool md_staging_skip_rdoq;
     EbBool md_staging_spatial_sse_full_loop_level;

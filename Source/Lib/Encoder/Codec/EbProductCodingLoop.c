@@ -4905,7 +4905,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     // Do not copy when TXT is OFF
     // Data is already in candidate_buffer
 #if TX_TYPE_GROUPING
-    if (context_ptr->tx_search_level > 0) {
+    if (context_ptr->tx_search_level) {
 #else
    if (!tx_search_skip_flag) {
 #endif
@@ -5618,11 +5618,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     uint64_t best_cost_search  = (uint64_t)~0;
     uint8_t  is_best_has_coeff = 1;
     init_tx_candidate_buffer(candidate_buffer, context_ptr, end_tx_depth);
-#if TX_TYPE_GROUPING
-    uint8_t tx_search_skip_flag;
-    if (context_ptr->md_staging_tx_search == 0)
-        context_ptr->tx_search_level = 0;
-#else
+#if !TX_TYPE_GROUPING
     uint8_t tx_search_skip_flag;
     if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_flag = EB_TRUE;
@@ -6429,7 +6425,9 @@ static void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
     // Set MD Staging full_loop_core settings
     context_ptr->md_staging_tx_size_mode          = 0;
+#if !TX_TYPE_GROUPING
     context_ptr->md_staging_tx_search             = 0;
+#endif
     context_ptr->md_staging_skip_full_chroma      = EB_TRUE;
     context_ptr->md_staging_skip_rdoq             = EB_TRUE;
 
@@ -6488,7 +6486,9 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         ModeDecisionCandidate *      candidate_ptr    = candidate_buffer->candidate_ptr;
 
         context_ptr->md_staging_tx_size_mode = 0;
+#if !TX_TYPE_GROUPING
         context_ptr->md_staging_tx_search = 1;
+#endif
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
         context_ptr->md_staging_skip_full_chroma          = EB_TRUE;
         context_ptr->md_staging_perform_inter_pred =
@@ -6639,7 +6639,9 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         else
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
+#if !TX_TYPE_GROUPING
         context_ptr->md_staging_tx_search = 1;
+#endif
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
 
