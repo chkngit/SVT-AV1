@@ -4555,11 +4555,14 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         ? EB_TRUE
         : EB_FALSE;
 
+#if TX_TYPE_GROUPING
+    uint8_t only_dct_dct = (context_ptr->md_staging_txt_level == 0);
+#endif
     // Tunr OFF TXT search for disallowed cases
     // Do not turn ON TXT search beyond this point
     if (get_ext_tx_types(tx_size,is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = 0;
+        only_dct_dct = 1;
 #else
             tx_search_skip_flag =1 ;
 #endif
@@ -4617,6 +4620,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->md_staging_txt_level; ++tx_type_group_idx) {
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE; ++tx_type_idx) {
             tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
+
+            if (only_dct_dct && tx_type != DCT_DCT)
+                continue;
 #else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
 
@@ -4655,7 +4661,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
      // Do not use temporary buffers when TXT is OFF
     EbPictureBufferDesc *recon_coeff_ptr =
 #if TX_TYPE_GROUPING
-            (context_ptr->md_staging_txt_level == 0)
+            only_dct_dct
 #else
             (tx_search_skip_flag)
 #endif
@@ -4663,7 +4669,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 : context_ptr->recon_coeff_ptr[tx_type];
     EbPictureBufferDesc *recon_ptr =
 #if TX_TYPE_GROUPING
-            (context_ptr->md_staging_txt_level == 0)
+            only_dct_dct
 #else
             (tx_search_skip_flag)
 #endif
@@ -4905,7 +4911,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     // Do not copy when TXT is OFF
     // Data is already in candidate_buffer
 #if TX_TYPE_GROUPING
-    if (context_ptr->md_staging_txt_level) {
+    if (!only_dct_dct) {
 #else
    if (!tx_search_skip_flag) {
 #endif
