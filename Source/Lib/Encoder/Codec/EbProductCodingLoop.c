@@ -4890,6 +4890,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
     }
 #if PREVIOUS_GROUP_EXIT
+    if(pcs_ptr->slice_type != I_SLICE)
     if (best_cost_txt_group != (uint64_t)~0 && tx_type_group_idx >= 1 && context_ptr->md_staging_txt_level > 1) {
 
         int64_t cur_to_pre_group_dev =
