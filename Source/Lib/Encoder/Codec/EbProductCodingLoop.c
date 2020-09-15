@@ -4919,7 +4919,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
     if (tx_type_group_idx == 1 && best_cost_txt_group != (uint64_t)~0) {
         // If DST_DST cost < than DCT_DCT cost, then skip H_DCT and V_DCT
-        if (best_cost_txt_group_array[1] < best_cost_txt_group_array[0]) {
+        if (best_cost_txt_group_array[1] < (best_cost_txt_group_array[0] / 2)) {
             tx_type_group_idx = 2;
         }
     }
