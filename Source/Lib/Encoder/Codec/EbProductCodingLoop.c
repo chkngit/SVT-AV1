@@ -4968,9 +4968,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
 #if VAR_COST_BASED_TXT // err
     if (tx_type_group_idx) {
-        uint64_t cost_th_0 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 8);
-        uint64_t cost_th_1 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 4);
-        uint64_t cost_th_2 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 2);
+        uint64_t cost_th_0 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 32);
+        uint64_t cost_th_1 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 16);
+        uint64_t cost_th_2 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) /  8);
         if (!is_inter)
             if (tx_type != DCT_DCT && besterr < cost_th_0)
                 break;
