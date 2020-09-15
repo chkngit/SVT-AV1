@@ -63,7 +63,9 @@ extern "C" {
 #define REMOVE_TXT_STATS 1
 #define TX_TYPE_GROUPING 1
 
-#define COST_BASED_TXT 1
+#define COST_BASED_TXT 0
+
+#define PREVIOUS_GROUP_EXIT 1
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/

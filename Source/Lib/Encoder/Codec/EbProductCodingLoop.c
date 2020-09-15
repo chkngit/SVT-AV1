@@ -4606,7 +4606,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 &context_ptr->luma_txb_skip_context,
                 &context_ptr->luma_dc_sign_context);
     TxType best_tx_type = DCT_DCT;
+#if !TX_TYPE_GROUPING
     uint8_t default_md_staging_skip_rdoq = context_ptr->md_staging_skip_rdoq;
+#endif
     uint8_t default_md_staging_spatial_sse_full_loop = context_ptr->md_staging_spatial_sse_full_loop_level;
     if (scs_ptr->static_config.spatial_sse_full_loop_level == 1 && context_ptr->pd_pass == PD_PASS_2)
         context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
@@ -4618,6 +4620,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
     for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->md_staging_txt_level; ++tx_type_group_idx) {
+#if PREVIOUS_GROUP_EXIT
+        uint64_t best_cost_txt_group = (uint64_t)~0;
+#endif
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE; ++tx_type_idx) {
             tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
 
@@ -4628,16 +4633,6 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
                 continue;
-#endif
-#if COST_BASED_TXT
-
-        uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
-        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
-        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] *context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
-
-        if(!is_inter)
-        if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_0)
-            continue;
 #endif
 #if !REMOVE_TXT_STATS 
         // Perform search selectively based on statistics (DCT_DCT always performed)
@@ -4885,11 +4880,41 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
         }
+#if PREVIOUS_GROUP_EXIT
+        if (cost < best_cost_txt_group) {
+            best_cost_txt_group = cost;
+        }
+#endif
     }
+#if PREVIOUS_GROUP_EXIT
+    if (best_cost_txt_group != (uint64_t)~0 && tx_type_group_idx >= 1 && context_ptr->md_staging_txt_level > 1) {
+
+        int64_t cur_to_pre_group_dev =
+            (int64_t)(((int64_t)MAX(best_cost_txt_group, 1) - (int64_t)MAX(best_cost_tx_search, 1)) * 100) /
+            (int64_t)(MAX(best_cost_tx_search, 1));
+
+        if (cur_to_pre_group_dev > 100)
+            break;
+    }
+#endif
+#if COST_BASED_TXT
+
+    uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
+    uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+    uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+
+    if (!is_inter)
+        if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_0)
+            continue;
+#endif
+
+
 #if TX_TYPE_GROUPING
     }
 #endif
+#if !TX_TYPE_GROUPING
     context_ptr->md_staging_skip_rdoq = default_md_staging_skip_rdoq;
+#endif
     context_ptr->md_staging_spatial_sse_full_loop_level = default_md_staging_spatial_sse_full_loop;
     //  Best Tx Type Pass
     candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = best_tx_type;
