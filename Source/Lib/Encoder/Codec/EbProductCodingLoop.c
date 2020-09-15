@@ -4634,6 +4634,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
             if (only_dct_dct && tx_type != DCT_DCT)
                 continue;
+#if COST_BASED_TXT
+            unsigned int sse = 0;
+            const AomVarianceFnPtr *vfp = &mefn_ptr[context_ptr->blk_geom->bsize];
+            unsigned int besterr;
+#endif
 #else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
         if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
@@ -4815,6 +4820,17 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 cropped_tx_height);
         txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] <<= 4;
         txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] <<= 4;
+#if COST_BASED_TXT
+        
+        besterr = vfp->vf(
+            &input_picture_ptr->buffer_y[input_txb_origin_index],
+            input_picture_ptr->stride_y, 
+            &recon_ptr->buffer_y[txb_origin_index], 
+            candidate_buffer->recon_ptr->stride_y, &sse);
+
+
+        printf("%d\t%d\n", besterr, sse);
+#endif
         } else {
             // LUMA DISTORTION
             picture_full_distortion32_bits(
@@ -4909,16 +4925,26 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
 #if COST_BASED_TXT
 
+#if 0 // cost
     uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
     uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
     uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
-
     if (!is_inter)
-    if (tx_type != DCT_DCT && best_dist_tx_search < cost_th_0)
-        break;
+        if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_0)
+            break; 
+#endif
+
+#if 0 // dist
+    uint64_t cost_th_0 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 8);
+    uint64_t cost_th_1 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 4);
+    uint64_t cost_th_2 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 2);
+    if (!is_inter)
+        if (tx_type != DCT_DCT && best_dist_tx_search < cost_th_0)
+            break; 
 #endif
 
 
+#endif
 #if TX_TYPE_GROUPING
     }
 #endif

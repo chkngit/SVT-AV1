@@ -2271,7 +2271,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
         else {
             context_ptr->md_txt_level_intra = 5;
+#if DCT_VS_DST
+            context_ptr->md_txt_level_inter = 2;
+#else
             context_ptr->md_txt_level_inter = 1;
+#endif
         }
 #else
     // Tx_search Level for Luma                       Settings
