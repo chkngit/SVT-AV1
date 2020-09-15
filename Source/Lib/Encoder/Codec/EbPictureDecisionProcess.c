@@ -3799,7 +3799,9 @@ EbErrorType derive_tf_window_params(
     SequenceControlSet *scs_ptr,
     EncodeContext *encode_context_ptr,
     PictureParentControlSet *pcs_ptr,
+#if !TF_CHROMA_BLIND
     PictureDecisionContext *context_ptr,
+#endif
     uint32_t out_stride_diff64) {
     PictureParentControlSet * picture_control_set_ptr_central = pcs_ptr;
     EbPictureBufferDesc * central_picture_ptr = picture_control_set_ptr_central->enhanced_picture_ptr;
@@ -4932,7 +4934,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     scs_ptr,
                                     encode_context_ptr,
                                     pcs_ptr,
+#if !TF_CHROMA_BLIND
                                     context_ptr,
+#endif
                                     out_stride_diff64);
                                 pcs_ptr->temp_filt_prep_done = 0;
 

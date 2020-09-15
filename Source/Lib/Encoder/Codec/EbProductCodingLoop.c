@@ -4623,7 +4623,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if PREVIOUS_GROUP_EXIT
         uint64_t best_cost_txt_group = (uint64_t)~0;
 #endif
-        for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE; ++tx_type_idx) {
+        for (int tx_type_idx = 0; tx_type_idx < TX_TYPES, (tx_type_group[tx_type_group_idx][tx_type_idx] != INVALID_TX_TYPE); ++tx_type_idx) {
             tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
 
             if (only_dct_dct && tx_type != DCT_DCT)
