@@ -4919,9 +4919,13 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
     if (tx_type_group_idx == 1 && best_cost_txt_group != (uint64_t)~0) {
         // If DST_DST cost < than DCT_DCT cost, then skip H_DCT and V_DCT
-        if (best_cost_txt_group_array[1] < (best_cost_txt_group_array[0] / 2)) {
+        int64_t cur_to_pre_group_dev =
+            (int64_t)(((int64_t)MAX(best_cost_txt_group_array[0], 1) - (int64_t)MAX(best_cost_txt_group_array[1], 1)) * 100) /
+            (int64_t)(MAX(best_cost_txt_group_array[1], 1));
+
+        if (cur_to_pre_group_dev > 25)
             tx_type_group_idx = 2;
-        }
+        
     }
 #endif
 #if PREVIOUS_GROUP_EXIT
