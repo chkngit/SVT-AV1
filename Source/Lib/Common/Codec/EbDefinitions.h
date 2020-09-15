@@ -62,6 +62,9 @@ extern "C" {
 #define INL_GM_ON_INPUT_DBG 1 //GM on original debug
 #define INL_TPL_ME_ON_INPUT_DBG 0 //TPL on original debug
 #endif
+#if !IME_REUSE_TPL_RESULT
+#define SIGNAL_TPL_ME_OQ 1 // A separate signal_xxx_oq for TPL ME
+#endif
 #endif
 
 #define IN_LOOP_TPL 1

@@ -351,6 +351,86 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
     return return_error;
 };
+
+#if SIGNAL_TPL_ME_OQ
+EbErrorType signal_tpl_me_kernel_oq(SequenceControlSet *       scs_ptr,
+                                           PictureParentControlSet *  pcs_ptr,
+                                           MotionEstimationContext_t *context_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+
+    //EbEncMode enc_mode = pcs_ptr->enc_mode;
+    EbInputResolution input_resolution = scs_ptr->input_resolution;
+    MeContext *me_context_ptr = context_ptr->me_context_ptr;
+
+    // Set ME/HME search regions
+    me_context_ptr->number_hme_search_region_in_width  = 2;
+    me_context_ptr->number_hme_search_region_in_height = 2;
+
+    // Set the minimum ME search area
+    me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
+
+    me_context_ptr->hme_level0_total_search_area_width =
+        me_context_ptr->hme_level0_total_search_area_height = 32;
+    me_context_ptr->hme_level0_max_total_search_area_width =
+        me_context_ptr->hme_level0_max_total_search_area_height = 164;
+
+    me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_max_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+    me_context_ptr->hme_level0_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+
+    me_context_ptr->hme_level1_search_area_in_width_array[0] =
+        me_context_ptr->hme_level1_search_area_in_width_array[1] =
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =
+        me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
+
+    me_context_ptr->hme_level2_search_area_in_width_array[0] =
+        me_context_ptr->hme_level2_search_area_in_width_array[1] =
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+        me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+    me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+
+    // Scale up the MIN ME area if low frame rate
+    uint8_t  low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+    if (low_frame_rate_flag) {
+        me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
+        me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
+    }
+
+    me_context_ptr->update_hme_search_center_flag = 1;
+
+    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+        me_context_ptr->update_hme_search_center_flag = 0;
+
+
+    // Set HME flags
+    me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
+    me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
+    me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
+    me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
+    // HME Search Method
+    me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+    me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+    me_context_ptr->compute_global_motion = EB_FALSE;
+
+    // Set hme/me based reference pruning level (0-4)
+    set_me_hme_ref_prune_ctrls(me_context_ptr, 4);
+
+    // Set hme-based me sr adjustment level
+    set_me_sr_adjustment_ctrls(me_context_ptr, 2);
+    return return_error;
+};
+#endif
+
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -1400,7 +1480,11 @@ void *inloop_me_kernel(void *input_ptr) {
 
             if (task_type != 0) {
                 // TODO: TPL ME Kernel Signal(s) derivation
+#if SIGNAL_TPL_ME_OQ
+                signal_tpl_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
+#else
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
+#endif
 
                 // TPL ME
                 segment_col_count = ppcs_ptr->tpl_me_segments_column_count;
