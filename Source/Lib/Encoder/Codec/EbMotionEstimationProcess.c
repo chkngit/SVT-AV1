@@ -1398,7 +1398,6 @@ void *inloop_me_kernel(void *input_ptr) {
             segment_col_count = ppcs_ptr->inloop_me_segments_column_count;
             segment_row_count = ppcs_ptr->inloop_me_segments_row_count;
 
-            context_ptr->me_context_ptr->me_type = ME_CLOSE_LOOP;
             if (task_type != 0) {
                 // TODO: TPL ME Kernel Signal(s) derivation
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
@@ -1426,6 +1425,7 @@ void *inloop_me_kernel(void *input_ptr) {
                 // ME Kernel Signal(s) derivation
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 
+                context_ptr->me_context_ptr->me_type = ME_CLOSE_LOOP;
                 context_ptr->me_context_ptr->num_of_list_to_search =
                     (ppcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
                 context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = ppcs_ptr->ref_list0_count_try;
@@ -1469,6 +1469,8 @@ void *inloop_me_kernel(void *input_ptr) {
             segment_index = in_results_ptr->segment_index;
 
 #if IME_REUSE_TPL_RESULT
+            // if TPL, always do ME
+            // if iME, only do ME when it's B/P and non skip case
             if (!skip_me && (ppcs_ptr->slice_type != I_SLICE || task_type != 0)) {
 #else
             if (ppcs_ptr->slice_type != I_SLICE || task_type != 0) {
@@ -1507,6 +1509,7 @@ void *inloop_me_kernel(void *input_ptr) {
                                 input_picture_ptr);
 
 #if IME_REUSE_TPL_RESULT
+                        // Calculate the me_processed_sb_count once, either in TPL_ME or in iME
                         {
 #else
                         if (task_type == 0) {

@@ -3195,9 +3195,11 @@ EbErrorType motion_estimate_sb(
         context_ptr->me_type != ME_MCTF;
 #endif
 
+#if !INL_ME_FIX
 #if INL_ME
 #if !IME_REUSE_TPL_RESULT
     prune_ref = (context_ptr->me_type == ME_TPL) ? 0 : prune_ref;
+#endif
 #endif
 #endif
 
@@ -3207,7 +3209,7 @@ EbErrorType motion_estimate_sb(
 #if !INL_ME
             if (context_ptr->me_alt_ref == EB_FALSE)
 #else
-#if INL_ME_FIX            
+#if INL_ME_FIX
             if (context_ptr->me_type != ME_MCTF)
 #else
             if(context_ptr->me_type != ME_MCTF && context_ptr->me_type != ME_TPL)
