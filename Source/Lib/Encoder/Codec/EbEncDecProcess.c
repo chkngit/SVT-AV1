@@ -6779,20 +6779,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // If using a mode offset, do not modify the NSQ-targeting features
     if (!mode_offset) {
 #endif
-#if ADD_SHAPE_REFINEMENT
-        if (pd_pass == PD_PASS_0) {
-            context_ptr->mpbd_ctrls.use_1st_pass = 0;
-            context_ptr->mpbd_ctrls.use_2nd_pass = 1;
-            context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
-            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = NUMBER_OF_SHAPES;
-        }
-        else {
-            context_ptr->mpbd_ctrls.use_1st_pass = 1;
-            context_ptr->mpbd_ctrls.use_2nd_pass = 1;
-            context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
-            context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 1;// NUMBER_OF_SHAPES; // lossless if 4
-        }
-#endif
 #if MULTI_BAND_ACTIONS
     if (pd_pass == PD_PASS_0)
         context_ptr->coeff_area_based_bypass_nsq_th = 0;
@@ -7069,6 +7055,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     }
 #endif
+#if SHUT_NSQ_FEATURES
+    adaptive_md_cycles_level = 0;
+#endif
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
 #endif
     // Weighting (expressed as a percentage) applied to
@@ -7317,7 +7306,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->sq_weight = 100 - (10 * context_ptr->coeffcients_area_based_cycles_allocation_level);
     }
 #endif
-
+#if SHUT_NSQ_FEATURES
+    context_ptr->sq_weight = (uint32_t)~0;
+#endif
     // nsq_hv_level  needs sq_weight to be ON
     // 0: OFF
     // 1: ON 10% + skip HA/HB/H4  or skip VA/VB/V4
@@ -7543,6 +7534,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->switch_md_mode_based_on_sq_coeff = 3;
 
+#if SHUT_NSQ_FEATURES
+    context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+#endif
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
 #else
     // Set coeff_based_nsq_cand_reduction

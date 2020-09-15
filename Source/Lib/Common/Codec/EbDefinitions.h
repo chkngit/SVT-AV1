@@ -703,6 +703,10 @@ extern "C" {
 #define REMOVE_DEPTH_COST_ARRAY          1 // remove unused array tracking depth cost
 #define ADD_SECOND_BLOCK_PASS            1 // Add second pass over d1 blocks
 #define ADD_SHAPE_REFINEMENT             1 // Add ability to choose between 1/2 block passes and # of shapes in second pass
+#define ADD_FIRST_PASS_MODE_OFFSET       1 // Add ability to offset 1st PB pass by a given number of modes
+
+#define SHUT_NSQ_FEATURES_1ST_PASS       1 // Shut nsq-targetting features in the first PB pass
+#define SHUT_NSQ_FEATURES                0 // Shut nsq-targetting features
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

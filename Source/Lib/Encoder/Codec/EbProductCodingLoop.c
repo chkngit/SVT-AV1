@@ -16352,6 +16352,12 @@ EbBool skip_next_block(SequenceControlSet *scs_ptr,
                        ModeDecisionContext *context_ptr,
                        uint32_t blk_idx_mds) {
 
+#if ADD_FIRST_PASS_MODE_OFFSET && SHUT_NSQ_FEATURES_1ST_PASS
+    // disable block pruning features during the first pass
+    if (context_ptr->block_pass == 1 && context_ptr->mpbd_ctrls.use_2nd_pass) {
+        return 0;
+    }
+#endif
     const BlockGeom *blk_geom = context_ptr->blk_geom;
 
     // Apply mode offset based on NSQ stats
@@ -16595,7 +16601,11 @@ EbBool shape_is_best_n(Part nsq_shape_table[NUMBER_OF_SHAPES], Part shape, uint8
 }
 #endif
 // Update d2 data, including d2 decision
+#if ADD_SHAPE_REFINEMENT
+void update_d2_decision(PictureControlSet *pcs_ptr,
+#else
 void update_d2_decision(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+#endif
                         ModeDecisionContext *context_ptr,
                         SuperBlock *sb_ptr, uint32_t sb_addr,
 #if ADD_SHAPE_REFINEMENT
@@ -16668,17 +16678,30 @@ void process_cu(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
         blk_idx_mds);
 
     // Reset settings, in case they were over-written by previous block
-    signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, 0);
-    signal_derivation_block(pcs_ptr, context_ptr, 0);
+#if ADD_FIRST_PASS_MODE_OFFSET
+    if (context_ptr->block_pass == 1 && context_ptr->mpbd_ctrls.use_2nd_pass) {
+        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, context_ptr->mpbd_ctrls.first_pass_mode_offset);
+        signal_derivation_block(pcs_ptr, context_ptr, context_ptr->mpbd_ctrls.first_pass_mode_offset);
+#if SHUT_NSQ_FEATURES_1ST_PASS
+        *md_early_exit_nsq = 0;
+        *md_early_exit_sq = 0;
+#endif
+    }
+    else {
+#endif
+        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, 0);
+        signal_derivation_block(pcs_ptr, context_ptr, 0);
 
-    // Check current depth cost; if larger than parent, exit early
-    check_curr_to_parent_cost(scs_ptr,
-        pcs_ptr,
-        context_ptr,
-        sb_addr,
-        next_non_skip_blk_idx_mds,
-        md_early_exit_sq);
-
+        // Check current depth cost; if larger than parent, exit early
+        check_curr_to_parent_cost(scs_ptr,
+            pcs_ptr,
+            context_ptr,
+            sb_addr,
+            next_non_skip_blk_idx_mds,
+            md_early_exit_sq);
+#if ADD_FIRST_PASS_MODE_OFFSET
+    }
+#endif
     // encode the current block only if it's not redundant
     if (!update_redundant(context_ptr)) {
 
@@ -16972,6 +16995,25 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             if (parent_blk_idx != leaf_data_array[blk_index].mds_idx)
                 continue;
 
+#if ADD_SHAPE_REFINEMENT
+            if (context_ptr->pd_pass == PD_PASS_0) {
+                context_ptr->mpbd_ctrls.use_1st_pass = 0;
+                context_ptr->mpbd_ctrls.use_2nd_pass = 1;
+                context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
+                context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = NUMBER_OF_SHAPES;
+            }
+            else {
+                context_ptr->mpbd_ctrls.use_1st_pass = 1;
+                context_ptr->mpbd_ctrls.use_2nd_pass = 1;
+#if ADD_FIRST_PASS_MODE_OFFSET
+                context_ptr->mpbd_ctrls.first_pass_mode_offset = 4;
+                context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 4;// NUMBER_OF_SHAPES;
+#else
+                context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
+                context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 1;// NUMBER_OF_SHAPES;
+#endif
+            }
+#endif
 #if ADD_SECOND_BLOCK_PASS
             uint32_t starting_leaf_blk = blk_index;
             EbBool starting_md_early_exit_sq = md_early_exit_sq;
@@ -16983,6 +17025,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #endif
 #if ADD_SHAPE_REFINEMENT
             if (context_ptr->mpbd_ctrls.use_1st_pass) {
+                context_ptr->block_pass = 1;
 #endif
                 // iterate over all blocks within the parent's d1 dimension
                 for (uint32_t d1_blk_idx = parent_blk_idx;
@@ -17089,6 +17132,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             }
 
             if (context_ptr->mpbd_ctrls.use_2nd_pass) {
+                context_ptr->block_pass = 2;
 #endif
 #if ADD_SECOND_BLOCK_PASS
 #if ADD_SHAPE_REFINEMENT
@@ -17177,8 +17221,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             }
 #endif
             // perform d2 decision on final d1 pass
+#if ADD_SHAPE_REFINEMENT
+            update_d2_decision(pcs_ptr,
+#else
             update_d2_decision(scs_ptr,
                                pcs_ptr,
+#endif
                                context_ptr,
                                sb_ptr,
                                sb_addr,

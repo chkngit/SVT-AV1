@@ -1074,6 +1074,7 @@ typedef struct ModeDecisionContext {
 #endif
 #if ADD_SHAPE_REFINEMENT
     MpbdCtrls mpbd_ctrls;
+    uint8_t block_pass;
 #endif
 } ModeDecisionContext;
 #if USE_GF_UPDATE_FOR_LAMBDA
