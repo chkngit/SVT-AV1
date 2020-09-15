@@ -5000,7 +5000,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t cost_th = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
         context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16) ?
         cost_th_1 :
-        cost_th_1 ; 
+        cost_th_2;
     if (is_inter)
         if (tx_type != DCT_DCT && best_dist_tx_search < cost_th)
             break; 
