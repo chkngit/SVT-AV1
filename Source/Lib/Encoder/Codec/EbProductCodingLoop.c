@@ -4667,9 +4667,12 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         uint64_t best_cost_txt_group = (uint64_t)~0;
 #endif
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES; ++tx_type_idx) {
+#if DCT_VS_DST
+            tx_type = (tx_type_tot_group > 2) ? tx_type_group_1[tx_type_group_idx][tx_type_idx]: tx_type_group_0[tx_type_group_idx][tx_type_idx];
+#else
             tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
-
-            if (tx_type_group[tx_type_group_idx][tx_type_idx] == INVALID_TX_TYPE)
+#endif
+            if (tx_type == INVALID_TX_TYPE)
                 break;
 
             if (only_dct_dct && tx_type != DCT_DCT)
@@ -4938,7 +4941,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if DCT_VS_DST
     best_cost_txt_group_array[tx_type_group_idx] = best_cost_txt_group;
 
-    if (tx_type_group_idx == 1 && best_cost_txt_group != (uint64_t)~0) {
+    if (tx_type_tot_group > 2 && tx_type_group_idx == 1 && best_cost_txt_group != (uint64_t)~0) {
         // If DST_DST cost < than DCT_DCT cost, then skip H_DCT and V_DCT
         int64_t cur_to_pre_group_dev =
             (int64_t)(((int64_t)MAX(best_cost_txt_group_array[0], 1) - (int64_t)MAX(best_cost_txt_group_array[1], 1)) * 100) /
@@ -5006,7 +5009,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         uint64_t cost_th = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
             context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16) ?
             cost_th_1 :
-            cost_th_4;
+            cost_th_3;
 
         if (tx_type != DCT_DCT && best_dist_tx_search < cost_th)
             break;
