@@ -4622,8 +4622,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
+#if DCT_VS_DST
+    uint64_t best_cost_txt_group_array[MAX_TX_TYPE_GROUP] = { (uint64_t)~0 };
+#endif
     for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->md_staging_txt_level; ++tx_type_group_idx) {
-#if PREVIOUS_GROUP_EXIT
+#if PREVIOUS_GROUP_EXIT || DCT_VS_DST
         uint64_t best_cost_txt_group = (uint64_t)~0;
 #endif
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES; ++tx_type_idx) {
@@ -4905,12 +4908,22 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             best_dist_tx_search = txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL];
 #endif
         }
-#if PREVIOUS_GROUP_EXIT
+#if PREVIOUS_GROUP_EXIT || DCT_VS_DST
         if (cost < best_cost_txt_group) {
             best_cost_txt_group = cost;
         }
 #endif
     }
+#if DCT_VS_DST
+    best_cost_txt_group_array[tx_type_group_idx] = best_cost_txt_group;
+
+    if (tx_type_group_idx == 1 && best_cost_txt_group != (uint64_t)~0) {
+        // If DST_DST cost < than DCT_DCT cost, then skip H_DCT and V_DCT
+        if (best_cost_txt_group_array[1] < best_cost_txt_group_array[0]) {
+            tx_type_group_idx = 2;
+        }
+    }
+#endif
 #if PREVIOUS_GROUP_EXIT
     if(pcs_ptr->slice_type != I_SLICE)
     if (best_cost_txt_group != (uint64_t)~0 && tx_type_group_idx >= 1 && context_ptr->md_staging_txt_level > 1) {
