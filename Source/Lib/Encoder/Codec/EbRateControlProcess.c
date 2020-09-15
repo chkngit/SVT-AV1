@@ -6334,7 +6334,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
 #if TPL_TUNING
-        if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
+        if (pcs_ptr->parent_pcs_ptr->slice_type != 2 && pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
    //     int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 #else
@@ -6414,7 +6414,7 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
             q_adj_factor -= 0.15;
         // Make a further adjustment based on the kf zero motion measure.
 #if TPL_TUNING
-        q_adj_factor += 0.05 - (0.001 * (double)twopass->kf_zeromotion_pct);
+      //  q_adj_factor += 0.05 - (0.001 * (double)twopass->kf_zeromotion_pct);
 #else
         q_adj_factor +=
             0.05 - (0.001 * (double)MAX(twopass->kf_zeromotion_pct, pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct));

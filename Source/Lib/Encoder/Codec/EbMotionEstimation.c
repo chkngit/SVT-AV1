@@ -3207,7 +3207,11 @@ EbErrorType motion_estimate_sb(
 #if !INL_ME
             if (context_ptr->me_alt_ref == EB_FALSE)
 #else
+#if INL_ME_FIX            
+            if (context_ptr->me_type != ME_MCTF)
+#else
             if(context_ptr->me_type != ME_MCTF && context_ptr->me_type != ME_TPL)
+#endif
 #endif
                 pcs_ptr->pa_me_data->me_results[sb_index]->do_comp[li][ri] = 1;
             context_ptr->hme_results[li][ri].list_i   = li;
