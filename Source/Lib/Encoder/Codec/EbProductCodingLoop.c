@@ -4947,7 +4947,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             (int64_t)(((int64_t)MAX(best_cost_txt_group_array[0], 1) - (int64_t)MAX(best_cost_txt_group_array[1], 1)) * 100) /
             (int64_t)(MAX(best_cost_txt_group_array[1], 1));
 
-        if (cur_to_pre_group_dev > 25)
+        if (cur_to_pre_group_dev > 5)
             tx_type_group_idx = 2;
         
     }
