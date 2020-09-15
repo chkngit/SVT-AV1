@@ -60,6 +60,7 @@ extern "C" {
 #if INL_ME_DBG
 #define INL_ME_ON_INPUT_DBG 1 //ME on original debug
 #define INL_GM_ON_INPUT_DBG 1 //GM on original debug
+#define INL_TPL_ME_ON_INPUT_DBG 0 //TPL on original debug
 #endif
 #endif
 

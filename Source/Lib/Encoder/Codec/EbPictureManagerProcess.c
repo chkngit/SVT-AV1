@@ -331,6 +331,15 @@ static uint8_t tpl_setup_me_refs(
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->ds_pics;
                     //printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
                     *ref_count_ptr += 1;
+#if INL_TPL_ME_ON_INPUT_DBG
+                    printf("\t Debug purpose, use input pic\n");
+                    pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_ptr =
+                        ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->input_picture;
+                    pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].sixteenth_picture_ptr =
+                        ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->sixteenth_input_picture;
+                    pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].quarter_picture_ptr =
+                        ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->quarter_input_picture;
+#endif
                 } else {
                     //printf("\t L%d: %ld=>%ld, doesn't exist, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
                 }
