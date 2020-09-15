@@ -4574,6 +4574,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if COST_BASED_TXT
     uint64_t best_dist_tx_search = (uint64_t)~0;
 #endif
+#if VAR_COST_BASED_TXT // err
+    uint64_t besterr = (uint64_t)~0;
+#endif
     int32_t  tx_type;
     const TxSetType tx_set_type = get_ext_tx_set_type(
         tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
@@ -4637,10 +4640,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
             if (only_dct_dct && tx_type != DCT_DCT)
                 continue;
-#if COST_BASED_TXT
+#if VAR_COST_BASED_TXT // err
             unsigned int sse = 0;
             const AomVarianceFnPtr *vfp = &mefn_ptr[context_ptr->blk_geom->bsize];
-            unsigned int besterr;
+            unsigned int err = 0;
 #endif
 #else
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
@@ -4823,16 +4826,16 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 cropped_tx_height);
         txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] <<= 4;
         txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] <<= 4;
-#if COST_BASED_TXT
+#if VAR_COST_BASED_TXT // err
         
-        besterr = vfp->vf(
+        err = vfp->vf(
             &input_picture_ptr->buffer_y[input_txb_origin_index],
             input_picture_ptr->stride_y, 
             &recon_ptr->buffer_y[txb_origin_index], 
             candidate_buffer->recon_ptr->stride_y, &sse);
 
 
-        printf("%d\t%d\n", besterr, sse);
+        //printf("%d\t%d\n", besterr, sse);
 #endif
         } else {
             // LUMA DISTORTION
@@ -4906,6 +4909,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             best_tx_type        = tx_type;
 #if COST_BASED_TXT
             best_dist_tx_search = txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL];
+#if VAR_COST_BASED_TXT // err
+            besterr = (uint64_t)err;
+#endif
 #endif
         }
 #if PREVIOUS_GROUP_EXIT || DCT_VS_DST
@@ -4960,7 +4966,16 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             break; 
 #endif
 
-
+#if VAR_COST_BASED_TXT // err
+    if (tx_type_group_idx) {
+        uint64_t cost_th_0 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 8);
+        uint64_t cost_th_1 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 4);
+        uint64_t cost_th_2 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 2);
+        if (!is_inter)
+            if (tx_type != DCT_DCT && besterr < cost_th_0)
+                break;
+    }
+#endif
 #endif
 #if TX_TYPE_GROUPING
     }
