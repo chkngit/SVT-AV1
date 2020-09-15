@@ -4639,12 +4639,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 ? MAX_TX_TYPE_GROUP
                 : 2;
 #endif
-#if 1
-            //TEST4
+#if 0
+            //TEST30
             tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                 ? MAX_TX_TYPE_GROUP
                 : MAX_TX_TYPE_GROUP;
+#endif
+#if 1 //-->
+            tx_type_tot_group = 4;
 #endif
         }
         else {
