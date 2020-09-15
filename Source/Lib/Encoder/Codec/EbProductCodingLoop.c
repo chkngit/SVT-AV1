@@ -4571,6 +4571,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     TxType   txk_end             = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
 #endif
     uint64_t best_cost_tx_search = (uint64_t)~0;
+#if COST_BASED_TXT
+    uint64_t best_dist_tx_search = (uint64_t)~0;
+#endif
     int32_t  tx_type;
     const TxSetType tx_set_type = get_ext_tx_set_type(
         tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
@@ -4882,6 +4885,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (cost < best_cost_tx_search) {
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
+#if COST_BASED_TXT
+            best_dist_tx_search = txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL];
+#endif
         }
 #if PREVIOUS_GROUP_EXIT
         if (cost < best_cost_txt_group) {
@@ -4908,7 +4914,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
 
     if (!is_inter)
-    if (tx_type != DCT_DCT/* && best_cost_tx_search < cost_th_2*/)
+    if (tx_type != DCT_DCT && best_dist_tx_search < cost_th_0)
         break;
 #endif
 
