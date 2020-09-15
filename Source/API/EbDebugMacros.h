@@ -63,7 +63,7 @@ extern "C" {
 #define REMOVE_TXT_STATS 1
 #define TX_TYPE_GROUPING 1
 
-#define COST_BASED_TXT 0
+#define COST_BASED_TXT 1
 #define VAR_COST_BASED_TXT 0
 #define PREVIOUS_GROUP_EXIT 0
 #define DCT_VS_DST 0 // to test for only INTRA CLASS
