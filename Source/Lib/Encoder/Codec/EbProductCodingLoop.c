@@ -4961,7 +4961,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     // TXT_OFF_IF_INTER_TX_BELOW_16
     //if (is_inter)
     // TXT_OFF_IF_INTRA_TX_BELOW_16
-    if (!is_inter)
+    //if (!is_inter)
     if (tx_type != DCT_DCT && 
         (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 || 
         context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] <  16))
