@@ -4624,10 +4624,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if TX_TYPE_GROUPING
     int tx_type_tot_group = 1;
     if (context_ptr->md_staging_txt_level) {
-        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3)
+        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
             tx_type_tot_group = MAX_TX_TYPE_GROUP;
-        else
-            tx_type_tot_group = 2;
+        }
+        else {
+            tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr]  < 16 ||
+                                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16 )
+                ? 3 
+                : 2; 
+        }
     }
 
 #if DCT_VS_DST
