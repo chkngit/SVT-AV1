@@ -4527,13 +4527,13 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
 }
 #endif
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                    ModeDecisionCandidateBuffer *candidate_buffer,
+    ModeDecisionCandidateBuffer *candidate_buffer,
 #if TX_TYPE_GROUPING
-        uint32_t qindex, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+    uint32_t qindex, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
 #else
-        uint32_t qindex, uint8_t tx_search_skip_flag ,uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+    uint32_t qindex, uint8_t tx_search_skip_flag, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
 #endif
-        uint64_t *y_full_distortion) {
+    uint64_t *y_full_distortion) {
     EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
         ? pcs_ptr->input_frame16bit
         : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -4543,15 +4543,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
     int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
         ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
-              .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
+        .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
         : 0;
 
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
-    TxSize   tx_size  = context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr];
+    TxSize   tx_size = context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr];
     int32_t  is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
-                        candidate_buffer->candidate_ptr->use_intrabc)
+        candidate_buffer->candidate_ptr->use_intrabc)
         ? EB_TRUE
         : EB_FALSE;
 
@@ -4560,15 +4560,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
     // Tunr OFF TXT search for disallowed cases
     // Do not turn ON TXT search beyond this point
-    if (get_ext_tx_types(tx_size,is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
+    if (get_ext_tx_types(tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set) == 1)
 #if TX_TYPE_GROUPING
         only_dct_dct = 1;
 #else
-            tx_search_skip_flag =1 ;
+        tx_search_skip_flag = 1;
 #endif
 #if !TX_TYPE_GROUPING
-    TxType   txk_start           = DCT_DCT;
-    TxType   txk_end             = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
+    TxType   txk_start = DCT_DCT;
+    TxType   txk_end = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
 #endif
     uint64_t best_cost_tx_search = (uint64_t)~0;
 #if COST_BASED_TXT
@@ -4581,15 +4581,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     const TxSetType tx_set_type = get_ext_tx_set_type(
         tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
     uint16_t txb_origin_x =
-            context_ptr->blk_geom->tx_org_x[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
+        context_ptr->blk_geom->tx_org_x[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
     uint16_t txb_origin_y =
-            context_ptr->blk_geom->tx_org_y[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
+        context_ptr->blk_geom->tx_org_y[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
     uint32_t txb_origin_index = txb_origin_x +
         (txb_origin_y * candidate_buffer->residual_ptr->stride_y);
     uint32_t input_txb_origin_index = (context_ptr->sb_origin_x + txb_origin_x +
-                                       input_picture_ptr->origin_x) +
+        input_picture_ptr->origin_x) +
         ((context_ptr->sb_origin_y + txb_origin_y + input_picture_ptr->origin_y) *
-         input_picture_ptr->stride_y);
+            input_picture_ptr->stride_y);
     int32_t cropped_tx_width =
         MIN(context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
             pcs_ptr->parent_pcs_ptr->aligned_width - (context_ptr->sb_origin_x + txb_origin_x));
@@ -4598,19 +4598,19 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             pcs_ptr->parent_pcs_ptr->aligned_height - (context_ptr->sb_origin_y + txb_origin_y));
 
     context_ptr->luma_txb_skip_context = 0;
-    context_ptr->luma_dc_sign_context  = 0;
+    context_ptr->luma_dc_sign_context = 0;
 #if PD0_SHUT_SKIP_DC_SIGN_UPDATE
     if (!context_ptr->shut_skip_ctx_dc_sign_update)
 #endif
-    get_txb_ctx(pcs_ptr,
-                COMPONENT_LUMA,
-                context_ptr->full_loop_luma_dc_sign_level_coeff_neighbor_array,
-                context_ptr->sb_origin_x + txb_origin_x,
-                context_ptr->sb_origin_y + txb_origin_y,
-                context_ptr->blk_geom->bsize,
-                context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
-                &context_ptr->luma_txb_skip_context,
-                &context_ptr->luma_dc_sign_context);
+        get_txb_ctx(pcs_ptr,
+            COMPONENT_LUMA,
+            context_ptr->full_loop_luma_dc_sign_level_coeff_neighbor_array,
+            context_ptr->sb_origin_x + txb_origin_x,
+            context_ptr->sb_origin_y + txb_origin_y,
+            context_ptr->blk_geom->bsize,
+            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+            &context_ptr->luma_txb_skip_context,
+            &context_ptr->luma_dc_sign_context);
     TxType best_tx_type = DCT_DCT;
 #if !TX_TYPE_GROUPING
     uint8_t default_md_staging_skip_rdoq = context_ptr->md_staging_skip_rdoq;
@@ -4620,15 +4620,23 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
     // local variables for all TX types
     uint16_t eob_txt[TX_TYPES] = { 0 };
-    int32_t  quantized_dc_txt[TX_TYPES]= { 0 };
-    uint32_t y_count_non_zero_coeffs_txt[TX_TYPES]= { 0 };
-    uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
+    int32_t  quantized_dc_txt[TX_TYPES] = { 0 };
+    uint32_t y_count_non_zero_coeffs_txt[TX_TYPES] = { 0 };
+    uint64_t y_txb_coeff_bits_txt[TX_TYPES] = { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
+    int tx_type_tot_group = 1;
+    if (context_ptr->md_staging_txt_level) {
+        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3)
+            tx_type_tot_group = MAX_TX_TYPE_GROUP;
+        else
+            tx_type_tot_group = 2;
+    }
+
 #if DCT_VS_DST
     uint64_t best_cost_txt_group_array[MAX_TX_TYPE_GROUP] = { (uint64_t)~0 };
 #endif
-    for (int tx_type_group_idx = 0; tx_type_group_idx <= context_ptr->md_staging_txt_level; ++tx_type_group_idx) {
+    for (int tx_type_group_idx = 0; tx_type_group_idx < tx_type_tot_group; ++tx_type_group_idx) {
 #if PREVIOUS_GROUP_EXIT || DCT_VS_DST
         uint64_t best_cost_txt_group = (uint64_t)~0;
 #endif
@@ -6603,9 +6611,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
         context_ptr->md_staging_tx_size_mode = 0;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
-            ? context_ptr->md_txt_level_intra
-            : context_ptr->md_txt_level_inter;
+        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
@@ -6760,9 +6766,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3 ) 
-            ? context_ptr->md_txt_level_intra 
-            : context_ptr->md_txt_level_inter ;
+        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif

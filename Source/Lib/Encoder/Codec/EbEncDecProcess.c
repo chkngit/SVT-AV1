@@ -2256,23 +2256,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
 #if TX_TYPE_GROUPING
-    if (pd_pass == PD_PASS_0) {
-        context_ptr->md_txt_level_intra = 0;
-        context_ptr->md_txt_level_inter = 0;
-    }
-    else if (pd_pass == PD_PASS_1) {
-        context_ptr->md_txt_level_intra = 0;
-        context_ptr->md_txt_level_inter = 0;
-    }
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_txt_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_txt_level = 0;
     else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
-            context_ptr->md_txt_level_intra = 5;
-            context_ptr->md_txt_level_inter = 5;
-        }
-        else {
-            context_ptr->md_txt_level_intra = 5;
-            context_ptr->md_txt_level_inter = 1;
-        }
+        context_ptr->md_txt_level = 1;
 #else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only

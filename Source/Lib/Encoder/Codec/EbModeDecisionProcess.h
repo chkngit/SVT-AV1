@@ -487,8 +487,7 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
 #if TX_TYPE_GROUPING
-    uint8_t      md_txt_level_intra;
-    uint8_t      md_txt_level_inter;
+    uint8_t      md_txt_level;
 #else
     uint8_t      tx_search_level;
 #endif
