@@ -4958,14 +4958,26 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
 
 #if TXT_OFF // dist
-    // TXT_OFF_IF_INTER_TX_BELOW_16
+#if 0
+    //TXT_OFF_IF_INTER_TX_BELOW_16
     //if (is_inter)
-    // TXT_OFF_IF_INTRA_TX_BELOW_16
+    //TXT_OFF_IF_INTRA_TX_BELOW_16
     //if (!is_inter)
     if (tx_type != DCT_DCT && 
         (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 || 
         context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] <  16))
         break;
+#endif
+
+    //TXT_OFF_IF_INTER_TX_16_ABOVE
+    //if (is_inter)
+    //TXT_OFF_IF_INTRA_TX_16_ABOVE
+    //if (!is_inter)
+    if (tx_type != DCT_DCT &&
+        (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >= 16 &&
+            context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >= 16))
+        break;
+
 #else
     uint64_t cost_th_0 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 8);
     uint64_t cost_th_1 = RDCOST(full_lambda, 16, (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / 4);
