@@ -2487,7 +2487,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
     }
     else
-#if MDS2_V0
+#if FEATURE_MDS2
         if (enc_mode <= ENC_M1)
             context_ptr->md_staging_mode = MD_STAGING_MODE_2;
         else
@@ -2584,7 +2584,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_1_class_prune_th = 100;
 
-#if MDS2_V0
+#if FEATURE_MDS2
    // md_stage_2_cand_prune_th (for single candidate removal per class)
    // Remove candidate if deviation to the best is higher than
    // md_stage_2_cand_prune_th
@@ -2804,7 +2804,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0 OFF - Use TXS for intra candidates only
     // 1 ON  - Use TXS for all candidates
     // 2 ON  - INTER TXS restricted to max 1 depth
-#if MDS2_V0 //-----
+#if FEATURE_MDS2 //-----
     if (enc_mode <= ENC_MRS)
         context_ptr->md_staging_tx_size_level = 1;
     else if (enc_mode <= ENC_M0)

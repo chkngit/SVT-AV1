@@ -452,7 +452,7 @@ typedef struct ModeDecisionContext {
     uint32_t *   ref_best_ref_sq_table;
     uint64_t     md_stage_1_cand_prune_th;
     uint64_t     md_stage_1_class_prune_th;
-#if MDS2_V0
+#if FEATURE_MDS2
     uint64_t     md_stage_2_cand_prune_th;
     uint64_t     md_stage_2_class_prune_th;
     uint64_t     md_stage_3_cand_prune_th;
@@ -545,7 +545,7 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_end_x;
     int16_t sprs_lev0_start_y;
     int16_t sprs_lev0_end_y;
-#if MDS2_V0
+#if FEATURE_MDS2
     uint8_t md_staging_tx_size_level;
 #else
     uint8_t txs_in_inter_classes;
