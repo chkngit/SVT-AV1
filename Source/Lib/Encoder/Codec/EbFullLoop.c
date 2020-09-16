@@ -1174,6 +1174,10 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
     int zbin[2] = {dequant_ptr[0] + ROUND_POWER_OF_TWO(dequant_ptr[0] * 70, 7),
                    dequant_ptr[1] + ROUND_POWER_OF_TWO(dequant_ptr[1] * 70, 7)};
     for (int i = *eob - 1; i >= 0; i--) {
+#if FAST_RDOQ_EOB
+        if (i <= 0)
+            break;
+#endif
         const int rc         = scan[i];
         const int qcoeff     = qcoeff_ptr[rc];
         const int coeff      = coeff_ptr[rc];
@@ -1204,7 +1208,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
-#if FAST_RDOQ_INTER
+#if FAST_RDOQ_EOB
+    fast_mode = 1;
+#elif FAST_RDOQ_INTER
     fast_mode = is_inter;
 #elif FAST_RDOQ
     fast_mode = 1;
