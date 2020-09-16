@@ -1224,7 +1224,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
 
 
 #if FAST_RDOQ_EOB
-    fast_mode = (*eob > ((width * height) /2));
+    fast_mode = (*eob > ((width * height * 3) /4));
+    if (fast_mode)
+        printf("");
 #endif
     assert(width == (1 << bwl));
     assert(txs_ctx < TX_SIZES);
