@@ -1506,7 +1506,9 @@ int32_t av1_quantize_inv_quantize(
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
-#if SHUT_FP_QUANT_TX_TYPE
+#if SHUT_FP_QUANT_TX_SIZE
+    if (perform_rdoq && width >= 16 && height >= 16) {
+#elif SHUT_FP_QUANT_TX_TYPE
 
         //DCT_DCT, // DCT  in both horizontal and vertical
         //ADST_DCT, // ADST in vertical, DCT in horizontal
