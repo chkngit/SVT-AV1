@@ -1204,7 +1204,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
-#if FAST_RDOQ
+#if FAST_RDOQ_INTER
+    fast_mode = is_inter;
+#elif FAST_RDOQ
     fast_mode = 1;
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
