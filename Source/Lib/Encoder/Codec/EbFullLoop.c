@@ -1175,7 +1175,8 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
                    dequant_ptr[1] + ROUND_POWER_OF_TWO(dequant_ptr[1] * 70, 7)};
 
 #if FAST_RDOQ_EOB 
-    for (int i = *eob - 1; i > 0; i--) {
+    int end_idx = coeff_ptr[scan[0]] ? 1 : 0;
+    for (int i = *eob - 1; i > end_idx; i--) {
 #else
     for (int i = *eob - 1; i >= 0; i--) {
 #endif
