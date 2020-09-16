@@ -65,6 +65,7 @@ extern "C" {
 #if !IME_REUSE_TPL_RESULT
 #define SIGNAL_TPL_ME_OQ 1 // A separate signal_xxx_oq for TPL ME
 #endif
+#define INL_TPL_ENHANCEMENT 1 // Create TPL related structure, instead using pcs directly
 #endif
 
 #define IN_LOOP_TPL 1

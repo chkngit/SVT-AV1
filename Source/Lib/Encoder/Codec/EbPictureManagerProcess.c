@@ -254,19 +254,24 @@ static uint8_t tpl_setup_me_refs(
                                       curr_poc + tpl_base_minigop - base_poc;
     uint32_t pred_struct_idx = curr_minigop_entry_idx + init_idx;
 
+#if !INL_TPL_ENHANCEMENT
     // 17/18/19, which is out side of the minigop //anaghdin to check
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
+#endif
 
     // Get the ref entry point of trailing frames, not good here
     if (*trailing_frames && pred_struct_idx + tpl_base_minigop < base_pred_struct_ptr->pred_struct_entry_count)
         pred_struct_idx += tpl_base_minigop;
 
+    PredictionStructureEntry *frame_pred_entry = base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx];
+#if !INL_TPL_ENHANCEMENT
     EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[REF_LIST_0],
             0,
             REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
     EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[REF_LIST_1],
             0,
             REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+#endif
 
     uint8_t ref_list_count = 0;
     for (uint8_t list_index = REF_LIST_0; list_index <= REF_LIST_1; list_index++) {
@@ -274,11 +279,11 @@ static uint8_t tpl_setup_me_refs(
 
         if (*trailing_frames) {
             ref_list_count = (list_index == REF_LIST_0) ?
-                base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list0.reference_list_count :
+                frame_pred_entry->ref_list0.reference_list_count :
 #if TPL_ZERO_LAD
-                0;
+                0; //Jing: why remove ref1? for poc17, it should refer to poc18 in L1
 #else
-                base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list1.reference_list_count;
+                frame_pred_entry->ref_list1.reference_list_count;
 #endif
             ref_list_count = MIN(ref_list_count, 2); //Jing: limit to 2 refs for trailing frames
         } else {
@@ -290,22 +295,34 @@ static uint8_t tpl_setup_me_refs(
         for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
             EbBool ref_in_slide_window = EB_FALSE;
 #if IN_LOOP_TPL
+#if INL_TPL_ENHANCEMENT
+            pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_FALSE;
+#else
             pcs_tpl_group_frame_ptr->ref_in_slide_window[list_index][*ref_count_ptr] = EB_FALSE;
+#endif
 #endif
             uint64_t ref_poc = pcs_tpl_group_frame_ptr->ref_pic_poc_array[list_index][ref_idx];
             if (*trailing_frames) {
                 int delta_poc = (list_index == REF_LIST_0) ?
-                    base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list0.reference_list[ref_idx] :
-                    base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx]->ref_list1.reference_list[ref_idx];
+                    frame_pred_entry->ref_list0.reference_list[ref_idx] :
+                    frame_pred_entry->ref_list1.reference_list[ref_idx];
                 ref_poc = pcs_tpl_group_frame_ptr->picture_number - delta_poc;
             }
 
             for (uint32_t j = 0; j < pcs_tpl_base_ptr->tpl_group_size; j++) {
                 if (ref_poc == pcs_tpl_base_ptr->tpl_group[j]->picture_number) {
+#if INL_TPL_ENHANCEMENT
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] = pcs_tpl_base_ptr->tpl_group[j]->ds_pics;
+#else
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] = pcs_tpl_base_ptr->tpl_group[j]->ds_pics;
+#endif
                     ref_in_slide_window = EB_TRUE;
 #if IN_LOOP_TPL
+#if INL_TPL_ENHANCEMENT
+                    pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_TRUE;
+#else
                     pcs_tpl_group_frame_ptr->ref_in_slide_window[list_index][*ref_count_ptr] = EB_TRUE;
+#endif
 #endif
                     *ref_count_ptr += 1;
                     //printf("\t L%d: %ld=>%ld, use input, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
@@ -316,7 +333,11 @@ static uint8_t tpl_setup_me_refs(
             if (list_index == REF_LIST_1 && ref_in_slide_window) {
                 // Remove duplicate refs from list1 which is already in list0
                 for (uint8_t i=0; i<*ref0_count; i++) {
+#if INL_TPL_ENHANCEMENT
+                    if (pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[0][i].picture_number == ref_poc) {
+#else
                     if (pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[0][i].picture_number == ref_poc) {
+#endif
                         *ref_count_ptr -= 1;
                         break;
                     }
@@ -327,7 +348,11 @@ static uint8_t tpl_setup_me_refs(
             if (!ref_in_slide_window) {
                 ReferenceQueueEntry* ref_entry_ptr = search_ref_in_ref_queue(scs_ptr->encode_context_ptr, ref_poc);
                 if (ref_entry_ptr && ref_entry_ptr->reference_available) {
+#if INL_TPL_ENHANCEMENT
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
+#else
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
+#endif
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->ds_pics;
                     //printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
                     *ref_count_ptr += 1;
@@ -348,27 +373,95 @@ static uint8_t tpl_setup_me_refs(
     }
 
 #if IN_LOOP_TPL
+#if INL_TPL_ENHANCEMENT
+    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = *ref0_count;
+    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref1_count = *ref1_count;
+
+    // Get the temporal layer index here
+    if (*trailing_frames) {
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_temporal_layer_index =
+            frame_pred_entry->temporal_layer_index;
+        pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag =
+            frame_pred_entry->is_referenced;
+
+        //decode order not accurate enough when at the end of bitstream where minigop switch happens
+        //and there's no way to detect the accurate dependancy/ref and decode order without caching a lot of frames,
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order =
+            pcs_tpl_base_ptr->picture_number + frame_pred_entry->decode_order + 1;
+    }
+#else
     pcs_tpl_group_frame_ptr->tpl_ref0_count = *ref0_count;
     pcs_tpl_group_frame_ptr->tpl_ref1_count = *ref1_count;
 #endif
+#endif
+#if !INL_TPL_ENHANCEMENT
 #if TPL_ZERO_LAD
     if (*trailing_frames)
         pcs_tpl_group_frame_ptr->max_number_of_pus_per_sb = pcs_tpl_base_ptr->max_number_of_pus_per_sb;
+#endif
 #endif
 #if INL_TPL_ME_DBG
     for (int i = REF_LIST_0; i <= REF_LIST_1; i++) {
         int ref_count = (i == 0) ? *ref0_count: *ref1_count;
         for (int j = 0; j < ref_count; j++) {
-            printf("\t\t Set ref on list: %d, total count %d: %ld => %ld\n",
+            printf("\t\t Set ref on list: %d, total count %d: %lu => %lu, decode order %lu\n",
                     i, ref_count,
                     pcs_tpl_group_frame_ptr->picture_number,
-                    pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[i][j].picture_number);
+#if INL_TPL_ENHANCEMENT
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[i][j].picture_number,
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order);
+#else
+                    pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[i][j].picture_number,
+                    pcs_tpl_group_frame_ptr->decode_order);
+#endif
         }
     }
 
 #endif
     return 0;
 }
+
+#if INL_TPL_ENHANCEMENT
+static EbErrorType tpl_init_pcs_tpl_data(
+    SequenceControlSet              *scs_ptr,
+    PictureParentControlSet         *pcs_tpl_group_frame_ptr,
+    PictureParentControlSet         *pcs_tpl_base_ptr,
+    EbBool                          *trailing_frames) {
+    uint64_t curr_poc = pcs_tpl_group_frame_ptr->picture_number;
+    uint64_t base_poc = pcs_tpl_base_ptr->picture_number;
+
+    // 17/18/19, which is out side of the minigop //anaghdin to check
+    *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
+
+    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = 0;
+    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref1_count = 0;
+    EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window,
+        0,
+        MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH * sizeof(EbBool));
+    EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_0],
+            0,
+            REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+    EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_1],
+            0,
+            REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+    if (*trailing_frames) {
+        // If trailing frames, set as B slice and layer1 first, will update later when getting the refs
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type = B_SLICE;
+
+        // These will be updated in function tpl_setup_me_refs()
+        //pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag = EB_FALSE;
+        //pcs_tpl_group_frame_ptr->tpl_data.tpl_temporal_layer_index = 1;
+        //pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order = 10;
+    } else {
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type = pcs_tpl_group_frame_ptr->slice_type;
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_temporal_layer_index = pcs_tpl_group_frame_ptr->temporal_layer_index;
+        pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag = pcs_tpl_group_frame_ptr->is_used_as_reference_flag;
+        pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order = pcs_tpl_group_frame_ptr->decode_order;
+    }
+    return 0;
+}
+#endif
+
 static EbErrorType tpl_get_open_loop_me(
     PictureManagerContext           *context_ptr,
     SequenceControlSet              *scs_ptr,
@@ -386,6 +479,13 @@ static EbErrorType tpl_get_open_loop_me(
             uint8_t ref_list0_count = 0;
             uint8_t ref_list1_count = 0;
             EbBool  is_trailing_tpl_frame = EB_FALSE;
+#if INL_TPL_ENHANCEMENT
+            tpl_init_pcs_tpl_data(scs_ptr,
+                pcs_tpl_group_frame_ptr, pcs_tpl_base_ptr,
+                &is_trailing_tpl_frame);
+
+            if (pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type != I_SLICE) {
+#else
 #if TPL_SETUP_REF
             pcs_tpl_group_frame_ptr->tpl_ref0_count = 0;
             pcs_tpl_group_frame_ptr->tpl_ref1_count = 0;
@@ -397,6 +497,7 @@ static EbErrorType tpl_get_open_loop_me(
 #else
             if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE /*&&
                     pcs_tpl_group_frame_ptr != pcs_tpl_base_ptr*/) {
+#endif
 #endif
 #if INL_TPL_ME_DBG
                 printf("[%ld]: Setup TPL ME refs for frame %ld\n",
@@ -535,7 +636,7 @@ void *picture_manager_kernel(void *input_ptr) {
             scs_ptr            = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
-            //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
+            //SVT_LOG("\nPicture Manager Process @ %lu, decode order %lu \n ", pcs_ptr->picture_number, pcs_ptr->decode_order);
                 pred_position_ptr = pcs_ptr->pred_struct_ptr
                                         ->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index];
 

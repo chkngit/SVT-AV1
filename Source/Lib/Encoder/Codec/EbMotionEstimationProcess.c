@@ -1499,7 +1499,11 @@ void *inloop_me_kernel(void *input_ptr) {
                 for (int i = 0; i<= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
                     for (int j=0; j< context_ptr->me_context_ptr->num_of_ref_pic_to_search[i];j++) {
                         context_ptr->me_context_ptr->me_ds_ref_array[i][j] =
+#if INL_TPL_ENHANCEMENT
+                            ppcs_ptr->tpl_data.tpl_ref_ds_ptr_array[i][j];
+#else
                             ppcs_ptr->tpl_ref_ds_ptr_array[i][j];
+#endif
                     }
                 }
 #if IME_REUSE_TPL_RESULT
@@ -1544,8 +1548,10 @@ void *inloop_me_kernel(void *input_ptr) {
                 }
 #if IME_REUSE_TPL_RESULT
                 skip_me = ppcs_ptr->tpl_me_done;
-                if (skip_me)
-                    printf("[%ld]: skip iME\n", ppcs_ptr->picture_number);
+                //if (skip_me)
+                //    printf("[%ld]: skip iME\n", ppcs_ptr->picture_number);
+                //else
+                //    printf("[%ld]: perform iME\n", ppcs_ptr->picture_number);
 #endif
             }
 
