@@ -1525,7 +1525,7 @@ int32_t av1_quantize_inv_quantize(
         //V_FLIPADST,
         //H_FLIPADST,
 
-    if (perform_rdoq && tx_type != ADST_ADST) {
+    if (perform_rdoq && tx_type != ADST_DCT && tx_type != DCT_ADST) {
 #elif SHUT_FP_QUANT_CHROMA    
     if (perform_rdoq && component_type == COMPONENT_LUMA) {
 #elif SHUT_FP_QUANT_INTER
