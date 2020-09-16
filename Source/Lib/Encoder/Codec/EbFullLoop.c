@@ -1212,7 +1212,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
 #if FAST_RDOQ_CHROMA
-    int                    fast_mode = plane;
+    fast_mode = plane;
 #elif FAST_RDOQ_INTER
     fast_mode = is_inter;
 #elif FAST_RDOQ
