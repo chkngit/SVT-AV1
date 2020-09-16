@@ -1507,7 +1507,25 @@ int32_t av1_quantize_inv_quantize(
     perform_rdoq = 0;
 #endif
 #if SHUT_FP_QUANT_TX_TYPE
-    if (perform_rdoq && tx_type != DCT_DCT) {
+
+        //DCT_DCT, // DCT  in both horizontal and vertical
+        //ADST_DCT, // ADST in vertical, DCT in horizontal
+        //DCT_ADST, // DCT  in vertical, ADST in horizontal
+        //ADST_ADST, // ADST in both directions
+        //FLIPADST_DCT,
+        //DCT_FLIPADST,
+        //FLIPADST_FLIPADST,
+        //ADST_FLIPADST,
+        //FLIPADST_ADST,
+        //IDTX,
+        //V_DCT,
+        //H_DCT,
+        //V_ADST,
+        //H_ADST,
+        //V_FLIPADST,
+        //H_FLIPADST,
+
+    if (perform_rdoq && tx_type != ADST_ADST) {
 #elif SHUT_FP_QUANT_CHROMA    
     if (perform_rdoq && component_type == COMPONENT_LUMA) {
 #elif SHUT_FP_QUANT_INTER
