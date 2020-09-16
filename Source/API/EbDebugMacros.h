@@ -81,7 +81,7 @@ extern "C" {
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
 #define FAST_RDOQ_CHROMA 1 //--->
-#define FAST_RDOQ_TH 0
+#define FAST_RDOQ_TH 1
 /************************************/
 #ifdef __cplusplus
 }

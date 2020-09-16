@@ -1182,8 +1182,8 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
         const int coeff_sign = -(coeff < 0);
         int64_t   abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
 #if FAST_RDOQ_TH
-        zbin_th = (zbin[rc != 0] *);
-        if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
+        int zbin_th = (zbin[rc != 0] * 3) / 4;
+        if (((abs_coeff << (1 + shift)) < zbin_th) || (qcoeff == 0)) {
 #else
         if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
 #endif
