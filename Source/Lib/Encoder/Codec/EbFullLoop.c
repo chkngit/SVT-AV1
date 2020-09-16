@@ -1181,7 +1181,12 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
         const int coeff      = coeff_ptr[rc];
         const int coeff_sign = -(coeff < 0);
         int64_t   abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
+#if FAST_RDOQ_TH
+        zbin_th = (zbin[rc != 0] *);
         if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
+#else
+        if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
+#endif
             eob_out--;
             qcoeff_ptr[rc]  = 0;
             dqcoeff_ptr[rc] = 0;
@@ -1206,8 +1211,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
-
-#if FAST_RDOQ_INTER
+#if FAST_RDOQ_CHROMA
+    int                    fast_mode = plane;
+#elif FAST_RDOQ_INTER
     fast_mode = is_inter;
 #elif FAST_RDOQ
     fast_mode = 1;
@@ -1225,8 +1231,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
 
 #if FAST_RDOQ_EOB
     fast_mode = (*eob > ((width * height * 3) /4));
-    if (fast_mode)
-        printf("");
 #endif
     assert(width == (1 << bwl));
     assert(txs_ctx < TX_SIZES);
