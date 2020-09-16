@@ -1506,8 +1506,8 @@ int32_t av1_quantize_inv_quantize(
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
-#if SHUT_FP_QUANT_MDS3
-    if (perform_rdoq && is_encode_pass) {
+#if SHUT_FP_QUANT_TX_TYPE
+    if (perform_rdoq && tx_type != DCT_DCT) {
 #elif SHUT_FP_QUANT_CHROMA    
     if (perform_rdoq && component_type == COMPONENT_LUMA) {
 #elif SHUT_FP_QUANT_INTER
