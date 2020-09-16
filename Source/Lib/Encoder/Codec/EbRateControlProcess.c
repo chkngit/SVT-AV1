@@ -478,6 +478,10 @@ void tpl_mc_flow_dispenser(
                         EbPaReferenceObject * referenceObject = (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
                         ref_pic_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
 #endif
+#if 0//TPL_TUNING
+                        if ((int64_t)pcs_ptr->picture_number - (int64_t)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number > 16)
+                            continue;
+#endif
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
                         uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
@@ -1156,7 +1160,7 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
         generate_r0beta(pcs_array[0]);
 
-#if 1 //AMIR_PRINTS
+#if 0 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
         for (frame_idx = 0; frame_idx < sw_length; frame_idx++)
@@ -6376,11 +6380,16 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
 #if TPL_TUNING
-        if (pcs_ptr->parent_pcs_ptr->slice_type != 2 && pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
-            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
-   //     int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
-#else
+        if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
+            double div_factor = 1;
 
+            if (rc->frames_to_key > (int) pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = 2;
+            else if (rc->frames_to_key <= (int) pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 0.5;
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
+        }
+        SVT_LOG("\nPOC:%d\tframestoKey:%d\tplsize:%d\n", pcs_ptr->parent_pcs_ptr->picture_number, rc->frames_to_key, pcs_ptr->parent_pcs_ptr->tpl_group_size);
 #endif
         rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
                                                   MAX_GFUBOOST_FACTOR,
