@@ -1173,10 +1173,11 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
     int eob_out = *eob;
     int zbin[2] = {dequant_ptr[0] + ROUND_POWER_OF_TWO(dequant_ptr[0] * 70, 7),
                    dequant_ptr[1] + ROUND_POWER_OF_TWO(dequant_ptr[1] * 70, 7)};
+
+#if FAST_RDOQ_EOB 
+    for (int i = *eob - 1; i > 0; i--) {
+#else
     for (int i = *eob - 1; i >= 0; i--) {
-#if FAST_RDOQ_EOB
-        if (i <= 0)
-            break;
 #endif
         const int rc         = scan[i];
         const int qcoeff     = qcoeff_ptr[rc];
