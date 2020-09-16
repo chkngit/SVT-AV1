@@ -69,6 +69,10 @@ extern "C" {
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
+#define SHUT_RDOQ 1 
+#define SHUT_FP_QUANT 0 
+#define FAST_RDOQ 0 
+/************************************/
 #ifdef __cplusplus
 }
 #endif // __cplusplus

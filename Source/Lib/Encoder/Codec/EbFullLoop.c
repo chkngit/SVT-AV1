@@ -1204,6 +1204,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
+#if FAST_RDOQ
+    fast_mode = 1;
+#endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
     const int              shift           = av1_get_tx_scale(tx_size);
@@ -1500,8 +1503,14 @@ int32_t av1_quantize_inv_quantize(
         perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
             md_context->rdoq_level);
     }
-
+#if SHUT_RDOQ
+    perform_rdoq = 0;
+#endif
+#if SHUT_FP_QUANT
+    if(0) {
+#else
     if (perform_rdoq) {
+#endif
         if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                              n_coeffs,
