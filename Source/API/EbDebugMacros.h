@@ -71,7 +71,8 @@ extern "C" {
 /************************************/
 #define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
-#define SHUT_FP_QUANT_INTER 1 
+#define SHUT_FP_QUANT_CHROMA 1
+#define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0 
 #define FAST_RDOQ 0 
 /************************************/

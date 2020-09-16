@@ -1506,7 +1506,9 @@ int32_t av1_quantize_inv_quantize(
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
-#if SHUT_FP_QUANT_INTER
+#if SHUT_FP_QUANT_CHROMA    
+    if (perform_rdoq && component_type == COMPONENT_LUMA) {
+#elif SHUT_FP_QUANT_INTER
     if (perform_rdoq && !is_inter) {
 #elif SHUT_FP_QUANT
     if(0) {
