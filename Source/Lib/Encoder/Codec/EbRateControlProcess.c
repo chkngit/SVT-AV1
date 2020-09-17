@@ -981,7 +981,7 @@ EbErrorType tpl_mc_flow(
     uint32_t                         inputQueueIndex;
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
 #endif
-    int32_t                         frame_idx, i;
+    int32_t                         frame_idx;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
@@ -1000,7 +1000,7 @@ EbErrorType tpl_mc_flow(
 
 #if IN_LOOP_TPL
 #if TPL_ZERO_LAD
-    for (frame_idx = 0; frame_idx < pcs_ptr->tpl_group_size; frame_idx++)
+    for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
         pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
 #else
     for (frame_idx = 0; frame_idx < pcs_ptr->tpl_group_size; frame_idx++) {
@@ -6394,11 +6394,10 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
             if (rc->frames_to_key > (int) pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
                 div_factor = 2;
-            else if ((rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
                 div_factor = 0.5;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
-        SVT_LOG("\nPOC:%d\tframestoKey:%d\tplsize:%d\n", pcs_ptr->parent_pcs_ptr->picture_number, rc->frames_to_key, pcs_ptr->parent_pcs_ptr->tpl_group_size);
 #endif
         rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
                                                   MAX_GFUBOOST_FACTOR,
