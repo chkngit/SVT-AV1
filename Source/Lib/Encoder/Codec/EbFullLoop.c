@@ -1551,12 +1551,11 @@ int32_t av1_quantize_inv_quantize(
             uint64_t var_threshold_0 = (uint64_t)( 3 * qstep * qstep);
             uint64_t var_threshold_1 = (uint64_t)(10 * qstep * qstep);
             if (md_context->block_var[0] < var_threshold_0) {
-                perform_rdoq = 0;
+                perform_rdoq = 1;
             }
             if (md_context->block_var[0] > var_threshold_1) {
                 perform_rdoq = 0;
             }
-            perform_rdoq = 0;
         }
     }
 #endif
