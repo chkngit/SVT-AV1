@@ -84,7 +84,7 @@ extern "C" {
 #define FAST_RDOQ_CHROMA 0 //--->
 #define FAST_RDOQ_TH 0
 #define FAST_RDOQ_NO_I_SLICE 0 
-#define FAST_RDOQ_RESIDUAL 0
+
 /************************************/
 #define COEFF_OPT 1
 #if COEFF_OPT
@@ -95,7 +95,7 @@ extern "C" {
 
 
 #define RES_ENERGY_BASED_FORCE_SKIP 1
-
+#define FAST_RDOQ_MODE 1
 #endif
 /************************************/
 #ifdef __cplusplus

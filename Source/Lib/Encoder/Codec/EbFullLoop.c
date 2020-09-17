@@ -1198,8 +1198,8 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
 }
 
 void eb_av1_optimize_b(ModeDecisionContext *md_context,
-#if FAST_RDOQ_RESIDUAL
-    int is_small_residual,
+#if FAST_RDOQ_MODE
+    int fast_mode,
 #endif
 #if FAST_RDOQ_NO_I_SLICE
     PictureControlSet *pcs_ptr,
@@ -1218,7 +1218,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     (void)qparam;
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
+#if !FAST_RDOQ_MODE
     int                    fast_mode       = (is_inter && plane);
+#endif
 #if FAST_RDOQ_NO_I_SLICE
     fast_mode = (pcs_ptr->slice_type != I_SLICE);
 #elif FAST_RDOQ_CHROMA
@@ -1227,9 +1229,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     fast_mode = is_inter;
 #elif FAST_RDOQ
     fast_mode = 1;
-#endif
-#if FAST_RDOQ_RESIDUAL
-    fast_mode = fast_mode && !is_small_residual;
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
@@ -1540,8 +1539,11 @@ int32_t av1_quantize_inv_quantize(
     if(component_type)
     perform_rdoq = 0;
 #endif
+#if FAST_RDOQ_MODE
+    int fast_mode = (is_inter && component_type);
+#endif
 
-#if RES_VAR_BASED_RDOQ_OFF || RES_ENERGY_BASED_FORCE_SKIP
+#if RES_VAR_BASED_RDOQ_OFF || RES_ENERGY_BASED_FORCE_SKIP || FAST_RDOQ_MODE
     if(pcs_ptr->slice_type != I_SLICE)
     if (component_type == COMPONENT_LUMA)
     {
@@ -1549,7 +1551,7 @@ int32_t av1_quantize_inv_quantize(
             const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
             const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
-#if RES_ENERGY_BASED_FORCE_SKIP
+#if RES_ENERGY_BASED_FORCE_SKIP || FAST_RDOQ_MODE
 #if 0
             int64_t block_sse;
 #endif
@@ -1568,13 +1570,15 @@ int32_t av1_quantize_inv_quantize(
             // would be helpful. For larger residuals, R-D optimization may not be
             // effective.
             // TODO(any): Experiment with variance and mean based thresholds
-            unsigned int coeff_opt_dist_threshold = 864;
+            unsigned int coeff_opt_dist_threshold = 100;
             const int perform_block_coeff_opt =
                 ((uint64_t)block_mse_q8 <=
                 (uint64_t)coeff_opt_dist_threshold * qstep * qstep);
 
+#if FAST_RDOQ_MODE
             if (!perform_block_coeff_opt)
-                perform_rdoq = 0;
+                fast_mode = 1;
+#endif
 #else
             //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
             //uint64_t var_threshold_0 = (uint64_t)(5 * qstep * qstep);
@@ -1670,8 +1674,8 @@ int32_t av1_quantize_inv_quantize(
     if (perform_rdoq && *eob != 0) {
         // Perform rdoq
         eb_av1_optimize_b(md_context,
-#if FAST_RDOQ_RESIDUAL
-            is_small_residual,
+#if FAST_RDOQ_MODE
+            fast_mode,
 #endif
 #if FAST_RDOQ_NO_I_SLICE
                           pcs_ptr,
