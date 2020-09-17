@@ -87,15 +87,13 @@ extern "C" {
 
 /************************************/
 #define COEFF_OPT 1
+
 #if COEFF_OPT
+
 #define RES_VAR_BASED_DCT_DCT 1
-#define RES_VAR_BASED_FORCE_SKIP 0
-
-#define RES_VAR_BASED_RDOQ_OFF 0
-
-
-#define RES_ENERGY_BASED_FORCE_SKIP 1
+#define RES_VAR_BASED_FORCE_SKIP 1
 #define FAST_RDOQ_MODE 1
+
 #endif
 /************************************/
 #ifdef __cplusplus

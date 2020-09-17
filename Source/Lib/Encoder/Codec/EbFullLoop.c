@@ -1543,7 +1543,7 @@ int32_t av1_quantize_inv_quantize(
     int fast_mode = (is_inter && component_type);
 #endif
 
-#if RES_VAR_BASED_RDOQ_OFF || RES_ENERGY_BASED_FORCE_SKIP || FAST_RDOQ_MODE
+#if FAST_RDOQ_MODE
     if(pcs_ptr->slice_type != I_SLICE)
     if (component_type == COMPONENT_LUMA)
     {
@@ -1551,7 +1551,7 @@ int32_t av1_quantize_inv_quantize(
             const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
             const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
-#if RES_ENERGY_BASED_FORCE_SKIP || FAST_RDOQ_MODE
+
 #if 0
             int64_t block_sse;
 #endif
@@ -1579,17 +1579,7 @@ int32_t av1_quantize_inv_quantize(
             if (!perform_block_coeff_opt)
                 fast_mode = 1;
 #endif
-#else
-            //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
-            //uint64_t var_threshold_0 = (uint64_t)(5 * qstep * qstep);
-            uint64_t var_threshold_1 = (uint64_t)(750 * qstep * qstep);
-            //if (md_context->block_var[0] < var_threshold_0) {
-            //    perform_rdoq = 0;
-            //}
-            if (md_context->block_var[0] > var_threshold_1) {
-                perform_rdoq = 0;
-            }
-#endif
+
         }
     }
 #endif
