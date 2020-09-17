@@ -1525,7 +1525,9 @@ int32_t av1_quantize_inv_quantize(
 
     EbBool is_inter     = (pred_mode >= NEARESTMV);
     EbBool perform_rdoq;
-
+#if ENABLE_COEFF_OPT
+    int is_small_residual = 0;
+#endif
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
     if (scs_ptr->static_config.rdoq_level != DEFAULT && md_context->pd_pass == PD_PASS_2)
         perform_rdoq = scs_ptr->static_config.rdoq_level;
@@ -1549,7 +1551,8 @@ int32_t av1_quantize_inv_quantize(
              (unsigned int)~0, 3200, 1728, 864, 432, 216, 86 };
 
         // Further refine based on the energy of the residual
-        if (is_inter && perform_rdoq) {
+        
+        if (perform_rdoq) {
             uint64_t block_sse =
                 aom_sum_squares_2d_i16(residual, residual_stride, width, height);
             unsigned int block_mse_q8 =
@@ -1568,11 +1571,11 @@ int32_t av1_quantize_inv_quantize(
             // would be helpful. For larger residuals, R-D optimization may not be
             // effective.
             // TODO(any): Experiment with variance and mean based thresholds
-            const int is_small_residual =
+             is_small_residual =
                 ((uint64_t)block_mse_q8 <=
                 (uint64_t)86 /*coeff_opt_dist_thresholds[5] */ * qstep * qstep);
             // Turn OFF RDOQ if large resudual
-            perform_rdoq = is_small_residual;
+            //perform_rdoq = is_small_residual;
         }
 #endif
     }
@@ -1608,7 +1611,11 @@ int32_t av1_quantize_inv_quantize(
 #elif SHUT_FP_QUANT
     if(0) {
 #else
+#if ENABLE_COEFF_OPT
+    if (perform_rdoq && is_small_residual) {
+#else
     if (perform_rdoq) {
+#endif
 #endif
         if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
