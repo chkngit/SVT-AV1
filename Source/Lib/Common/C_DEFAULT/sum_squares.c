@@ -71,7 +71,7 @@ uint64_t aom_var_2d_u16_c(uint8_t *src, int src_stride, int width, int height) {
 
   return (ss - s * s / (width * height));
 }
-#if COEFF_OPT
+#if 1//COEFF_OPT
 uint64_t aom_sum_sse_2d_i16_c(const int16_t *src, int src_stride, int width,
     int height, int *sum) {
     int r, c;

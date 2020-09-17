@@ -1087,7 +1087,7 @@ extern "C" {
     RTCD_EXTERN uint32_t(*eb_log2f)(uint32_t x);
     void eb_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size);
     RTCD_EXTERN void (*eb_memcpy)(void  *dst_ptr, void  const*src_ptr, size_t size);
-#if COEFF_OPT
+#if 1//COEFF_OPT
     uint64_t aom_sum_squares_2d_i16_c(const int16_t *src, int stride, int width, int height);
     RTCD_EXTERN uint64_t(*aom_sum_squares_2d_i16)(const int16_t *src, int stride, int width, int height);
 
@@ -1307,7 +1307,7 @@ extern "C" {
             void eb_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr, ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride);
             void eb_aom_highbd_subtract_block_sse2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr, ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride, int bd);
 
-#if COEFF_OPT //---
+#if 1//COEFF_OPT //---
             uint64_t aom_sum_squares_2d_i16_avx2(const int16_t *src, int stride, int width, int height);
             uint64_t aom_sum_sse_2d_i16_avx2(const int16_t *src, int src_stride, int width, int height, int *sum);
 #endif
