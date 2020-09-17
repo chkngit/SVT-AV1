@@ -4583,7 +4583,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
 
 #if RES_VAR_BASED_DCT_DCT //---
+#if RES_VAR_BASED_FORCE_SKIP
     uint8_t force_zero_coeff = 0;
+#endif
     if (!only_dct_dct) {
         const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
         MacroblockPlane candidate_plane;
@@ -4603,18 +4605,20 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
         const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
         const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
-        uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
-        //uint64_t var_threshold = (uint64_t)(3 * qstep * qstep);
+        //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+        uint64_t var_threshold = (uint64_t)(3 * qstep * qstep);
         if (context_ptr->block_var[0] < var_threshold) {
             // Predict DC only blocks based on residual variance.
             // For chroma plane, this early prediction is disabled for intra blocks.
             //if ((plane == 0) || (plane > 0 && is_inter_block(mbmi))) *dc_only_blk = 1;
             only_dct_dct = 1;
+#if RES_VAR_BASED_FORCE_SKIP
             if (only_dct_dct) {
                 if ((llabs(context_ptr->per_px_mean[0]) * dc_coeff_scale[tx_size]) < (dc_qstep << 12)) {
                     force_zero_coeff = 1;
                 }
             }
+#endif
         }
     }
 #endif
