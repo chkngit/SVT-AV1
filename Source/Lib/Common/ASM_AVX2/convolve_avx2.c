@@ -1980,7 +1980,7 @@ static uint64_t aom_sum_squares_i16_64n_sse2(const int16_t *src, uint32_t n) {
     v_acc0_q = _mm_add_epi64(v_acc0_q, _mm_srli_si128(v_acc0_q, 8));
     return xx_cvtsi128_si64(v_acc0_q);
 }
-#if 0//COEFF_OPT
+
 uint64_t eb_aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
     if (n % 64 == 0) {
         return aom_sum_squares_i16_64n_sse2(src, n);
@@ -1991,7 +1991,7 @@ uint64_t eb_aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
         return eb_aom_sum_squares_i16_c(src, n);
     }
 }
-#endif
+
 /**
  * See eb_av1_wedge_sign_from_residuals_c
  */
