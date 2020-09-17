@@ -5955,22 +5955,15 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 #if TPL_TUNING
-        //scs_ptr->scd_delay
-     //   if (pcs_ptr->parent_pcs_ptr->future_altref_nframes > 2)
-      //      pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / 2;
-
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
 
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = 2;
-    /*        else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
-                div_factor = 0.5;*/
+            else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
+                div_factor = 0.5;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
-            SVT_LOG("\nPOC:%d\t PDWCount:%d\tplsize:%d\t%f\n", pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->pd_window_count, pcs_ptr->parent_pcs_ptr->tpl_group_size,
-                pcs_ptr->parent_pcs_ptr->r0);
         }
-
 
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 
@@ -6401,7 +6394,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
             if (rc->frames_to_key > (int) pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
                 div_factor = 2;
-            else if (rc->frames_to_key <= (int) pcs_ptr->parent_pcs_ptr->tpl_group_size)
+            else if ((rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
                 div_factor = 0.5;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
