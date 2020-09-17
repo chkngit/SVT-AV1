@@ -285,7 +285,21 @@ static uint8_t tpl_setup_me_refs(
 #else
                 frame_pred_entry->ref_list1.reference_list_count;
 #endif
-            ref_list_count = MIN(ref_list_count, 2); //Jing: limit to 2 refs for trailing frames
+            //Jing: We can set the it as the same logic of ref_list_count_try in PD kernel
+            //      But need to make sure change them at the same time.
+            //      Now for simplicity, just limit it as 2 for trailing frames
+            //      Corresponding logic in PD:
+            //          if (pcs_ptr->enc_mode <= ENC_M6) {
+            //              pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+            //              pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+            //          }
+            //          else {
+            //              pcs_ptr->ref_list0_count_try =
+            //                  pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
+            //              pcs_ptr->ref_list1_count_try =
+            //                  pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+            //          }
+            ref_list_count = MIN(ref_list_count, 2);
         } else {
             ref_list_count = (list_index == REF_LIST_0) ?
                 pcs_tpl_group_frame_ptr->ref_list0_count_try :

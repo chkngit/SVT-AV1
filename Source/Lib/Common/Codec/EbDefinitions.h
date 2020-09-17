@@ -66,6 +66,7 @@ extern "C" {
 #define SIGNAL_TPL_ME_OQ 1 // A separate signal_xxx_oq for TPL ME
 #endif
 #define INL_TPL_ENHANCEMENT 1 // Create TPL related structure, instead using pcs directly
+#define INL_DECIMATE_ZZ_FIX 1 // Compute decimated_zz in open loop
 #endif
 
 #define IN_LOOP_TPL 1

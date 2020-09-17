@@ -1046,6 +1046,20 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 
+#if INL_DECIMATE_ZZ_FIX
+            if (scs_ptr->static_config.look_ahead_distance != 0 &&
+                    pcs_ptr->picture_number > 0 &&
+                    scs_ptr->in_loop_me)
+                compute_decimated_zz_sad(
+                    context_ptr,
+                    pcs_ptr,
+                    pcs_ptr->ds_pics.sixteenth_picture_ptr,
+                    x_sb_start_index,
+                    x_sb_end_index,
+                    y_sb_start_index,
+                    y_sb_end_index);
+#endif
+
             // ZZ SSDs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
             if (use_output_stat(scs_ptr) && scs_ptr->static_config.look_ahead_distance != 0) {
