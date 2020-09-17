@@ -463,6 +463,9 @@ typedef struct MpbdCtrls {
     EbBool use_2nd_pass;
     uint8_t first_pass_mode_offset;     // mode offset to use for encoding first pass
     uint8_t num_best_parts_2nd_pass;    // choose the best <n> partitions from first pass to consider in second pass
+#if SKIP_2ND_PASS_USING_COST_DEV
+    uint32_t cost_dev_prune_th_2nd_pass; // Threshold used to prune partitions in the second pass, based on cost dev. to the best
+#endif
 } MpbdCtrls;
 #endif
 typedef struct ModeDecisionContext {

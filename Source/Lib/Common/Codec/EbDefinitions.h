@@ -705,8 +705,11 @@ extern "C" {
 #define ADD_SHAPE_REFINEMENT             1 // Add ability to choose between 1/2 block passes and # of shapes in second pass
 #define ADD_FIRST_PASS_MODE_OFFSET       1 // Add ability to offset 1st PB pass by a given number of modes
 
-#define SHUT_NSQ_FEATURES_1ST_PASS       1 // Shut nsq-targetting features in the first PB pass
+#define SHUT_NSQ_FEATURES_1ST_PASS       0 // Shut nsq-targetting features in the first PB pass
 #define SHUT_NSQ_FEATURES                0 // Shut nsq-targetting features
+#define USE_SOME_NSQ_FEATS               1 // Shut stats, redundant only and use M0 sq_weight level in first pass
+
+#define SKIP_2ND_PASS_USING_COST_DEV     0 // Don't pass blocks to the second PB pass if the cost dev. to the best is high
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

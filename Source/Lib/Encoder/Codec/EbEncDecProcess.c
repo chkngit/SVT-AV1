@@ -6123,7 +6123,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->redundant_blk =
             sequence_control_set_ptr->static_config.enable_redundant_blk;
-
+#if SHUT_NSQ_FEATURES || USE_SOME_NSQ_FEATS
+    context_ptr->redundant_blk = EB_FALSE;
+#endif
     // Set edge_skp_angle_intra
     if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
         if (pd_pass == PD_PASS_0)
@@ -7055,7 +7057,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     }
 #endif
-#if SHUT_NSQ_FEATURES
+#if SHUT_NSQ_FEATURES || USE_SOME_NSQ_FEATS
     adaptive_md_cycles_level = 0;
 #endif
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
@@ -7308,6 +7310,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if SHUT_NSQ_FEATURES
     context_ptr->sq_weight = (uint32_t)~0;
+#elif USE_SOME_NSQ_FEATS
+    if (pd_pass == PD_PASS_2) {
+        // Use a more conservative level in the first pass
+        if (context_ptr->block_pass == 1)
+            context_ptr->sq_weight = 105;
+    }
 #endif
     // nsq_hv_level  needs sq_weight to be ON
     // 0: OFF
@@ -7536,6 +7544,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if SHUT_NSQ_FEATURES
     context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+#elif USE_SOME_NSQ_FEATS
+    if (pd_pass == PD_PASS_2) {
+        // Do not use the feature in the first pass, as we already use an offset
+        if (context_ptr->block_pass == 1)
+            context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+    }
 #endif
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
 #else
@@ -7689,7 +7703,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if NIC_SCALING_PER_STAGE
     // If using a mode offset, do not modify the NSQ-targeting features or NICS
+#if ADD_FIRST_PASS_MODE_OFFSET
+    if (!mode_offset || context_ptr->block_pass == 1) {
+#else
     if (!mode_offset) {
+#endif
         uint8_t nic_scaling_level = 1;
 
         if (enc_mode <= ENC_MR)

@@ -16682,7 +16682,7 @@ void process_cu(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     if (context_ptr->block_pass == 1 && context_ptr->mpbd_ctrls.use_2nd_pass) {
         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, context_ptr->mpbd_ctrls.first_pass_mode_offset);
         signal_derivation_block(pcs_ptr, context_ptr, context_ptr->mpbd_ctrls.first_pass_mode_offset);
-#if SHUT_NSQ_FEATURES_1ST_PASS
+#if 1//SHUT_NSQ_FEATURES_1ST_PASS // Don't skip blocks in the first pass
         *md_early_exit_nsq = 0;
         *md_early_exit_sq = 0;
 #endif
@@ -17001,13 +17001,19 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 context_ptr->mpbd_ctrls.use_2nd_pass = 1;
                 context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
                 context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = NUMBER_OF_SHAPES;
+#if SKIP_2ND_PASS_USING_COST_DEV
+                context_ptr->mpbd_ctrls.cost_dev_prune_th_2nd_pass = (uint32_t)~0;
+#endif
             }
             else {
                 context_ptr->mpbd_ctrls.use_1st_pass = 1;
                 context_ptr->mpbd_ctrls.use_2nd_pass = 1;
 #if ADD_FIRST_PASS_MODE_OFFSET
-                context_ptr->mpbd_ctrls.first_pass_mode_offset = 4;
-                context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 4;// NUMBER_OF_SHAPES;
+                context_ptr->mpbd_ctrls.first_pass_mode_offset = 5;
+                context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 2;// NUMBER_OF_SHAPES;
+#if SKIP_2ND_PASS_USING_COST_DEV
+                context_ptr->mpbd_ctrls.cost_dev_prune_th_2nd_pass = (uint32_t)~0;
+#endif
 #else
                 context_ptr->mpbd_ctrls.first_pass_mode_offset = 0;
                 context_ptr->mpbd_ctrls.num_best_parts_2nd_pass = 1;// NUMBER_OF_SHAPES;
@@ -17179,7 +17185,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                         context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag = EB_FALSE;
                         context_ptr->md_local_blk_unit[d1_blk_idx].cost = (MAX_MODE_COST >> 4);
                         context_ptr->md_local_blk_unit[d1_blk_idx].default_cost = MAX_MODE_COST;
-
+#if SKIP_2ND_PASS_USING_COST_DEV
+                        // If the current shape's cost dev. to the best is too high, skip, even if it is in the best n
+                        if (blk_geom->shape != PART_N && context_ptr->mpbd_ctrls.cost_dev_prune_th_2nd_pass != (uint32_t)~0 &&
+                                ((((nsq_cost[blk_geom->shape] - nsq_cost[nsq_shape_table[0]]) * 100) >
+                                (nsq_cost[nsq_shape_table[0]]) * context_ptr->mpbd_ctrls.cost_dev_prune_th_2nd_pass))) {
+                            md_early_exit_nsq = 1;
+                        }
+#endif
                         if (blk_geom->shape != PART_N && !shape_is_best_n(nsq_shape_table, blk_geom->shape, context_ptr->mpbd_ctrls.num_best_parts_2nd_pass)) {
 
                             //blk_index++;
