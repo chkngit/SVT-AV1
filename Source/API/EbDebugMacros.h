@@ -69,6 +69,7 @@ extern "C" {
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
+#define SHUT_RDOQ_CHROMA 1 
 #define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
@@ -85,7 +86,7 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 #define FAST_RDOQ_RESIDUAL 0
 /************************************/
-#define COEFF_OPT 1
+#define COEFF_OPT 0
 #if COEFF_OPT
 #define RES_VAR_BASED_DCT_DCT 1
 #define RES_VAR_BASED_RDOQ_OFF 1

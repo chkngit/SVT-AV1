@@ -1536,17 +1536,26 @@ int32_t av1_quantize_inv_quantize(
             md_context->rdoq_level);
     }
 
+#if SHUT_RDOQ_CHROMA
+    if(component_type)
+    perform_rdoq = 0;
+#endif
 #if RES_VAR_BASED_RDOQ_OFF
-    if (!is_encode_pass) {
+    //if (!is_encode_pass)
+    {
         if (perform_rdoq) {
             const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
             const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
             //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
-            uint64_t var_threshold = (uint64_t)(3 * qstep * qstep);
-            if (md_context->block_var[0] < var_threshold) {
+            uint64_t var_threshold_0 = (uint64_t)( 3 * qstep * qstep);
+            uint64_t var_threshold_1 = (uint64_t)(10 * qstep * qstep);
+            if (md_context->block_var[0] < var_threshold_0) {
                 perform_rdoq = 0;
             }
+            //if (md_context->block_var[0] > var_threshold_1) {
+            //    perform_rdoq = 0;
+            //}
         }
     }
 #endif

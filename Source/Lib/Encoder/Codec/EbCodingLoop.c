@@ -394,6 +394,17 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             residual16bit->stride_y,
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
+
+#if COEFF_OPT
+        pixel_diff_stats(
+            context_ptr->md_context,
+            0,
+            ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
+            residual16bit->stride_y,
+            context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
+            context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
+#endif
+
         av1_estimate_transform(
             ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
             residual16bit->stride_y,
