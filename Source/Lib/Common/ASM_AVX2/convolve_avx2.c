@@ -1567,11 +1567,8 @@ uint64_t eb_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *
     __m128i v_acc_q_0 = _mm256_castsi256_si128(v_acc0_q);
     __m128i v_acc_q_1 = _mm256_extracti128_si256(v_acc0_q, 1);
     v_acc_q_0         = _mm_add_epi64(v_acc_q_0, v_acc_q_1);
-#if ARCH_X86_64
+
     csse = (uint64_t)_mm_extract_epi64(v_acc_q_0, 0);
-#else
-    xx_storel_64(&csse, v_acc_q_0);
-#endif
 
     return ROUND_POWER_OF_TWO(csse, 2 * WEDGE_WEIGHT_BITS);
 }
@@ -1932,15 +1929,8 @@ int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
   return sse;
 }
 static INLINE uint64_t xx_cvtsi128_si64(__m128i a) {
-#if ARCH_X86_64
+
     return (uint64_t)_mm_cvtsi128_si64(a);
-#else
-    {
-        uint64_t tmp;
-        _mm_storel_epi64((__m128i *)&tmp, a);
-        return tmp;
-    }
-#endif
 }
 static uint64_t aom_sum_squares_i16_64n_sse2(const int16_t *src, uint32_t n) {
     const __m128i v_zext_mask_q = xx_set1_64_from_32i(0xffffffff);
@@ -2058,11 +2048,7 @@ int8_t eb_av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m
     __m128i v_acc_q_1 = _mm256_extracti128_si256(v_acc_q, 1);
     v_acc_q_0         = _mm_add_epi64(v_acc_q_0, v_acc_q_1);
 
-#if ARCH_X86_64
     acc = (uint64_t)_mm_extract_epi64(v_acc_q_0, 0);
-#else
-    xx_storel_64(&acc, v_acc_q_0);
-#endif
 
     return acc > limit;
 }

@@ -357,6 +357,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_subtract_block = eb_aom_subtract_block_c;
 #if COEFF_OPT //--
     aom_sum_squares_2d_i16 = aom_sum_squares_2d_i16_c;
+    aom_sum_sse_2d_i16 = aom_sum_sse_2d_i16_c;
 #endif
     eb_aom_lowbd_blend_a64_d16_mask = eb_aom_lowbd_blend_a64_d16_mask_c;
     eb_aom_highbd_blend_a64_d16_mask = eb_aom_highbd_blend_a64_d16_mask_c;
@@ -960,6 +961,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
         if (flags & HAS_AVX2) eb_aom_subtract_block = eb_aom_subtract_block_avx2;
 #if COEFF_OPT
         if (flags & HAS_AVX2) aom_sum_squares_2d_i16 = aom_sum_squares_2d_i16_avx2;
+        if (flags & HAS_AVX2) aom_sum_sse_2d_i16 = aom_sum_sse_2d_i16_avx2;
 #endif
         if (flags & HAS_AVX2) eb_aom_lowbd_blend_a64_d16_mask = eb_aom_lowbd_blend_a64_d16_mask_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_blend_a64_d16_mask = eb_aom_highbd_blend_a64_d16_mask_avx2;

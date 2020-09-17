@@ -1090,6 +1090,9 @@ extern "C" {
 #if COEFF_OPT
     uint64_t aom_sum_squares_2d_i16_c(const int16_t *src, int stride, int width, int height);
     RTCD_EXTERN uint64_t(*aom_sum_squares_2d_i16)(const int16_t *src, int stride, int width, int height);
+
+    uint64_t aom_sum_sse_2d_i16_c(const int16_t *src, int src_stride, int width, int height, int *sum);
+    RTCD_EXTERN uint64_t(*aom_sum_sse_2d_i16)(const int16_t *src, int src_stride, int width, int height, int *sum);
 #endif
 #ifdef ARCH_X86
 
@@ -1306,6 +1309,7 @@ extern "C" {
 
 #if COEFF_OPT //---
             uint64_t aom_sum_squares_2d_i16_avx2(const int16_t *src, int stride, int width, int height);
+            uint64_t aom_sum_sse_2d_i16_avx2(const int16_t *src, int src_stride, int width, int height, int *sum);
 #endif
             void eb_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride, const CONV_BUF_TYPE *src0, uint32_t src0_stride, const CONV_BUF_TYPE *src1, uint32_t src1_stride, const uint8_t *mask, uint32_t mask_stride, int w, int h, int subw, int subh, ConvolveParams *conv_params);
 
