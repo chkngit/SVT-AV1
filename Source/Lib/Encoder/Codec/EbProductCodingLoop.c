@@ -4567,7 +4567,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         tx_search_skip_flag = 1;
 #endif
 
-#if COEFF_OPT //---
+#if 0//COEFF_OPT //---
     if (!only_dct_dct) {
         const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
         MacroblockPlane candidate_plane;
