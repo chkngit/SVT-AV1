@@ -1542,6 +1542,7 @@ int32_t av1_quantize_inv_quantize(
 #endif
 
 #if RES_VAR_BASED_RDOQ_OFF || RES_ENERGY_BASED_FORCE_SKIP
+    if(pcs_ptr->slice_type != I_SLICE)
     if (component_type == COMPONENT_LUMA)
     {
         if (perform_rdoq) {
@@ -1549,8 +1550,10 @@ int32_t av1_quantize_inv_quantize(
             const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
 #if RES_ENERGY_BASED_FORCE_SKIP
+#if 0
             int64_t block_sse;
-            unsigned int block_mse_q8 = md_context->block_mse_q8[0];
+#endif
+            uint64_t block_mse_q8 = md_context->block_mse_q8[0];
             if (md_context->hbd_mode_decision) {
 #if 0
                 block_sse = ROUND_POWER_OF_TWO(block_sse, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
