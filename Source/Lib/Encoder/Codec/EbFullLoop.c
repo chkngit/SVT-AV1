@@ -1550,18 +1550,22 @@ int32_t av1_quantize_inv_quantize(
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
 #if RES_ENERGY_BASED_FORCE_SKIP
             int64_t block_sse;
-            unsigned int block_mse_q8;
+            unsigned int block_mse_q8 = md_context->block_mse_q8[0];
             if (md_context->hbd_mode_decision) {
+#if 0
                 block_sse = ROUND_POWER_OF_TWO(block_sse, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
+#endif
                 block_mse_q8 = ROUND_POWER_OF_TWO(block_mse_q8, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
             }
+#if 0
             block_sse *= 16;
+#endif
             // Use mse / qstep^2 based threshold logic to take decision of R-D
             // optimization of coeffs. For smaller residuals, coeff optimization
             // would be helpful. For larger residuals, R-D optimization may not be
             // effective.
             // TODO(any): Experiment with variance and mean based thresholds
-            unsigned int coeff_opt_dist_threshold = 216;
+            unsigned int coeff_opt_dist_threshold = 86;
             const int perform_block_coeff_opt =
                 ((uint64_t)block_mse_q8 <=
                 (uint64_t)coeff_opt_dist_threshold * qstep * qstep);
