@@ -96,7 +96,7 @@ void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_strid
 uint64_t pixel_diff_stats(int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height) {
     uint64_t sse = 0;
     int sum = 0;
-    sse = aom_sum_sse_2d_i16(residual, residual_stride, area_width, area_height, &sum);
+    sse = /*aom_sum_sse_2d_i16*/aom_sum_sse_2d_i16_avx2(residual, residual_stride, area_width, area_height, &sum);
     double norm_factor = 1.0 / (area_width * area_height);
     int sign_sum = sum > 0 ? 1 : -1;
     // Conversion to transform domain
