@@ -85,7 +85,7 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 #define FAST_RDOQ_RESIDUAL 0
 /************************************/
-#define COEFF_OPT 0
+#define COEFF_OPT 1
 /************************************/
 #ifdef __cplusplus
 }
