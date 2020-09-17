@@ -83,7 +83,7 @@ extern "C" {
 #define FAST_RDOQ_CHROMA 0 //--->
 #define FAST_RDOQ_TH 0
 #define FAST_RDOQ_NO_I_SLICE 0 
-#define FAST_RDOQ_RESIDUAL 1
+#define FAST_RDOQ_RESIDUAL 0
 /************************************/
 #define ENERGY_EXIT 1
 /************************************/
