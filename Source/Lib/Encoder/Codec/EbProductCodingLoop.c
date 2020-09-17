@@ -4612,7 +4612,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             only_dct_dct = 1;
             if (only_dct_dct) {
                 if ((llabs(context_ptr->per_px_mean[0]) * dc_coeff_scale[tx_size]) < (dc_qstep << 12)) {
-                    force_zero_coeff = 0;
+                    force_zero_coeff = 1;
                 }
             }
         }
