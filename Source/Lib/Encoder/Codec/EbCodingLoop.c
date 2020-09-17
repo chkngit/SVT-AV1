@@ -107,6 +107,7 @@ void pixel_diff_stats(ModeDecisionContext *context_ptr, int8_t component, int16_
     context_ptr->sse[component] = sse;
     context_ptr->block_var[component] = block_var;
     context_ptr->per_px_mean[component] = per_px_mean;
+    context_ptr->block_mse_q8[component] = block_mse_q8;
 }
 #endif
 /***************************************************

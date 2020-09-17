@@ -577,6 +577,7 @@ typedef struct ModeDecisionContext {
     uint64_t sse[3];
     uint64_t block_var[3];
     uint64_t per_px_mean[3];
+    uint64_t block_mse_q8[3];
 #endif
 } ModeDecisionContext;
 

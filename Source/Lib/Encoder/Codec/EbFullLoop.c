@@ -1540,13 +1540,35 @@ int32_t av1_quantize_inv_quantize(
     if(component_type)
     perform_rdoq = 0;
 #endif
-#if RES_VAR_BASED_RDOQ_OFF
+
+#if RES_VAR_BASED_RDOQ_OFF || RES_ENERGY_BASED_FORCE_SKIP
     if (component_type == COMPONENT_LUMA)
     {
         if (perform_rdoq) {
             const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
             const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
             const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
+#if RES_ENERGY_BASED_FORCE_SKIP
+            int64_t block_sse;
+            unsigned int block_mse_q8;
+            if (md_context->hbd_mode_decision) {
+                block_sse = ROUND_POWER_OF_TWO(block_sse, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
+                block_mse_q8 = ROUND_POWER_OF_TWO(block_mse_q8, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
+            }
+            block_sse *= 16;
+            // Use mse / qstep^2 based threshold logic to take decision of R-D
+            // optimization of coeffs. For smaller residuals, coeff optimization
+            // would be helpful. For larger residuals, R-D optimization may not be
+            // effective.
+            // TODO(any): Experiment with variance and mean based thresholds
+            unsigned int coeff_opt_dist_threshold = 86;
+            const int perform_block_coeff_opt =
+                ((uint64_t)block_mse_q8 <=
+                (uint64_t)coeff_opt_dist_threshold * qstep * qstep);
+
+            if (!perform_block_coeff_opt)
+                perform_rdoq = 0;
+#else
             //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
             //uint64_t var_threshold_0 = (uint64_t)(5 * qstep * qstep);
             uint64_t var_threshold_1 = (uint64_t)(750 * qstep * qstep);
@@ -1556,6 +1578,7 @@ int32_t av1_quantize_inv_quantize(
             if (md_context->block_var[0] > var_threshold_1) {
                 perform_rdoq = 0;
             }
+#endif
         }
     }
 #endif

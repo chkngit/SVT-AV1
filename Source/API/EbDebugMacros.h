@@ -93,6 +93,9 @@ extern "C" {
 
 #define RES_VAR_BASED_RDOQ_OFF 0
 
+
+#define RES_ENERGY_BASED_FORCE_SKIP 1
+
 #endif
 /************************************/
 #ifdef __cplusplus
