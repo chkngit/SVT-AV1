@@ -130,7 +130,12 @@ extern EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t res
                                           EB_TRANS_COEFF_SHAPE trans_coeff_shape);
 
 extern int32_t av1_quantize_inv_quantize(
-        PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, int32_t *coeff,
+        PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, 
+#if COEFF_OPT
+         int16_t *residual,
+         uint16_t residual_stride,
+#endif
+        int32_t *coeff,
         const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
         int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
         uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
