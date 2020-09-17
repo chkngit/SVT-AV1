@@ -69,7 +69,7 @@ extern "C" {
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
-#define SHUT_RDOQ 1 
+#define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
 #define SHUT_FP_QUANT_CHROMA 0 //--->
@@ -77,7 +77,7 @@ extern "C" {
 #define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0
 
-#define FAST_RDOQ 0 
+#define FAST_RDOQ 1 
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
 #define FAST_RDOQ_CHROMA 0 //--->
