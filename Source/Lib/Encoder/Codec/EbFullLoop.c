@@ -1229,7 +1229,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     fast_mode = 1;
 #endif
 #if FAST_RDOQ_RESIDUAL
-    fast_mode = !is_small_residual;
+    fast_mode = fast_mode && !is_small_residual;
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;

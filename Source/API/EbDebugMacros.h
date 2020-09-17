@@ -77,13 +77,13 @@ extern "C" {
 #define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0
 
-#define FAST_RDOQ 1 
+#define FAST_RDOQ 0 
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
 #define FAST_RDOQ_CHROMA 0 //--->
 #define FAST_RDOQ_TH 0
 #define FAST_RDOQ_NO_I_SLICE 0 
-#define FAST_RDOQ_RESIDUAL 1
+#define FAST_RDOQ_RESIDUAL 0
 
 #define RDOQ_EARLY_EXIT 0
 /************************************/
