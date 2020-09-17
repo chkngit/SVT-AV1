@@ -4796,7 +4796,12 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             candidate_buffer->candidate_ptr->transform_type_uv = (context_ptr->txb_itr == 0)
                 ? candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr]
                 : candidate_buffer->candidate_ptr->transform_type_uv;
-
+#if RES_VAR_BASED_FORCE_SKIP
+        if (force_zero_coeff) {
+            quantized_dc_txt[tx_type] = 0;
+            y_count_non_zero_coeffs_txt[tx_type] = 0;
+        } else {
+#endif
         // Y: T Q i_q
         av1_estimate_transform(
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
@@ -4836,7 +4841,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             candidate_buffer->candidate_ptr->use_intrabc,
             full_lambda,
             EB_FALSE);
-
+#if RES_VAR_BASED_FORCE_SKIP
+        }
+#endif
         uint32_t y_has_coeff = y_count_non_zero_coeffs_txt[tx_type] > 0;
 
         // tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
