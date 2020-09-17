@@ -1586,6 +1586,7 @@ int32_t av1_quantize_inv_quantize(
 #endif
     }
 #if ENERGY_EXIT
+    if(pcs_ptr->slice_type != I_SLICE)
     perform_rdoq = is_small_residual;
 #endif
 #if SHUT_RDOQ
