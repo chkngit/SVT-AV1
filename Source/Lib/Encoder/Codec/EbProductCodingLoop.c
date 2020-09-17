@@ -4587,9 +4587,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint8_t force_zero_coeff = 0;
 #endif
 
-    if (!only_dct_dct && 
-       (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_1 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_2) && 
-       (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >= 16 && context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >= 16)) { // NEW_COND
+    if (!only_dct_dct && pcs_ptr->slice_type != I_SLICE) {
 
 
     //if (is_inter && !only_dct_dct) {
@@ -4612,7 +4610,22 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
         const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
         //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
-        uint64_t var_threshold = (uint64_t)(10 * qstep * qstep);
+        uint64_t var_threshold;
+
+        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
+            var_threshold = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                ? (uint64_t)(1.8 * qstep * qstep)
+                : (uint64_t)(1.8 * qstep * qstep);
+        }
+        else {
+            var_threshold = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                ? (uint64_t)(1.8 * qstep * qstep)
+                : (uint64_t)(10 * qstep * qstep);
+        }
+
+
         if (context_ptr->block_var[0] < var_threshold) {
             // Predict DC only blocks based on residual variance.
             // For chroma plane, this early prediction is disabled for intra blocks.
