@@ -1198,6 +1198,9 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
 }
 
 void eb_av1_optimize_b(ModeDecisionContext *md_context,
+#if FAST_RDOQ_RESIDUAL
+    int is_small_residual,
+#endif
 #if FAST_RDOQ_NO_I_SLICE
     PictureControlSet *pcs_ptr,
 #endif
@@ -1224,6 +1227,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     fast_mode = is_inter;
 #elif FAST_RDOQ
     fast_mode = 1;
+#endif
+#if FAST_RDOQ_RESIDUAL
+    fast_mode = !is_small_residual;
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
@@ -1611,11 +1617,7 @@ int32_t av1_quantize_inv_quantize(
 #elif SHUT_FP_QUANT
     if(0) {
 #else
-#if ENABLE_COEFF_OPT
-    if(0) {//(perform_rdoq && !is_small_residual) {
-#else
     if (perform_rdoq) {
-#endif
 #endif
         if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
@@ -1664,6 +1666,9 @@ int32_t av1_quantize_inv_quantize(
     if (perform_rdoq && *eob != 0) {
         // Perform rdoq
         eb_av1_optimize_b(md_context,
+#if FAST_RDOQ_RESIDUAL
+            is_small_residual,
+#endif
 #if FAST_RDOQ_NO_I_SLICE
                           pcs_ptr,
 #endif
