@@ -72,16 +72,18 @@ extern "C" {
 #define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
-#define SHUT_FP_QUANT_CHROMA 1 //--->
+#define SHUT_FP_QUANT_CHROMA 0 //--->
 #define SHUT_FP_QUANT_TX_TYPE 0
 #define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0
 
-#define FAST_RDOQ 1 
+#define FAST_RDOQ 0 
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
 #define FAST_RDOQ_CHROMA 0 //--->
-#define FAST_RDOQ_TH 1
+#define FAST_RDOQ_TH 0
+
+#define SHUT_COEF_GENERAL 1
 /************************************/
 #ifdef __cplusplus
 }

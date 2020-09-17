@@ -1266,6 +1266,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int           nz_ci[3]   = {ci, 0, 0};
 
     if (abs_qc >= 2) {
+#if !SHUT_COEF_GENERAL
         update_coeff_general(&accu_rate,
                              &accu_dist,
                              si,
@@ -1284,6 +1285,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
                              qcoeff_ptr,
                              dqcoeff_ptr,
                              levels);
+#endif
         --si;
     } else {
         assert(abs_qc == 1);
