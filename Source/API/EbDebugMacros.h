@@ -85,10 +85,7 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 #define FAST_RDOQ_RESIDUAL 0
 /************************************/
-#define ENERGY_EXIT 1
-/************************************/
-#define COEFF_OPT 1 // support only: no action
-#define ENABLE_COEFF_OPT 1
+#define COEFF_OPT 0
 /************************************/
 #ifdef __cplusplus
 }

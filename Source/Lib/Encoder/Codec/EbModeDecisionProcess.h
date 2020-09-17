@@ -573,6 +573,9 @@ typedef struct ModeDecisionContext {
 #if FASTER_PD0
     uint16_t sb_index;
 #endif
+#if COEFF_OPT
+    uint64_t block_var[3];
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,

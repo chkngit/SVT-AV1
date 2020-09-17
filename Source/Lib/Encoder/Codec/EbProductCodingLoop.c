@@ -4566,6 +4566,35 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #else
         tx_search_skip_flag = 1;
 #endif
+
+#if COEFF_OPT //---
+    if (!only_dct_dct) {
+        const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
+        MacroblockPlane candidate_plane;
+
+        uint32_t q_index = context_ptr->qp_index;
+
+        //if (component_type == COMPONENT_LUMA) 
+        {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_8bit.y_dequant_qtx[q_index];
+        }
+
+        const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
+        uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+        if (context_ptr->block_var[0] < var_threshold) {
+            // Predict DC only blocks based on residual variance.
+            // For chroma plane, this early prediction is disabled for intra blocks.
+            //if ((plane == 0) || (plane > 0 && is_inter_block(mbmi))) *dc_only_blk = 1;
+            only_dct_dct = 1;
+        }
+    }
+#endif
 #if !TX_TYPE_GROUPING
     TxType   txk_start = DCT_DCT;
     TxType   txk_end = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
@@ -4762,10 +4791,6 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         quantized_dc_txt[tx_type] = av1_quantize_inv_quantize(
             pcs_ptr,
             context_ptr,
-#if COEFF_OPT
-            &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
-            candidate_buffer->residual_ptr->stride_y,
-#endif
             &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                    ->buffer_y)[context_ptr->txb_1d_offset]),
             NOT_USED_VALUE,
@@ -5797,6 +5822,14 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                     context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
+#if COEFF_OPT
+                context_ptr->block_var[0] = (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) ?
+                    pixel_diff_stats(
+                        &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
+                        tx_candidate_buffer->residual_ptr->stride_y,
+                        context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
+                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) : UINT_MAX;
+#endif
             }
 
             tx_type_search(pcs_ptr, context_ptr,
@@ -6375,6 +6408,15 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                         context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->bwidth,
                         context_ptr->blk_geom->bheight);
+
+#if COEFF_OPT
+    context_ptr->block_var[0] = (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) ?
+        pixel_diff_stats( 
+            &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[blk_origin_index]),
+            candidate_buffer->residual_ptr->stride_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight) : UINT_MAX;
+#endif
 
     perform_tx_partitioning(candidate_buffer,
                             context_ptr,

@@ -89,7 +89,24 @@ void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_strid
                             area_height);
     }
 }
-
+#if COEFF_OPT
+/*******************************************
+* Computes the residual block's SSE and mean
+*******************************************/
+uint64_t pixel_diff_stats(int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height) {
+    uint64_t sse = 0;
+    int sum = 0;
+    sse = aom_sum_sse_2d_i16(residual, residual_stride, area_width, area_height, &sum);
+    double norm_factor = 1.0 / (area_width * area_height);
+    int sign_sum = sum > 0 ? 1 : -1;
+    // Conversion to transform domain
+    int64_t per_px_mean = (int64_t)(norm_factor * abs(sum)) << 7;
+    per_px_mean = sign_sum * per_px_mean;
+    unsigned int block_mse_q8 = (unsigned int)(norm_factor * (256 * sse));
+    uint64_t block_var = (uint64_t)(sse - (uint64_t)(norm_factor * sum * sum));
+    return block_var;
+}
+#endif
 /***************************************************
 * Update Intra Mode Neighbor Arrays
 ***************************************************/
@@ -395,10 +412,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
         blk_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
-#if COEFF_OPT
-            ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
-            residual16bit->stride_y,
-#endif
             ((TranLow *)transform16bit->buffer_y) + coeff1d_offset,
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
@@ -553,10 +566,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
         blk_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
-#if COEFF_OPT
-            ((int16_t *)residual16bit->buffer_cb) + scratch_cb_offset,
-            residual16bit->stride_cb,
-#endif
             ((TranLow *)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -603,10 +612,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
         blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
-#if COEFF_OPT
-            ((int16_t *)residual16bit->buffer_cr) + scratch_cb_offset,
-            residual16bit->stride_cr,
-#endif
             ((TranLow *)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_cr) + context_ptr->coded_area_sb_uv,
@@ -788,10 +793,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
             blk_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
-#if COEFF_OPT
-                ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
-                residual16bit->stride_y,
-#endif
                 ((int32_t *)transform16bit->buffer_y) + coeff1d_offset,
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
@@ -945,10 +946,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
             blk_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
-#if COEFF_OPT
-                ((int16_t *)residual16bit->buffer_cb) + scratch_cb_offset,
-                residual16bit->stride_cb,
-#endif
                 ((int32_t *)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -996,10 +993,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
             blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
-#if COEFF_OPT
-                ((int16_t *)residual16bit->buffer_cr) + scratch_cb_offset,
-                residual16bit->stride_cr,
-#endif
                 ((int32_t *)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_cr) + context_ptr->coded_area_sb_uv,
