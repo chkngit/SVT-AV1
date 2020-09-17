@@ -69,7 +69,7 @@ extern "C" {
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
-#define SHUT_RDOQ_CHROMA 1 
+#define SHUT_RDOQ_CHROMA 0 
 #define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
