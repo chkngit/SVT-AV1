@@ -4586,7 +4586,13 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if RES_VAR_BASED_FORCE_SKIP
     uint8_t force_zero_coeff = 0;
 #endif
-    if (is_inter && !only_dct_dct) {
+
+    if (!only_dct_dct && 
+       (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_1 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_2) && 
+       (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] >= 16 && context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] >= 16)) { // NEW_COND
+
+
+    //if (is_inter && !only_dct_dct) {
         const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
         MacroblockPlane candidate_plane;
 
