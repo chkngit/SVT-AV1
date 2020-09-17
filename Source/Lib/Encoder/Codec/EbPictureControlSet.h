@@ -876,6 +876,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet* tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size;             //size of above buffer
     void* pd_window[PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
+#if TPL_TUNING
+    uint8_t pd_window_count;
+#endif
 #if FIX_LAD_DEADLOCK
     uint8_t is_next_frame_intra;
 #endif

@@ -4618,6 +4618,9 @@ void* picture_decision_kernel(void *input_ptr)
 #if NEW_DELAY
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
             memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
+#if TPL_TUNING
+            pcs_ptr->pd_window_count = 0;
+#endif
 #else
             parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
             parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
@@ -4638,7 +4641,6 @@ void* picture_decision_kernel(void *input_ptr)
                 parent_pcs_window[0] = queue_entry_ptr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                 parent_pcs_window[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
 #endif
-
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index + 1);
                     if (encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr == NULL) {
@@ -4658,6 +4660,13 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                     }
                 }
+#if TPL_TUNING
+                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
+                    if (pcs_ptr->pd_window[2 + window_index])
+                        pcs_ptr->pd_window_count++;
+                    else
+                        break;
+#endif
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
