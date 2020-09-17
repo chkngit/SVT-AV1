@@ -1570,7 +1570,7 @@ int32_t av1_quantize_inv_quantize(
             // would be helpful. For larger residuals, R-D optimization may not be
             // effective.
             // TODO(any): Experiment with variance and mean based thresholds
-            unsigned int coeff_opt_dist_threshold = 100;
+            unsigned int coeff_opt_dist_threshold = 200;
             const int perform_block_coeff_opt =
                 ((uint64_t)block_mse_q8 <=
                 (uint64_t)coeff_opt_dist_threshold * qstep * qstep);
