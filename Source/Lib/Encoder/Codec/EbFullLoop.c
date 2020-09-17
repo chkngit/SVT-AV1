@@ -1585,6 +1585,9 @@ int32_t av1_quantize_inv_quantize(
         }
 #endif
     }
+#if ENERGY_EXIT
+    perform_rdoq = is_small_residual;
+#endif
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
