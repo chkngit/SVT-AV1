@@ -86,9 +86,9 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 #define FAST_RDOQ_RESIDUAL 0
 /************************************/
-#define COEFF_OPT 0
+#define COEFF_OPT 1
 #if COEFF_OPT
-#define RES_VAR_BASED_DCT_DCT 1
+#define RES_VAR_BASED_DCT_DCT 0
 #define RES_VAR_BASED_RDOQ_OFF 1
 #endif
 /************************************/

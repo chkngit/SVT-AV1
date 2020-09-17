@@ -1541,7 +1541,7 @@ int32_t av1_quantize_inv_quantize(
     perform_rdoq = 0;
 #endif
 #if RES_VAR_BASED_RDOQ_OFF
-    //if (!is_encode_pass)
+    if (component_type == COMPONENT_LUMA)
     {
         if (perform_rdoq) {
             const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
@@ -1553,9 +1553,10 @@ int32_t av1_quantize_inv_quantize(
             if (md_context->block_var[0] < var_threshold_0) {
                 perform_rdoq = 0;
             }
-            //if (md_context->block_var[0] > var_threshold_1) {
-            //    perform_rdoq = 0;
-            //}
+            if (md_context->block_var[0] > var_threshold_1) {
+                perform_rdoq = 0;
+            }
+            perform_rdoq = 0;
         }
     }
 #endif

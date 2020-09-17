@@ -395,7 +395,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
 
-#if COEFF_OPT
+#if COEFF_OPT // calc
         pixel_diff_stats(
             context_ptr->md_context,
             0,

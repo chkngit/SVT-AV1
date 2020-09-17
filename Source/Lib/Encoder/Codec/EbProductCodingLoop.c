@@ -5845,7 +5845,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                     context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
-#if COEFF_OPT
+#if COEFF_OPT // calc
                 if (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) {
                     pixel_diff_stats(
                         context_ptr,
@@ -6440,7 +6440,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                         context_ptr->blk_geom->bwidth,
                         context_ptr->blk_geom->bheight);
 
-#if COEFF_OPT
+#if COEFF_OPT // calc
     if (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) {
         pixel_diff_stats(
             context_ptr,
