@@ -1612,7 +1612,7 @@ int32_t av1_quantize_inv_quantize(
     if(0) {
 #else
 #if ENABLE_COEFF_OPT
-    if (perform_rdoq && is_small_residual) {
+    if (perform_rdoq && !is_small_residual) {
 #else
     if (perform_rdoq) {
 #endif
