@@ -4567,7 +4567,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         tx_search_skip_flag = 1;
 #endif
 
-#if 0//COEFF_OPT //---
+#if COEFF_OPT //---
     if (!only_dct_dct) {
         const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
         MacroblockPlane candidate_plane;
@@ -4586,7 +4586,8 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         }
 
         const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
-        uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+        //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+        uint64_t var_threshold = (uint64_t)(3 * qstep * qstep);
         if (context_ptr->block_var[0] < var_threshold) {
             // Predict DC only blocks based on residual variance.
             // For chroma plane, this early prediction is disabled for intra blocks.
