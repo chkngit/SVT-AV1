@@ -93,7 +93,7 @@ void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_strid
 /*******************************************
 * Computes the residual block's SSE and mean
 *******************************************/
-uint64_t pixel_diff_stats(int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height) {
+void pixel_diff_stats(ModeDecisionContext *context_ptr, int8_t component, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height) {
     uint64_t sse = 0;
     int sum = 0;
     sse = aom_sum_sse_2d_i16(residual, residual_stride, area_width, area_height, &sum);
@@ -104,7 +104,9 @@ uint64_t pixel_diff_stats(int16_t *residual, uint32_t residual_stride, uint32_t 
     per_px_mean = sign_sum * per_px_mean;
     unsigned int block_mse_q8 = (unsigned int)(norm_factor * (256 * sse));
     uint64_t block_var = (uint64_t)(sse - (uint64_t)(norm_factor * sum * sum));
-    return block_var;
+    context_ptr->sse[component] = sse;
+    context_ptr->block_var[component] = block_var;
+    context_ptr->per_px_mean[component] = per_px_mean;
 }
 #endif
 /***************************************************

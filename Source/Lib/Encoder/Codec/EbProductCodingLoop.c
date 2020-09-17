@@ -4526,6 +4526,21 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
     return EB_FALSE;
 }
 #endif
+
+
+#if COEFF_OPT
+// Scaling terms (precision of 12 bits) to perform tx-size specific
+// normalization that is used in DCT_DCT forward transform.
+// For transform blocks of 1:2 and 2:1       - sqrt(2) normalization is used
+// For transform blocks of 1:4 and 4:1       - factor of 2 is used
+// For transform blocks TX_8x8 and below     - an additional factor of 2 is used
+// For transform blocks max(width,height)=64 - currently not supported
+
+static const uint16_t dc_coeff_scale[TX_SIZES_ALL] = {
+  1024, 2048, 4096, 4096, 0,    1448, 1448, 2896, 2896, 2896,
+  2896, 0,    0,    2048, 2048, 4096, 4096, 0,    0
+};
+#endif
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer,
 #if TX_TYPE_GROUPING
@@ -4567,7 +4582,8 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         tx_search_skip_flag = 1;
 #endif
 
-#if COEFF_OPT //---
+#if RES_VAR_BASED_DCT_DCT //---
+    uint8_t force_zero_coeff = 0;
     if (!only_dct_dct) {
         const int dequant_shift = context_ptr->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
         MacroblockPlane candidate_plane;
@@ -4586,13 +4602,19 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         }
 
         const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
-        //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
-        uint64_t var_threshold = (uint64_t)(5 * qstep * qstep);
+        const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
+        uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+        //uint64_t var_threshold = (uint64_t)(3 * qstep * qstep);
         if (context_ptr->block_var[0] < var_threshold) {
             // Predict DC only blocks based on residual variance.
             // For chroma plane, this early prediction is disabled for intra blocks.
             //if ((plane == 0) || (plane > 0 && is_inter_block(mbmi))) *dc_only_blk = 1;
             only_dct_dct = 1;
+            if (only_dct_dct) {
+                if ((llabs(context_ptr->per_px_mean[0]) * dc_coeff_scale[tx_size]) < (dc_qstep << 12)) {
+                    force_zero_coeff = 0;
+                }
+            }
         }
     }
 #endif
@@ -5824,12 +5846,20 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
 #if COEFF_OPT
-                context_ptr->block_var[0] = (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) ?
+                if (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) {
                     pixel_diff_stats(
+                        context_ptr,
+                        0,
                         &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
                         tx_candidate_buffer->residual_ptr->stride_y,
                         context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
-                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) : UINT_MAX;
+                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
+                }
+                else {
+                    context_ptr->sse[0] = UINT_MAX;
+                    context_ptr->block_var[0] = UINT_MAX;
+                    context_ptr->per_px_mean[0] = UINT_MAX;
+                }
 #endif
             }
 
@@ -6411,12 +6441,21 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                         context_ptr->blk_geom->bheight);
 
 #if COEFF_OPT
-    context_ptr->block_var[0] = (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) ?
-        pixel_diff_stats( 
+    if (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage == MD_STAGE_3) {
+        pixel_diff_stats(
+            context_ptr,
+            0,
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[blk_origin_index]),
             candidate_buffer->residual_ptr->stride_y,
             context_ptr->blk_geom->bwidth,
-            context_ptr->blk_geom->bheight) : UINT_MAX;
+            context_ptr->blk_geom->bheight);
+    }
+    else {
+        context_ptr->sse[0] = UINT_MAX;
+        context_ptr->block_var[0] = UINT_MAX;
+        context_ptr->per_px_mean[0] = UINT_MAX;
+    }
+
 #endif
 
     perform_tx_partitioning(candidate_buffer,

@@ -574,7 +574,9 @@ typedef struct ModeDecisionContext {
     uint16_t sb_index;
 #endif
 #if COEFF_OPT
+    uint64_t sse[3];
     uint64_t block_var[3];
+    uint64_t per_px_mean[3];
 #endif
 } ModeDecisionContext;
 
