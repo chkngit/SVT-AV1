@@ -60,7 +60,7 @@ extern "C" {
 /************************************/
 
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
-#define REMOVE_TXT_STATS 1
+#define REMOVE_TXT_STATS 0
 #define TX_TYPE_GROUPING 1
 
 #define COST_BASED_TXT 0
