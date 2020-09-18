@@ -4583,6 +4583,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
 
 #if RES_VAR_BASED_DCT_DCT //---
+    uint8_t only_dc = 0;
 #if RES_VAR_BASED_FORCE_SKIP
     uint8_t force_zero_coeff = 0;
 #endif
@@ -4631,6 +4632,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             // For chroma plane, this early prediction is disabled for intra blocks.
             //if ((plane == 0) || (plane > 0 && is_inter_block(mbmi))) *dc_only_blk = 1;
             only_dct_dct = 1;
+            only_dc = 1;
 #if RES_VAR_BASED_FORCE_SKIP
             if (only_dct_dct) {
                 if ((llabs(context_ptr->per_px_mean[0]) * dc_coeff_scale[tx_size]) < (dc_qstep << 12)) {
@@ -4826,6 +4828,15 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         } else {
 #endif
         // Y: T Q i_q
+#if 0//RES_VAR_BASED_DCT_DCT
+            if (only_dc) {
+                int32_t *coeff_pr = &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_y)[context_ptr->txb_1d_offset]);
+           
+            const int n_coeffs = av1_get_max_eob(tx_size);
+            memset(coeff_pr, 0, sizeof(int32_t) * n_coeffs);
+            coeff_pr[0] = (int32_t)((context_ptr->per_px_mean[0] * dc_coeff_scale[tx_size]) >> 12);
+            } else
+#endif
         av1_estimate_transform(
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
             candidate_buffer->residual_ptr->stride_y,
