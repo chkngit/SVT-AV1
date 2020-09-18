@@ -4704,11 +4704,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     int tx_type_tot_group = 1;
     if (context_ptr->md_staging_txt_level) {
 
-       
-        if (pcs_ptr->enc_mode <= ENC_M7) {
+      
+        if (context_ptr->md_staging_txt_level == 1) {
             tx_type_tot_group = MAX_TX_TYPE_GROUP;
         }
-        else {
+        else if (context_ptr->md_staging_txt_level == 2) {
             if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
 
                 tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
