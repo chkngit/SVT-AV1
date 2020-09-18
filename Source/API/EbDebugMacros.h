@@ -100,7 +100,7 @@ extern "C" {
 /************************************/
 #define OPTIMIZE_BUILD_QUANTIZER 1
 /************************************/
-#define OPT_IFS 1
+#define OPT_IFS 0
 /************************************/
 #ifdef __cplusplus
 }
