@@ -98,9 +98,9 @@ extern "C" {
 #define SKIP_TRELLIS_BASED_ON_SATD 1
 
 /************************************/
-#define OPTIMIZE_BUILD_QUANTIZER 0
+#define OPTIMIZE_BUILD_QUANTIZER 1
 /************************************/
-#define OPT_IFS 0
+#define OPT_IFS 1
 /************************************/
 #ifdef __cplusplus
 }
