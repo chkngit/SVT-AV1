@@ -3013,6 +3013,12 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         assert(0);
         break;
     }
+
+
+#if 0//SEPERATES_COMP
+    adaptive_md_cycles_red_ctrls->mode_offset = 0;
+#endif
+
 }
 #else
 void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode) {
@@ -5528,6 +5534,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                     context_ptr->inter_compound_mode = 3;
                 else
                     context_ptr->inter_compound_mode = 0;
+
+              
+
             }
             else {
                 context_ptr->inter_compound_mode = 0;
@@ -7525,6 +7534,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->switch_md_mode_based_on_sq_coeff = 2;
     else
         context_ptr->switch_md_mode_based_on_sq_coeff = 3;
+
+#if 0//SEPERATES_COMP
+    context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+#endif
 
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
 #else

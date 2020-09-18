@@ -542,6 +542,11 @@ typedef struct ModeDecisionContext {
     MvUnit           mv_unit;
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
+
+#if SEPERATES_COMP
+    EbBool comp_inj_table[MD_COMP_TYPES];
+#endif
+
     // Entropy Coder
 #if !MD_FRAME_CONTEXT_MEM_OPT
     EntropyCoder *   coeff_est_entropy_coder_ptr;

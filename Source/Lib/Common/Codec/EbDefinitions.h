@@ -694,6 +694,10 @@ extern "C" {
 #define MDS2_V0                          1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2
 #define NIC_SCALING_PER_STAGE            1 // Add ability to scale NICs per stage; improve current trade-offs
 #define USE_MDS1_PRUNING                 1 // Turn on md stage 1 pruning for M1-M5 with conservative settings
+
+#define SEPERATES_COMP   1// Separate the injection of  inter-inter compound modes
+
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
