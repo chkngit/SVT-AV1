@@ -3315,8 +3315,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
-
+#endif
                     if (tmp_rd < rd) {
                         best_dual_mode  = i;
                         rd              = tmp_rd;
@@ -3463,10 +3466,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         best_in_temp = !best_in_temp;
 #endif
 #if OPT_IFS
-                        if (best_filters == 0)
-                            md_context_ptr->redgular_done = 1;
-                        else
-                            md_context_ptr->redgular_done = 0;
+                        md_context_ptr->ifs_is_regular_last = (best_filters == 0) ? 1 : 0;
 #endif
                     }
                 }
@@ -6514,7 +6514,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         return return_error;
     }
 #if OPT_IFS
-    md_context_ptr->redgular_done = 0;
+    md_context_ptr->ifs_is_regular_last = 0;
 #endif
     if (md_context_ptr->interpolation_search_level != IFS_OFF) {
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
@@ -6583,7 +6583,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
 #if OPT_IFS
-    if(!md_context_ptr->redgular_done)
+    if(!md_context_ptr->ifs_is_regular_last)
 #endif
     av1_inter_prediction(
             picture_control_set_ptr,
