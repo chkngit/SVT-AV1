@@ -1120,6 +1120,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tpl_opt_flag = 0;
     else
         pcs_ptr->tpl_opt_flag = 1;
+#if BYPASS_SIGNAL_SET
+    // This flag to idenfy the fastest preset so the switch md preset
+    // can be disabled for this preset because it is useless.
+       pcs_ptr->fastest_preset = ENC_M8;
+#endif
     return return_error;
 }
 

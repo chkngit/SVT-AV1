@@ -813,6 +813,9 @@ typedef struct PictureParentControlSet {
 #if TF_CHROMA_BLIND
     TfControls tf_ctrls;
 #endif
+#if BYPASS_SIGNAL_SET
+    uint8_t fastest_preset;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {

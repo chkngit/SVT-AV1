@@ -687,6 +687,7 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1012, 1013, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1029, 1030, 1031, 1036, 1037, 1038, 1039,
     1040, 1065, 1070, 1071, 1072, 1073, 1074, 1079, 1080, 1081, 1082, 1083, 1088, 1089, 1090, 1091,
     1092, 1097, 1098, 1099, 1100};
+#if !INIT_BLOCK_OPT
 void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t blk_idx = 0;
     do {
@@ -706,6 +707,7 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         ++blk_idx;
     } while (blk_idx < scs_ptr->max_block_cnt);
 }
+#endif
 void av1_perform_inverse_transform_recon_luma(ModeDecisionContext *        context_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer) {
     uint32_t tu_total_count;
@@ -1949,6 +1951,32 @@ uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
 // Derive me_sb_addr and me_block_offset used to access ME_MV
+#if ME_IDX_LUPT
+const uint32_t me_idx[] = { 0,
+ 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 1, 3, 0, 0, 2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 5, 6, 1, 1, 9, 10, 5, 9, 1, 1, 6, 10, 1, 1, 1, 1, 1, 1, 1, 1, 5,
+ 5, 5, 5, 5, 21, 22, 5, 5, 29, 30, 21, 29, 5, 5, 22, 30, 5, 5, 5, 5, 5, 5, 5, 5, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 29, 29, 29, 29, 29, 29, 29, 29,
+ 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 6, 6, 6, 6, 6, 23, 24, 6, 6, 31, 32, 23, 31, 6, 6, 24, 32, 6, 6, 6, 6, 6, 6, 6, 6, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24,
+ 24, 24, 24, 31, 31, 31, 31, 31, 31, 31, 31, 31, 32, 32, 32, 32, 32, 32, 32, 32, 32, 9, 9, 9, 9, 9, 37, 38, 9, 9, 45, 46, 37, 45, 9, 9, 38, 46, 9, 9, 9, 9, 9, 9, 9, 9, 37, 37, 37, 37,
+ 37, 37, 37, 37, 37, 38, 38, 38, 38, 38, 38, 38, 38, 38, 45, 45, 45, 45, 45, 45, 45, 45, 45, 46, 46, 46, 46, 46, 46, 46, 46, 46, 10, 10, 10, 10, 10, 39, 40, 10, 10, 47, 48, 39, 47, 10, 10, 40, 48, 10,
+ 10, 10, 10, 10, 10, 10, 10, 39, 39, 39, 39, 39, 39, 39, 39, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 47, 47, 47, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 2, 2, 2, 2, 2, 7, 8,
+ 2, 2, 11, 12, 7, 11, 2, 2, 8, 12, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 7, 7, 25, 26, 7, 7, 33, 34, 25, 33, 7, 7, 26, 34, 7, 7, 7, 7, 7, 7, 7, 7, 25, 25, 25, 25, 25, 25, 25,
+ 25, 25, 26, 26, 26, 26, 26, 26, 26, 26, 26, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 34, 34, 34, 8, 8, 8, 8, 8, 27, 28, 8, 8, 35, 36, 27, 35, 8, 8, 28, 36, 8, 8, 8, 8,
+ 8, 8, 8, 8, 27, 27, 27, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 35, 35, 35, 35, 35, 35, 35, 35, 35, 36, 36, 36, 36, 36, 36, 36, 36, 36, 11, 11, 11, 11, 11, 41, 42, 11, 11, 49,
+ 50, 41, 49, 11, 11, 42, 50, 11, 11, 11, 11, 11, 11, 11, 11, 41, 41, 41, 41, 41, 41, 41, 41, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50,
+ 50, 12, 12, 12, 12, 12, 43, 44, 12, 12, 51, 52, 43, 51, 12, 12, 44, 52, 12, 12, 12, 12, 12, 12, 12, 12, 43, 43, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 44, 44, 51, 51, 51, 51, 51, 51,
+ 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 3, 3, 3, 3, 3, 13, 14, 3, 3, 17, 18, 13, 17, 3, 3, 14, 18, 3, 3, 3, 3, 3, 3, 3, 3, 13, 13, 13, 13, 13, 53, 54, 13, 13, 61, 62, 53, 61,
+ 13, 13, 54, 62, 13, 13, 13, 13, 13, 13, 13, 13, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 61, 61, 61, 61, 61, 61, 61, 61, 61, 62, 62, 62, 62, 62, 62, 62, 62, 62, 14, 14,
+ 14, 14, 14, 55, 56, 14, 14, 63, 64, 55, 63, 14, 14, 56, 64, 14, 14, 14, 14, 14, 14, 14, 14, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 63, 63, 63, 63, 63, 63, 63, 63, 63,
+ 64, 64, 64, 64, 64, 64, 64, 64, 64, 17, 17, 17, 17, 17, 69, 70, 17, 17, 77, 78, 69, 77, 17, 17, 70, 78, 17, 17, 17, 17, 17, 17, 17, 17, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 70, 70, 70, 70, 70, 70,
+ 70, 70, 77, 77, 77, 77, 77, 77, 77, 77, 77, 78, 78, 78, 78, 78, 78, 78, 78, 78, 18, 18, 18, 18, 18, 71, 72, 18, 18, 79, 80, 71, 79, 18, 18, 72, 80, 18, 18, 18, 18, 18, 18, 18, 18, 71, 71, 71, 71, 71,
+ 71, 71, 71, 71, 72, 72, 72, 72, 72, 72, 72, 72, 72, 79, 79, 79, 79, 79, 79, 79, 79, 79, 80, 80, 80, 80, 80, 80, 80, 80, 80, 4, 4, 4, 4, 4, 15, 16, 4, 4, 19, 20, 15, 19, 4, 4, 16, 20, 4, 4,
+ 4, 4, 4, 4, 4, 4, 15, 15, 15, 15, 15, 57, 58, 15, 15, 65, 66, 57, 65, 15, 15, 58, 66, 15, 15, 15, 15, 15, 15, 15, 15, 57, 57, 57, 57, 57, 57, 57, 57, 57, 58, 58, 58, 58, 58, 58, 58, 58, 58, 65,
+ 65, 65, 65, 65, 65, 65, 65, 65, 66, 66, 66, 66, 66, 66, 66, 66, 66, 16, 16, 16, 16, 16, 59, 60, 16, 16, 67, 68, 59, 67, 16, 16, 60, 68, 16, 16, 16, 16, 16, 16, 16, 16, 59, 59, 59, 59, 59, 59, 59, 59,
+ 59, 60, 60, 60, 60, 60, 60, 60, 60, 60, 67, 67, 67, 67, 67, 67, 67, 67, 67, 68, 68, 68, 68, 68, 68, 68, 68, 68, 19, 19, 19, 19, 19, 73, 74, 19, 19, 81, 82, 73, 81, 19, 19, 74, 82, 19, 19, 19, 19, 19,
+ 19, 19, 19, 73, 73, 73, 73, 73, 73, 73, 73, 73, 74, 74, 74, 74, 74, 74, 74, 74, 74, 81, 81, 81, 81, 81, 81, 81, 81, 81, 82, 82, 82, 82, 82, 82, 82, 82, 82, 20, 20, 20, 20, 20, 75, 76, 20, 20, 83, 84,
+ 75, 83, 20, 20, 76, 84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 84, 84, 84,
+};
+#endif
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr) {
 
@@ -1990,11 +2018,22 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
         context_ptr->me_block_offset = 0;
     }
     else {
+#if ME_IDX_LUPT
+        if(scs_ptr->seq_header.sb_size == BLOCK_64X64)
+            context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];
+        else
+            context_ptr->me_block_offset =
+            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+                sq_blk_geom,
+                context_ptr->geom_offset_x,
+                context_ptr->geom_offset_y);
+#else
         context_ptr->me_block_offset =
             get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
                 sq_blk_geom,
                 context_ptr->geom_offset_x,
                 context_ptr->geom_offset_y);
+#endif
     }
     context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
 }
@@ -7170,7 +7209,11 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
 
     EbEncMode enc_mode;
     if (mode_offset)
+#if BYPASS_SIGNAL_SET
+        enc_mode = MIN(pcs->parent_pcs_ptr->fastest_preset, pcs->parent_pcs_ptr->enc_mode + mode_offset);
+#else
         enc_mode = MIN(ENC_M8, pcs->parent_pcs_ptr->enc_mode + mode_offset);
+#endif
     else
         enc_mode = pcs->parent_pcs_ptr->enc_mode;
 
@@ -8714,7 +8757,11 @@ uint8_t update_md_settings_based_on_sq_coeff(SequenceControlSet *scs_ptr, Pictur
             if (coeffb_sw_md_ctrls->skip_block) {
                 zero_sq_coeff_skip_action = 1;
             }
+#if BYPASS_SIGNAL_SET
+            else if(pcs_ptr->parent_pcs_ptr->enc_mode  < pcs_ptr->parent_pcs_ptr->fastest_preset){
+#else
             else {
+#endif
                 signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
                 signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
             }
@@ -8737,7 +8784,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     const EbMdcLeafData *const leaf_data_array = mdcResultTbPtr->leaf_data_array;
     const uint16_t             tile_idx        = context_ptr->tile_index;
     context_ptr->sb_ptr                        = sb_ptr;
+#if !INIT_BLOCK_OPT
     init_sq_nsq_block(scs_ptr, context_ptr);
+#endif
 
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
@@ -8966,11 +9015,17 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         uint16_t redundant_blk_mds;
         if (!use_output_stat(scs_ptr)) {
         // Reset settings, in case they were over-written by previous block
-        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr,0);
+#if BYPASS_SIGNAL_SET
+        if(pcs_ptr->parent_pcs_ptr->enc_mode  < pcs_ptr->parent_pcs_ptr->fastest_preset)
+#endif
+            signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr,0);
         signal_derivation_block(pcs_ptr, context_ptr,0);
         }
         // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
-        update_md_settings_based_on_stats(scs_ptr, pcs_ptr, context_ptr,
+#if BYPASS_SIGNAL_SET
+        if(pcs_ptr->parent_pcs_ptr->enc_mode  < pcs_ptr->parent_pcs_ptr->fastest_preset)
+#endif
+            update_md_settings_based_on_stats(scs_ptr, pcs_ptr, context_ptr,
             context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement);
         // If SQ block has zero coeffs, use more aggressive settings (or skip) for NSQ blocks
         uint8_t zero_sq_coeff_skip_action = update_md_settings_based_on_sq_coeff(scs_ptr, pcs_ptr, context_ptr);

@@ -102,6 +102,11 @@ extern "C" {
 /************************************/
 #define OPT_IFS 0
 /************************************/
+/***********************************/
+#define INIT_BLOCK_OPT        1
+#define BYPASS_SIGNAL_SET     1
+#define ME_IDX_LUPT           1
+/************************************/
 #ifdef __cplusplus
 }
 #endif // __cplusplus
