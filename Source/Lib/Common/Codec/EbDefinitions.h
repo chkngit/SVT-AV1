@@ -58,6 +58,7 @@ extern "C" {
 #define INL_TPL_ME_DBG 0
 #define INL_ME_DBG 0 //In loop me for debug
 #if INL_ME_DBG
+#define INL_ME_DBG_MEM_OPT  1 //only use 8bit luma for ME
 #define INL_ME_ON_INPUT_DBG 1 //ME on original debug
 #define INL_GM_ON_INPUT_DBG 1 //GM on original debug
 #define INL_TPL_ME_ON_INPUT_DBG 0 //TPL on original debug
