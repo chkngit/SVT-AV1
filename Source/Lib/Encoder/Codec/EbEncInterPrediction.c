@@ -3391,7 +3391,6 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             } else {
 #if OPT_IFS
             for (int i = filter_set_size-1; i >= 0; --i) {
-            //for (int i = 0; i < filter_set_size; ++i) {
 #else
                 // EIGHTTAP_REGULAR mode is calculated beforehand
                 for (int i = 1; i < filter_set_size; ++i) {
@@ -3406,40 +3405,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     const int32_t tmp_rs = eb_av1_get_switchable_rate(
                         candidate_buffer_ptr, cm, md_context_ptr);
-#if 0//OPT_IFS // to add mdsand chroma signals
-                    av1_inter_prediction(
-                        picture_control_set_ptr,
-                        candidate_buffer_ptr->candidate_ptr->interp_filters,
-                        md_context_ptr->blk_ptr,
-                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
-                        &mv_unit,
-                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
-                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
-                        1,
-                        md_context_ptr,
-                        candidate_buffer_ptr->candidate_ptr->compound_idx,
-                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-                        &md_context_ptr->sb_ptr->tile_info,
-                        md_context_ptr->luma_recon_neighbor_array,
-                        md_context_ptr->cb_recon_neighbor_array,
-                        md_context_ptr->cr_recon_neighbor_array,
-                        0, //No inter-intra for IFSearch
-                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
-                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
-                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
-                        md_context_ptr->blk_origin_x,
-                        md_context_ptr->blk_origin_y,
-                        md_context_ptr->blk_geom->bwidth,
-                        md_context_ptr->blk_geom->bheight,
-                        ref_pic_list0,
-                        ref_pic_list1,
-                        candidate_buffer_ptr->prediction_ptr,
-                        md_context_ptr->blk_geom->origin_x,
-                        md_context_ptr->blk_geom->origin_y,
-                        md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
-                        md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE,
-                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
-#else
+                    
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3475,7 +3441,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             use_uv,
 #endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
-#endif
+
                     model_rd_for_sb(picture_control_set_ptr,
                                     prediction_ptr,
                                     md_context_ptr,
@@ -3495,6 +3461,12 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         best_filters = /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters;
 #if !OPT_IFS
                         best_in_temp = !best_in_temp;
+#endif
+#if OPT_IFS
+                        if (best_filters == 0)
+                            md_context_ptr->redgular_done = 1;
+                        else
+                            md_context_ptr->redgular_done = 0;
 #endif
                     }
                 }
@@ -6541,60 +6513,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
         return return_error;
     }
-
-#if OPT_IFS // to add mdsand chroma signals
-    uint16_t ifs_cap_size = 4;
-    uint8_t perform_ifs = (
-        md_context_ptr->interpolation_search_level != IFS_OFF &&
-        md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE &&
-        md_context_ptr->blk_geom->bwidth > ifs_cap_size && md_context_ptr->blk_geom->bheight > ifs_cap_size) ?
-        1 : 0;
-
-    if (perform_ifs)
-    {
-        if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD &&
-            hbd_mode_decision == EB_DUAL_BIT_MD) {
-            if (ref_idx_l0 >= 0)
-                ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr
-                    ->ref_pic_ptr_array[list_idx0][ref_idx_l0]
-                    ->object_ptr)
-                ->reference_picture;
-            if (ref_idx_l1 >= 0)
-                ref_pic_list1 = ((EbReferenceObject *)picture_control_set_ptr
-                    ->ref_pic_ptr_array[list_idx1][ref_idx_l1]
-                    ->object_ptr)
-                ->reference_picture;
-        }
-        interpolation_filter_search(picture_control_set_ptr,
 #if OPT_IFS
-            candidate_buffer_ptr->prediction_ptr,
-#else
-            md_context_ptr->prediction_ptr_temp,
+    md_context_ptr->redgular_done = 0;
 #endif
-            md_context_ptr,
-            candidate_buffer_ptr,
-            mv_unit,
-            ref_pic_list0,
-            ref_pic_list1,
-            md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
-            ? EB_8_BIT_MD
-            : md_context_ptr->hbd_mode_decision,
-            bit_depth);
-        if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD &&
-            hbd_mode_decision == EB_DUAL_BIT_MD) {
-            if (ref_idx_l0 >= 0)
-                ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr
-                    ->ref_pic_ptr_array[list_idx0][ref_idx_l0]
-                    ->object_ptr)
-                ->reference_picture16bit;
-            if (ref_idx_l1 >= 0)
-                ref_pic_list1 = ((EbReferenceObject *)picture_control_set_ptr
-                    ->ref_pic_ptr_array[list_idx1][ref_idx_l1]
-                    ->object_ptr)
-                ->reference_picture16bit;
-        }
-    }
-#else
     if (md_context_ptr->interpolation_search_level != IFS_OFF) {
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
             // ON for 8x8 and above
@@ -6616,7 +6537,11 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                 ->reference_picture;
                 }
                 interpolation_filter_search(picture_control_set_ptr,
+#if OPT_IFS
+                                           candidate_buffer_ptr->prediction_ptr,
+#else
                                             md_context_ptr->prediction_ptr_temp,
+#endif
                                             md_context_ptr,
                                             candidate_buffer_ptr,
                                             mv_unit,
@@ -6642,7 +6567,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
             }
         }
     }
-#endif
+
 
     NeighborArrayUnit *luma_recon_neighbor_array;
     NeighborArrayUnit *cb_recon_neighbor_array;
@@ -6657,8 +6582,8 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cb_recon_neighbor_array   = md_context_ptr->cb_recon_neighbor_array16bit;
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
-#if OPT_IFS // to add mdsand chroma signals
-    if (perform_ifs == 0 || candidate_buffer_ptr->candidate_ptr->interp_filters != 0)
+#if OPT_IFS
+    if(!md_context_ptr->redgular_done)
 #endif
     av1_inter_prediction(
             picture_control_set_ptr,

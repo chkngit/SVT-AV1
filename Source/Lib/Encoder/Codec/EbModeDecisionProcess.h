@@ -581,6 +581,10 @@ typedef struct ModeDecisionContext {
     uint64_t per_px_mean[3];
     uint64_t block_mse_q8[3];
 #endif
+
+#if OPT_IFS
+    uint8_t redgular_done;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
