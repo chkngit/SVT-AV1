@@ -4632,10 +4632,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 tx_type_tot_group = MAX_TX_TYPE_GROUP;
             }
             else {
-                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                    ? 5
-                    : 1;
+                tx_type_tot_group = 5;
             }
         }
         else if (context_ptr->md_staging_txt_level <= 3) {

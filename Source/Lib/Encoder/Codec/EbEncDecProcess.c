@@ -2259,7 +2259,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // Tx_search Level for Luma         Settings
     // 0                                OFF (DCT_DCT only)
     // 1                                Tx search all types
-    // 2                                M5 - {For (>=tx_16x16) (G1/INTER)  + For (<tx_16x16)(G5/INTER)}
+    // 2                                M5 - (G5/INTER)}
     // 3                                M6 - {For (>=tx_16x16) (G3/INTER) + For (<tx_16x16)(G5/INTER)}
     // 4                                M7 - {For (>=tx_16x16) (G4/INTRA & G2/INTER)  + For (<tx_16x16)(G3/INTER)}
     if (mode_offset == 0) {
