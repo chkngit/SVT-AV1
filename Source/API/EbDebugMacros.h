@@ -85,16 +85,18 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 
 /************************************/
-#define SHUT_FP_QUANT_CHROMA 1 //--->
-#define COEFF_OPT 1
+#define SHUT_FP_QUANT_CHROMA 0 //---> 
+#define COEFF_OPT 0 //--->
 
 #if COEFF_OPT
 
-#define RES_VAR_BASED_DCT_DCT 1
+#define RES_VAR_BASED_DCT_DCT 0 //--->
 #define RES_VAR_BASED_FORCE_SKIP 0
 #define FAST_RDOQ_MODE 0
 
 #endif
+#define SKIP_TRELLIS_BASED_ON_SATD 1
+
 /************************************/
 #ifdef __cplusplus
 }

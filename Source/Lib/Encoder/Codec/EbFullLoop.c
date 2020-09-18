@@ -1196,7 +1196,13 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
     }
     *eob = eob_out;
 }
-
+#if SKIP_TRELLIS_BASED_ON_SATD
+// look-up table for sqrt of number of pixels in a transform block
+// rounded up to the nearest integer.
+static const int sqrt_tx_pixels_2d[TX_SIZES_ALL] = { 4,  8,  16, 32, 32, 6,  6,
+                                                     12, 12, 23, 23, 32, 32, 8,
+                                                     8,  16, 16, 23, 23 };
+#endif
 void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #if FAST_RDOQ_MODE
     int fast_mode,
@@ -1535,6 +1541,23 @@ int32_t av1_quantize_inv_quantize(
             md_context->rdoq_level);
     }
 
+#if SKIP_TRELLIS_BASED_ON_SATD || FAST_RDOQ_MODE
+     const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
+     const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
+     const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
+#endif
+#if SKIP_TRELLIS_BASED_ON_SATD
+    // Hsan
+    int satd = svt_aom_satd(coeff, n_coeffs);
+    const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
+    satd = RIGHT_SIGNED_SHIFT(satd, shift);
+    satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
+    uint64_t coeff_opt_satd_threshold = 16;
+    const int skip_block_trellis =
+        ((uint64_t)satd >
+        (uint64_t)coeff_opt_satd_threshold * qstep * sqrt_tx_pixels_2d[txsize]);
+
+#endif
 #if SHUT_RDOQ_CHROMA
     if(component_type)
     perform_rdoq = 0;
@@ -1548,10 +1571,6 @@ int32_t av1_quantize_inv_quantize(
     if (component_type == COMPONENT_LUMA)
     {
         if (perform_rdoq) {
-            const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
-            const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
-            const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
-
 #if 0
             int64_t block_sse;
 #endif
