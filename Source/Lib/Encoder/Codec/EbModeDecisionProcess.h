@@ -583,7 +583,7 @@ typedef struct ModeDecisionContext {
 #endif
 
 #if OPT_IFS
-    uint8_t redgular_done;
+    uint8_t ifs_regular_done; // If regular is last performed interp_filters @ IFS
 #endif
 } ModeDecisionContext;
 
