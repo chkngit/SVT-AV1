@@ -42,33 +42,6 @@
 extern "C" {
 #endif
 
-#define PAD_CHROMA_AFTER_MCTF 1 // Padding chroma after altref
-#define NEW_DELAY             1 //Change delay some sorts of I in PicDecision
-#if NEW_DELAY
-#define FIX_LAD_DEADLOCK      1 //fix deadlock when lad>0 + iperiod>0
-#define NEW_DELAY_DBG_MSG     0
-#define SCD_LAD            6  //number of future frames
-#define PD_WINDOW_SIZE     (SCD_LAD +2) //adding previous+current to future
-#define MAX_TPL_GROUP_SIZE 64 //enough to cover 6L gop
-#endif
-
-#define INL_ME 1 //In loop me
-#if INL_ME
-#define IME_REUSE_TPL_RESULT 1 // Reuse TPL results for iLoopME
-#define INL_TPL_ENHANCEMENT 1 // Refinement for TPL
-#define INL_TPL_ME_DBG_MSG  0 // Debug message
-#define INL_ME_DBG 1 //In loop me for debug
-#if INL_ME_DBG
-#define INL_ME_ON_INPUT_DBG 1 //ME on original debug
-#define INL_GM_ON_INPUT_DBG 1 //GM on original debug
-#define INL_TPL_ME_ON_INPUT_DBG 1 // use original in TPL
-#define INL_ME_DBG_MEM_OPT  1
-#endif
-#if !IME_REUSE_TPL_RESULT
-#define SIGNAL_TPL_ME_OQ 1 // A separate signal_xxx_oq for TPL ME
-#endif
-#endif
-
 
 #define MAX_TX_WEIGHT 500
 #define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
