@@ -73,7 +73,6 @@ extern "C" {
 #define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
-#define SHUT_FP_QUANT_CHROMA 1 //--->
 #define SHUT_FP_QUANT_TX_TYPE 0
 #define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0
@@ -86,13 +85,14 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 
 /************************************/
+#define SHUT_FP_QUANT_CHROMA 1 //--->
 #define COEFF_OPT 1
 
 #if COEFF_OPT
 
 #define RES_VAR_BASED_DCT_DCT 1
 #define RES_VAR_BASED_FORCE_SKIP 0
-#define FAST_RDOQ_MODE 1
+#define FAST_RDOQ_MODE 0
 
 #endif
 /************************************/
