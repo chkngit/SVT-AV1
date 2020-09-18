@@ -85,7 +85,7 @@ extern "C" {
 #define FAST_RDOQ_NO_I_SLICE 0 
 
 /************************************/
-#define SHUT_FP_QUANT_CHROMA 0 //---> 
+#define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define COEFF_OPT 0 //--->
 
 #if COEFF_OPT
