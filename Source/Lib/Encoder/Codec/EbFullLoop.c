@@ -1553,7 +1553,7 @@ int32_t av1_quantize_inv_quantize(
          const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
-         uint64_t coeff_opt_satd_threshold = 32;
+         uint64_t coeff_opt_satd_threshold = 64;
          const int skip_block_trellis =
              ((uint64_t)satd >
              (uint64_t)coeff_opt_satd_threshold * qstep * sqrt_tx_pixels_2d[txsize]);
