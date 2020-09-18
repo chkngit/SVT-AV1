@@ -1547,6 +1547,7 @@ int32_t av1_quantize_inv_quantize(
      const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
 #endif
 #if SKIP_TRELLIS_BASED_ON_SATD
+     if (pcs_ptr->slice_type != I_SLICE)
      if (perform_rdoq) {
          // Hsan
          int satd = svt_aom_satd(coeff, n_coeffs);
