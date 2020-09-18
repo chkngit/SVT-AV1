@@ -309,8 +309,6 @@ void tpl_mc_flow_dispenser(
     EbPictureBufferDesc *recon_picture_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
     TplStats  tpl_stats;
 
-    (void)scs_ptr;
-
     DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
     DECLARE_ALIGNED(32, int16_t, src_diff[256]);
     DECLARE_ALIGNED(32, TranLow, coeff[256]);
@@ -829,7 +827,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
 
-    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
+   // SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
@@ -859,57 +857,25 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
             }
             double beta = 1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
-                //if (mc_dep_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
-                //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS)
-                //    && intra_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
-                //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS) ){
                 double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
-                //if (pcs_ptr->picture_number == 16)
-                //SVT_LOG(
-                //        "generate_r0beta ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
-                //        "mc_dep=%lld\tbeta=%f\n",
-                //        pcs_ptr->picture_number,
-                //        sb_x,
-                //        sb_y,
-                //        pcs_ptr->r0,
-                //        rk,
-                //        intra_cost,
-                //        mc_dep_cost,
-                //        beta);
                 assert(beta > 0.0);
             }
-            //SVT_LOG("generate_r0beta sbxy=%d %d, rk=%f beta=%f\n", sb_x, sb_y, rk, beta);
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
         }
     }
     return;
 }
-
 /************************************************
-* Genrate TPL MC Flow Based on Lookahead
-** LAD Window: sliding window size
+* Allocate and initialize buffers needed for tpl
 ************************************************/
-EbErrorType tpl_mc_flow(
+EbErrorType init_tpl_buffers(
     EncodeContext                   *encode_context_ptr,
-    SequenceControlSet              *scs_ptr,
-    PictureParentControlSet         *pcs_ptr)
-{
+    PictureParentControlSet         *pcs_ptr,
+    PictureParentControlSet        **pcs_array) {
 
-    PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = { NULL, };
-    int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
+    int32_t                         frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
     int32_t                         frame_idx;
-    uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
-    uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
-    uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
-    EbPictureBufferDesc *            mc_flow_rec_picture_buffer_noref = NULL;
-
-    (void)scs_ptr;
-    pcs_array[0] = pcs_ptr;
-
-    for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
-        pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
-
 
     for (frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
         encode_context_ptr->poc_map_idx[frame_idx] = -1;
@@ -927,7 +893,7 @@ EbErrorType tpl_mc_flow(
     picture_buffer_desc_init_data.bot_padding = pcs_ptr->enhanced_picture_ptr->origin_bot_y;
     picture_buffer_desc_init_data.split_mode = EB_FALSE;
 
-    EB_NEW(mc_flow_rec_picture_buffer_noref,
+    EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref,
         eb_picture_buffer_desc_ctor,
         (EbPtr)&picture_buffer_desc_init_data);
 
@@ -942,20 +908,44 @@ EbErrorType tpl_mc_flow(
                 (EbPtr)&picture_buffer_desc_init_data);
         }
         else {
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
+            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = encode_context_ptr->mc_flow_rec_picture_buffer_noref;
         }
     }
+    return EB_ErrorNone;
+}
+/************************************************
+* Genrate TPL MC Flow Based on frames in the tpl group
+************************************************/
+EbErrorType tpl_mc_flow(
+    EncodeContext                   *encode_context_ptr,
+    SequenceControlSet              *scs_ptr,
+    PictureParentControlSet         *pcs_ptr)
+{
+
+    PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = { NULL, };
+    int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
+    int32_t                         frame_idx;
+    uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
+    uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
+    uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
+
+    pcs_array[0] = pcs_ptr;
+
+    for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
+        pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
+
+    init_tpl_buffers(
+        encode_context_ptr,
+        pcs_ptr,
+        pcs_array);
 
 #if INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 #else
     if (pcs_array[0]->temporal_layer_index == 0) {
 #endif
-        // dispenser I0 or frame_idx0 pic in LA1
-        int32_t sw_length = frames_in_sw;
-
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
-        for (frame_idx = 0; frame_idx < sw_length; frame_idx++) {
+        for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
@@ -964,14 +954,14 @@ EbErrorType tpl_mc_flow(
         }
 
         // synthesizer
-        for (frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--)
-            tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
+        for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--)
+            tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
         generate_r0beta(pcs_array[0]);
 
 #if 0 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
-        for (frame_idx = 0; frame_idx < sw_length; frame_idx++)
+        for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
         {
             PictureParentControlSet         *pcs_ptr_tmp = pcs_array[frame_idx];
             Av1Common *cm = pcs_ptr->av1_cm;
@@ -1001,10 +991,10 @@ EbErrorType tpl_mc_flow(
 
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != mc_flow_rec_picture_buffer_noref)
+            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != encode_context_ptr->mc_flow_rec_picture_buffer_noref)
             EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
     }
-    EB_DELETE(mc_flow_rec_picture_buffer_noref);
+    EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
 
     return EB_ErrorNone;
 }
