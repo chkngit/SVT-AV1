@@ -1547,14 +1547,13 @@ int32_t av1_quantize_inv_quantize(
      const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
 #endif
 #if SKIP_TRELLIS_BASED_ON_SATD
-     if (pcs_ptr->slice_type != I_SLICE)
      if (perform_rdoq) {
          // Hsan
          int satd = svt_aom_satd(coeff, n_coeffs);
          const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
-         uint64_t coeff_opt_satd_threshold = 64;
+         uint64_t coeff_opt_satd_threshold = (pcs_ptr->slice_type == I_SLICE) ? 128 : 64;
          const int skip_block_trellis =
              ((uint64_t)satd >
              (uint64_t)coeff_opt_satd_threshold * qstep * sqrt_tx_pixels_2d[txsize]);
