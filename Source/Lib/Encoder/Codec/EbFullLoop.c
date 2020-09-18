@@ -1557,6 +1557,8 @@ int32_t av1_quantize_inv_quantize(
          const int skip_block_trellis =
              ((uint64_t)satd >
              (uint64_t)coeff_opt_satd_threshold * qstep * sqrt_tx_pixels_2d[txsize]);
+         if (skip_block_trellis)
+             perform_rdoq = 0;
      }
 #endif
 #if SHUT_RDOQ_CHROMA
