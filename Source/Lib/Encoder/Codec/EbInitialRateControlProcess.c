@@ -650,13 +650,13 @@ void tpl_mc_flow_dispenser(
     qIndex =
        (qIndex + delta_qindex);
 #if OPTIMIZE_BUILD_QUANTIZER
-    mb_plane.quant_qtx       = pcs_ptr->quants_8bit.y_quant[qIndex];
-    mb_plane.quant_fp_qtx    = pcs_ptr->quants_8bit.y_quant_fp[qIndex];
-    mb_plane.round_fp_qtx    = pcs_ptr->quants_8bit.y_round_fp[qIndex];
-    mb_plane.quant_shift_qtx = pcs_ptr->quants_8bit.y_quant_shift[qIndex];
-    mb_plane.zbin_qtx        = pcs_ptr->quants_8bit.y_zbin[qIndex];
-    mb_plane.round_qtx       = pcs_ptr->quants_8bit.y_round[qIndex];
-    mb_plane.dequant_qtx     = pcs_ptr->deq_8bit.y_dequant_qtx[qIndex];
+    mb_plane.quant_qtx       = scs_ptr->quants_8bit.y_quant[qIndex];
+    mb_plane.quant_fp_qtx    = scs_ptr->quants_8bit.y_quant_fp[qIndex];
+    mb_plane.round_fp_qtx    = scs_ptr->quants_8bit.y_round_fp[qIndex];
+    mb_plane.quant_shift_qtx = scs_ptr->quants_8bit.y_quant_shift[qIndex];
+    mb_plane.zbin_qtx        = scs_ptr->quants_8bit.y_zbin[qIndex];
+    mb_plane.round_qtx       = scs_ptr->quants_8bit.y_round[qIndex];
+    mb_plane.dequant_qtx     = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
 #else
     Quants *const quants_bd = &pcs_ptr->quants_bd;
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
@@ -1375,35 +1375,37 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
 #if OPTIMIZE_BUILD_QUANTIZER
-            eb_av1_set_quantizer(
-                pcs_ptr,
-                pcs_ptr->frm_hdr.quantization_params.base_q_idx);
+            if (pcs_ptr->picture_number == 0) {
+                //eb_av1_set_quantizer(
+                //    pcs_ptr,
+                //    pcs_ptr->frm_hdr.quantization_params.base_q_idx);
 
-            Quants *const quants_8bit = &pcs_ptr->quants_8bit;
-            Dequants *const deq_8bit = &pcs_ptr->deq_8bit;
-            eb_av1_build_quantizer(
-                AOM_BITS_8,
-                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
-                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
-                pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
-                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
-                pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
-                quants_8bit,
-                deq_8bit);
-
-            if (scs_ptr->static_config.encoder_bit_depth == AOM_BITS_10)
-            {
-                Quants *const quants_bd = &pcs_ptr->quants_bd;
-                Dequants *const deq_bd = &pcs_ptr->deq_bd;
+                Quants *const quants_8bit = &scs_ptr->quants_8bit;
+                Dequants *const deq_8bit = &scs_ptr->deq_8bit;
                 eb_av1_build_quantizer(
-                    AOM_BITS_10,
+                    AOM_BITS_8,
                     pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
-                    quants_bd,
-                    deq_bd);
+                    quants_8bit,
+                    deq_8bit);
+
+                if (scs_ptr->static_config.encoder_bit_depth == AOM_BITS_10)
+                {
+                    Quants *const quants_bd = &scs_ptr->quants_bd;
+                    Dequants *const deq_bd = &scs_ptr->deq_bd;
+                    eb_av1_build_quantizer(
+                        AOM_BITS_10,
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+                        quants_bd,
+                        deq_bd);
+                }
             }
 #endif
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {

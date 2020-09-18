@@ -686,10 +686,12 @@ typedef struct PictureParentControlSet {
     // Global quant matrix tables
     const QmVal *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
     const QmVal *gqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
+#if !OPTIMIZE_BUILD_QUANTIZER
     Quants quants_bd; // follows input bit depth
     Dequants deq_bd;  // follows input bit depth
     Quants quants_8bit;  // 8bit
     Dequants deq_8bit; // 8bit
+#endif
     int32_t      min_qmlevel;
     int32_t      max_qmlevel;
     // Encoder

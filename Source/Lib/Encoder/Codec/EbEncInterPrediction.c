@@ -461,9 +461,17 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     int32_t   current_q_index =
             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 
+#if OPTIMIZE_BUILD_QUANTIZER
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     Dequants *const dequants = context_ptr->hbd_mode_decision ?
+#if OPTIMIZE_BUILD_QUANTIZER
+                               &scs_ptr->deq_bd :
+                               &scs_ptr->deq_8bit;
+#else
                                &picture_control_set_ptr->parent_pcs_ptr->deq_bd:
                                &picture_control_set_ptr->parent_pcs_ptr->deq_8bit;
+#endif
     int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
@@ -3080,12 +3088,19 @@ static void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
                                              md_context_ptr->blk_geom->bheight_uv);
             break;
         }
-
+#if OPTIMIZE_BUILD_QUANTIZER
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         const uint8_t current_q_index =
             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
         Dequants *const dequants = md_context_ptr->hbd_mode_decision
+#if OPTIMIZE_BUILD_QUANTIZER
+            ? &scs_ptr->deq_bd
+            : &scs_ptr->deq_8bit;
+#else
             ? &picture_control_set_ptr->parent_pcs_ptr->deq_bd
             : &picture_control_set_ptr->parent_pcs_ptr->deq_8bit;
+#endif
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         model_rd_from_sse(
             plane == 0 ? md_context_ptr->blk_geom->bsize : md_context_ptr->blk_geom->bsize_uv,

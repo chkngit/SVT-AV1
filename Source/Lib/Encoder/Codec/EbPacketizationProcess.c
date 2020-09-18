@@ -124,7 +124,11 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         eb_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
 
         uint64_t ref_qindex_dequant =
+#if OPTIMIZE_BUILD_QUANTIZER
+            (uint64_t)scs_ptr->deq_bd
+#else
             (uint64_t)pcs_ptr->parent_pcs_ptr->deq_bd
+#endif
                 .y_dequant_qtx[frm_hdr->quantization_params.base_q_idx][1];
         uint64_t sad_bits_ref_dequant;
         uint64_t weight               = 0;
@@ -150,7 +154,11 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
                                                         [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if OPTIMIZE_BUILD_QUANTIZER
+                                    scs_ptr->deq_bd
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
+#endif
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
@@ -193,7 +201,11 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
                                                         [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if OPTIMIZE_BUILD_QUANTIZER
+                                    scs_ptr->deq_bd
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
+#endif
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
@@ -237,7 +249,11 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
                                                 [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if OPTIMIZE_BUILD_QUANTIZER
+                                    scs_ptr->deq_bd
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
+#endif
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
@@ -278,7 +294,11 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
                                                 [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if OPTIMIZE_BUILD_QUANTIZER
+                                    scs_ptr->deq_bd
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
+#endif
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
