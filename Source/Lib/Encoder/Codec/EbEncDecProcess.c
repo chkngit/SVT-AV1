@@ -2256,12 +2256,27 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
 #if TX_TYPE_GROUPING
-    if (pd_pass == PD_PASS_0)
-        context_ptr->md_txt_level = 0;
-    else if (pd_pass == PD_PASS_1)
-        context_ptr->md_txt_level = 0;
-    else
-        context_ptr->md_txt_level = 1;
+    // Tx_search Level for Luma         Settings
+    // 0                                OFF (DCT_DCT only)
+    // 1                                Tx search all types
+    // 2                                M5 - {For (>=tx_16x16) (G1/INTER)  + For (<tx_16x16)(G5/INTER)}
+    // 3                                M6 - {For (>=tx_16x16) (G3/INTER) + For (<tx_16x16)(G5/INTER)}
+    // 4                                M7 - {For (>=tx_16x16) (G4/INTRA & G2/INTER)  + For (<tx_16x16)(G3/INTER)}
+    if (mode_offset == 0) {
+        if (pd_pass == PD_PASS_0)
+            context_ptr->txt_level = 0;
+        else if (pd_pass == PD_PASS_1)
+            context_ptr->txt_level = 0;
+        else
+            if (enc_mode <= ENC_M4)
+                context_ptr->txt_level = 1;
+            else if (enc_mode <= ENC_M5)
+                context_ptr->txt_level = 2;
+            else if (enc_mode <= ENC_M6)
+                context_ptr->txt_level = 3;
+            else
+                context_ptr->txt_level = 4;
+    }
 #else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
@@ -2299,6 +2314,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             txt_cycles_reduction_level = 5;
     }
+
+    if (context_ptr->txt_level > 1)
+        txt_cycles_reduction_level = 0;
 #if SHUT_TXT_STATS
     txt_cycles_reduction_level = 0;
 #endif

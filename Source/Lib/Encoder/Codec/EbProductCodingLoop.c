@@ -4623,11 +4623,31 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
     int tx_type_tot_group = 1;
-    if (context_ptr->md_staging_txt_level) {
-
-       
-        if (pcs_ptr->enc_mode <= ENC_M7) {
+    if (context_ptr->md_staging_txt_level > 0) {
+        if (context_ptr->md_staging_txt_level <= 1) {
             tx_type_tot_group = MAX_TX_TYPE_GROUP;
+        }
+        else if (context_ptr->md_staging_txt_level <= 2) {
+            if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
+                tx_type_tot_group = MAX_TX_TYPE_GROUP;
+            }
+            else {
+                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                    ? 5
+                    : 1;
+            }
+        }
+        else if (context_ptr->md_staging_txt_level <= 3) {
+            if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
+                tx_type_tot_group = MAX_TX_TYPE_GROUP;
+            }
+            else {
+                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                    ? 5
+                    : 3;
+            }
         }
         else {
             if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
@@ -4638,7 +4658,6 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     : 4;
             }
             else {
-                //TEST1
                 tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                     ? 3
@@ -4658,7 +4677,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if DCT_VS_DST
             tx_type = (tx_type_tot_group > 2) ? tx_type_group_1[tx_type_group_idx][tx_type_idx]: tx_type_group_0[tx_type_group_idx][tx_type_idx];
 #else
-            tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
+            if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                tx_type = tx_type_group_sc[tx_type_group_idx][tx_type_idx];
+            else
+                tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
 #endif
             if (tx_type == INVALID_TX_TYPE)
                 break;
@@ -6597,7 +6619,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
         context_ptr->md_staging_tx_size_mode = 0;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = context_ptr->txt_level;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
@@ -6752,7 +6774,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = context_ptr->txt_level;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif

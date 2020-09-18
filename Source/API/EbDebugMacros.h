@@ -59,8 +59,8 @@ extern "C" {
 #define OPT_4           0
 /************************************/
 
-#define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
-#define REMOVE_TXT_STATS 1
+#define SHUT_TXT_STATS 0 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
+#define REMOVE_TXT_STATS 0
 #define TX_TYPE_GROUPING 1
 
 #define COST_BASED_TXT 0
