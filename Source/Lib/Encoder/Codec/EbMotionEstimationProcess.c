@@ -1010,10 +1010,10 @@ void *motion_estimation_kernel(void *input_ptr) {
 #endif
             }
             if (
-#if !TPL_ZERO_LAD
+#if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
-#if IN_LOOP_TPL
+#if FEATURE_IN_LOOP_TPL
                 (!scs_ptr->in_loop_me || pcs_ptr->slice_type == I_SLICE) &&
 #endif
                 scs_ptr->static_config.enable_tpl_la)

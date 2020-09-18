@@ -45,6 +45,11 @@ extern "C" {
 #define FIX_10BIT     1 // PR:1484 fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // PR:1484 fix RC token check to include double dash
 
+#define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
+#if FEATURE_IN_LOOP_TPL
+#define ENABLE_TPL_ZERO_LAD 1 // Enable TPL in loop to work with zero LAD
+#define TUNE_TPL 1   // Tuning TPL algorithm for QP assignment
+#endif
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

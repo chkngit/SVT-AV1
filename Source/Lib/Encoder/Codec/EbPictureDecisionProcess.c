@@ -3916,6 +3916,17 @@ void store_tpl_pictures(
     else {
         memcpy(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
+#if !TUNE_TPL
+        //add 3 future pictures from PD future window
+        for (uint32_t pic_i = 0; pic_i < 3; ++pic_i) {
+            if (pcs->pd_window[2 + pic_i]) {
+                pcs->tpl_group[mg_size + pic_i] = pcs->pd_window[2 + pic_i];
+                pcs->tpl_group_size++;
+            }
+            else
+                break;
+        }
+#endif
 #if 0//INL_TPL_ENHANCEMENT
         //add 6 future pictures from PD future window
         for (uint32_t pic_i = 0; pic_i < 6; ++pic_i) {
@@ -4607,6 +4618,9 @@ void* picture_decision_kernel(void *input_ptr)
 #if NEW_DELAY
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
             memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
+#if TUNE_TPL
+            pcs_ptr->pd_window_count = 0;
+#endif
 #else
             parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
             parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
@@ -4647,6 +4661,13 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                     }
                 }
+#if TUNE_TPL
+                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
+                    if (pcs_ptr->pd_window[2 + window_index])
+                        pcs_ptr->pd_window_count++;
+                    else
+                        break;
+#endif
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;

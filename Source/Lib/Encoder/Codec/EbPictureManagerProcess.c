@@ -280,7 +280,7 @@ static uint8_t tpl_setup_me_refs(
         if (*trailing_frames) {
             ref_list_count = (list_index == REF_LIST_0) ?
                 frame_pred_entry->ref_list0.reference_list_count :
-#if TPL_ZERO_LAD
+#if ENABLE_TPL_ZERO_LAD
                 0; //Jing: why remove ref1? for poc17, it should refer to poc18 in L1
 #else
                 frame_pred_entry->ref_list1.reference_list_count;
@@ -308,7 +308,7 @@ static uint8_t tpl_setup_me_refs(
 
         for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
             EbBool ref_in_slide_window = EB_FALSE;
-#if IN_LOOP_TPL
+#if FEATURE_IN_LOOP_TPL
 #if INL_TPL_ENHANCEMENT
             pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_FALSE;
 #else
@@ -331,7 +331,7 @@ static uint8_t tpl_setup_me_refs(
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] = pcs_tpl_base_ptr->tpl_group[j]->ds_pics;
 #endif
                     ref_in_slide_window = EB_TRUE;
-#if IN_LOOP_TPL
+#if FEATURE_IN_LOOP_TPL
 #if INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_TRUE;
 #else
@@ -374,7 +374,7 @@ static uint8_t tpl_setup_me_refs(
                     printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
 #endif
 #if INL_TPL_ME_ON_INPUT_DBG
-                    printf("\t Debug purpose, use input pic\n");
+                   // printf("\t Debug purpose, use input pic\n");
 #if INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_ptr =
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->input_picture;
@@ -399,7 +399,7 @@ static uint8_t tpl_setup_me_refs(
         }
     }
 
-#if IN_LOOP_TPL
+#if FEATURE_IN_LOOP_TPL
 #if INL_TPL_ENHANCEMENT
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = *ref0_count;
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref1_count = *ref1_count;
@@ -422,6 +422,10 @@ static uint8_t tpl_setup_me_refs(
 #endif
 #endif
 #if INL_TPL_ME_DBG_MSG
+#if ENABLE_TPL_ZERO_LAD
+    if (*trailing_frames)
+        pcs_tpl_group_frame_ptr->max_number_of_pus_per_sb = pcs_tpl_base_ptr->max_number_of_pus_per_sb;
+#endif
     for (int i = REF_LIST_0; i <= REF_LIST_1; i++) {
         int ref_count = (i == 0) ? *ref0_count: *ref1_count;
         for (int j = 0; j < ref_count; j++) {
@@ -449,7 +453,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
     uint64_t curr_poc = pcs_tpl_group_frame_ptr->picture_number;
     uint64_t base_poc = pcs_tpl_base_ptr->picture_number;
 
-    // 17/18/19, which is out side of the minigop //anaghdin to check
+    // 17/18/19, which is out side of the minigop
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
 
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = 0;
@@ -493,7 +497,9 @@ static EbErrorType tpl_get_open_loop_me(
         // Do tpl ME to get ME results
         for (uint32_t i = 0; i < pcs_tpl_base_ptr->tpl_group_size; i++) {
             PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_tpl_base_ptr->tpl_group[i];
-
+#if !FEATURE_IN_LOOP_TPL
+            if (!pcs_tpl_group_frame_ptr->tpl_me_done) {
+#endif
             uint8_t ref_list0_count = 0;
             uint8_t ref_list1_count = 0;
             EbBool  is_trailing_tpl_frame = EB_FALSE;
@@ -504,9 +510,19 @@ static EbErrorType tpl_get_open_loop_me(
 
             if (pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type != I_SLICE) {
 #else
-            if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE) {
-#endif
+#if FEATURE_IN_LOOP_TPL
+            pcs_tpl_group_frame_ptr->tpl_ref0_count = 0;
+            pcs_tpl_group_frame_ptr->tpl_ref1_count = 0;
+            EB_MEMSET(pcs_tpl_group_frame_ptr->ref_in_slide_window,
+                0,
+                MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH * sizeof(EbBool));
 
+            if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE) {
+#else
+            if (pcs_tpl_group_frame_ptr->slice_type != I_SLICE /*&&
+                    pcs_tpl_group_frame_ptr != pcs_tpl_base_ptr*/) {
+#endif
+#endif
 #if INL_TPL_ME_DBG_MSG
                 printf("[%ld]: Setup TPL ME refs for frame %lu\n",
                         pcs_tpl_base_ptr->picture_number,
@@ -517,8 +533,9 @@ static EbErrorType tpl_get_open_loop_me(
                         pcs_tpl_group_frame_ptr, pcs_tpl_base_ptr,
                         &ref_list0_count, &ref_list1_count,
                         &is_trailing_tpl_frame);
-
+#if FEATURE_IN_LOOP_TPL
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
+#endif
                     // Initialize Segments
                     pcs_tpl_group_frame_ptr->tpl_me_segments_column_count = 1;//scs_ptr->tf_segment_column_count;
                     pcs_tpl_group_frame_ptr->tpl_me_segments_row_count = 1;//scs_ptr->tf_segment_row_count;

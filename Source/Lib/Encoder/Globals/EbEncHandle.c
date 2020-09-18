@@ -99,8 +99,11 @@
 #if !NEW_DELAY
 #define SCD_LAD                                             12
 #endif
+#if ENABLE_TPL_ZERO_LAD
+#define TPL_LAD                                              0
+#else
 #define TPL_LAD                                              16
-
+#endif
 /**************************************
  * Globals
  **************************************/
@@ -2269,9 +2272,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
 
 #if INL_ME
-    //if (scs_ptr->static_config.rate_control_mode == 0 && scs_ptr->static_config.enable_tpl_la ==0)
-    //    scs_ptr->in_loop_me = 1;
-    scs_ptr->in_loop_me = 0;
+    if (scs_ptr->static_config.rate_control_mode != 0 && use_input_stat(scs_ptr))
+        scs_ptr->in_loop_me = 0;
+    else
+        scs_ptr->in_loop_me = 1;
 #endif
 
     // Set over_boundary_block_mode     Settings

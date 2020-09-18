@@ -593,7 +593,7 @@ typedef struct PictureParentControlSet {
 #if !INL_TPL_ENHANCEMENT
     // iME TPL
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if IN_LOOP_TPL //anaghdin initialize the values
+#if FEATURE_IN_LOOP_TPL
     uint8_t                     tpl_ref0_count;
     uint8_t                     tpl_ref1_count;
     EbBool                      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -877,6 +877,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet* tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size;             //size of above buffer
     void* pd_window[PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
+#if TUNE_TPL
+    uint8_t pd_window_count;
+#endif
 #if FIX_LAD_DEADLOCK
     uint8_t is_next_frame_intra;
 #endif
