@@ -1135,6 +1135,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         set_global_motion_field(pcs_ptr);
 
         eb_av1_qm_init(pcs_ptr->parent_pcs_ptr);
+#if !OPTIMIZE_BUILD_QUANTIZER
         Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
         Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
         eb_av1_set_quantizer(
@@ -1163,6 +1164,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             deq_8bit);
 
         // Hsan: collapse spare code
+#endif
         MdRateEstimationContext *md_rate_estimation_array;
 
         // QP

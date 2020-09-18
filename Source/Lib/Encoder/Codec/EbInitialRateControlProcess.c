@@ -649,7 +649,15 @@ void tpl_mc_flow_dispenser(
             8);
     qIndex =
        (qIndex + delta_qindex);
-
+#if OPTIMIZE_BUILD_QUANTIZER
+    mb_plane.quant_qtx       = pcs_ptr->quants_8bit.y_quant[qIndex];
+    mb_plane.quant_fp_qtx    = pcs_ptr->quants_8bit.y_quant_fp[qIndex];
+    mb_plane.round_fp_qtx    = pcs_ptr->quants_8bit.y_round_fp[qIndex];
+    mb_plane.quant_shift_qtx = pcs_ptr->quants_8bit.y_quant_shift[qIndex];
+    mb_plane.zbin_qtx        = pcs_ptr->quants_8bit.y_zbin[qIndex];
+    mb_plane.round_qtx       = pcs_ptr->quants_8bit.y_round[qIndex];
+    mb_plane.dequant_qtx     = pcs_ptr->deq_8bit.y_dequant_qtx[qIndex];
+#else
     Quants *const quants_bd = &pcs_ptr->quants_bd;
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
     eb_av1_set_quantizer(
@@ -671,6 +679,7 @@ void tpl_mc_flow_dispenser(
     mb_plane.zbin_qtx        = pcs_ptr->quants_bd.y_zbin[qIndex];
     mb_plane.round_qtx       = pcs_ptr->quants_bd.y_round[qIndex];
     mb_plane.dequant_qtx     = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
+#endif
     pcs_ptr->base_rdmult = svt_av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 
     // Walk the first N entries in the sliding window
@@ -1355,6 +1364,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
         uint32_t segment_index = in_results_ptr->segment_index;
 
+
         // Set the segment mask
         SEGMENT_COMPLETION_MASK_SET(pcs_ptr->me_segments_completion_mask, segment_index);
 
@@ -1364,6 +1374,38 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+#if OPTIMIZE_BUILD_QUANTIZER
+            eb_av1_set_quantizer(
+                pcs_ptr,
+                pcs_ptr->frm_hdr.quantization_params.base_q_idx);
+
+            Quants *const quants_8bit = &pcs_ptr->quants_8bit;
+            Dequants *const deq_8bit = &pcs_ptr->deq_8bit;
+            eb_av1_build_quantizer(
+                AOM_BITS_8,
+                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
+                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
+                pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+                pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
+                pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+                quants_8bit,
+                deq_8bit);
+
+            if (scs_ptr->static_config.encoder_bit_depth == AOM_BITS_10)
+            {
+                Quants *const quants_bd = &pcs_ptr->quants_bd;
+                Dequants *const deq_bd = &pcs_ptr->deq_bd;
+                eb_av1_build_quantizer(
+                    AOM_BITS_10,
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+                    quants_bd,
+                    deq_bd);
+            }
+#endif
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
