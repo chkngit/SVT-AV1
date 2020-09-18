@@ -405,7 +405,16 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
 #endif
+#if 0//RES_VAR_BASED_DCT_DCT
+        if (only_dc) {
+            int32_t *coeff_pr = &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_y)[context_ptr->txb_1d_offset]);
 
+            const int n_coeffs = av1_get_max_eob(tx_size);
+            memset(coeff_pr, 0, sizeof(int32_t) * n_coeffs);
+            coeff_pr[0] = (int32_t)((context_ptr->per_px_mean[0] * dc_coeff_scale[tx_size]) >> 12);
+        }
+        else
+#endif
         av1_estimate_transform(
             ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
             residual16bit->stride_y,

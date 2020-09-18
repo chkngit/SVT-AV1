@@ -4610,7 +4610,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
         const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
         const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
-        //uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+#if 1
+        uint64_t var_threshold = (uint64_t)(1.8 * qstep * qstep);
+#else
         uint64_t var_threshold;
 
         if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
@@ -4623,9 +4625,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             var_threshold = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                 ? (uint64_t)(1.8 * qstep * qstep)
-                : (uint64_t)(10 * qstep * qstep);
+                : (uint64_t)(1.8 * qstep * qstep);
         }
-
+#endif
 
         if (context_ptr->block_var[0] < var_threshold) {
             // Predict DC only blocks based on residual variance.
