@@ -255,7 +255,7 @@ static uint8_t tpl_setup_me_refs(
     uint32_t pred_struct_idx = curr_minigop_entry_idx + init_idx;
 
 #if !INL_TPL_ENHANCEMENT
-    // 17/18/19, which is out side of the minigop //anaghdin to check
+    // 17/18/19, which is out side of the minigop
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
 #endif
 
@@ -457,7 +457,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
     uint64_t curr_poc = pcs_tpl_group_frame_ptr->picture_number;
     uint64_t base_poc = pcs_tpl_base_ptr->picture_number;
 
-    // 17/18/19, which is out side of the minigop //anaghdin to check
+    // 17/18/19, which is out side of the minigop
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
 
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = 0;
@@ -500,7 +500,7 @@ static EbErrorType tpl_get_open_loop_me(
         // Do tpl ME to get ME results
         for (uint32_t i = 0; i < pcs_tpl_base_ptr->tpl_group_size; i++) {
             PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_tpl_base_ptr->tpl_group[i];
-#if !TPL_SETUP_REF
+#if !IN_LOOP_TPL
             if (!pcs_tpl_group_frame_ptr->tpl_me_done) {
 #endif
             uint8_t ref_list0_count = 0;
@@ -513,7 +513,7 @@ static EbErrorType tpl_get_open_loop_me(
 
             if (pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type != I_SLICE) {
 #else
-#if TPL_SETUP_REF
+#if IN_LOOP_TPL
             pcs_tpl_group_frame_ptr->tpl_ref0_count = 0;
             pcs_tpl_group_frame_ptr->tpl_ref1_count = 0;
             EB_MEMSET(pcs_tpl_group_frame_ptr->ref_in_slide_window,
@@ -536,7 +536,7 @@ static EbErrorType tpl_get_open_loop_me(
                         pcs_tpl_group_frame_ptr, pcs_tpl_base_ptr,
                         &ref_list0_count, &ref_list1_count,
                         &is_trailing_tpl_frame);
-#if TPL_SETUP_REF
+#if IN_LOOP_TPL
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
 #endif
                     // Initialize Segments

@@ -306,9 +306,7 @@ void tpl_mc_flow_dispenser(
     BlockGeom   blk_geom;
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-#if TPL_REC_BUFFER
     EbPictureBufferDesc *recon_picture_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
-#endif
     TplStats  tpl_stats;
 
     (void)scs_ptr;
@@ -407,17 +405,11 @@ void tpl_mc_flow_dispenser(
                 if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
                     uint32_t mb_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
                     uint32_t mb_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
-#if TPL_REC_BUFFER
                     const int dst_buffer_stride = recon_picture_ptr->stride_y;
                     const int dst_mb_offset = mb_origin_y * dst_buffer_stride + mb_origin_x;
                     const int dst_basic_offset = recon_picture_ptr->origin_y * recon_picture_ptr->stride_y + recon_picture_ptr->origin_x;
                     uint8_t *dst_buffer = recon_picture_ptr->buffer_y + dst_basic_offset + dst_mb_offset;
-#else
-                    const int dst_buffer_stride = input_picture_ptr->stride_y;
-                    const int dst_mb_offset = mb_origin_y * dst_buffer_stride + mb_origin_x;
-                    const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
-                    uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] + dst_basic_offset + dst_mb_offset;
-#endif
+
                     int64_t inter_cost;
                     int64_t recon_error = 1, sse = 1;
                     uint64_t best_ref_poc = 0;
@@ -437,7 +429,6 @@ void tpl_mc_flow_dispenser(
                     for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
-#if IN_LOOP_TPL
 #if INL_TPL_ENHANCEMENT
                         if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
                             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
@@ -447,41 +438,14 @@ void tpl_mc_flow_dispenser(
                             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_ref1_count))
                             continue;
 #endif
-
-#endif
-#if !IN_LOOP_TPL
-                        if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->mrp_ctrls.ref_list0_count_try) ||
-                            (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->mrp_ctrls.ref_list1_count_try))
-                            continue;
-#endif
                         if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
                             continue;
-#if !IN_LOOP_TPL
-                        if (!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
-                            continue;
-                        uint64_t ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
-                        uint32_t ref_frame_idx = 0;
-                        while (ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
-                            ref_frame_idx++;
-                        if (ref_frame_idx == MAX_TPL_LA_SW || (int32_t)ref_frame_idx >= frame_idx) {
-                            continue;
-                        }
-#endif
-#if IN_LOOP_TPL
 #if INL_TPL_ENHANCEMENT
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #else
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #endif
 
-#else
-                        EbPaReferenceObject * referenceObject = (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
-                        ref_pic_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
-#endif
-#if 0//TPL_TUNING
-                        if ((int64_t)pcs_ptr->picture_number - (int64_t)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number > 16)
-                            continue;
-#endif
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
                         uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
@@ -502,11 +466,7 @@ void tpl_mc_flow_dispenser(
                         MV best_mv = { y_curr_mv, x_curr_mv };
                         av1_build_inter_predictor(pcs_ptr->av1_cm,
                             ref_mb,
-#if TPL_REC_BUFFER
                             ref_pic_ptr->stride_y,
-#else
-                            input_picture_ptr->stride_y,
-#endif
                             predictor,
                             16,
                             &best_mv,
@@ -520,15 +480,12 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
-#if TPL_REC_BUFFER
 #if INL_TPL_ENHANCEMENT
                             best_ref_poc = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
 #else
                             best_ref_poc = pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
 #endif
-#else
-                            best_ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
-#endif
+
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
@@ -554,7 +511,6 @@ void tpl_mc_flow_dispenser(
                         // inter recon with rec_picture as reference pic
                         uint64_t ref_poc = best_ref_poc;
                         uint32_t ref_frame_idx = 0;
-#if TPL_REC_BUFFER
                         uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
 #if INL_TPL_ENHANCEMENT
@@ -573,12 +529,7 @@ void tpl_mc_flow_dispenser(
 #else
                             ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #endif
-#else
-                        while (ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
-                            ref_frame_idx++;
-                        assert(ref_frame_idx != MAX_TPL_LA_SW);
-#endif
-#if TPL_REC_BUFFER
+
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
                         uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
@@ -586,15 +537,7 @@ void tpl_mc_flow_dispenser(
                         struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
                                                   ref_pic_ptr->width, ref_pic_ptr->height,
                                                   ref_pic_ptr->stride_y };
-#else
-                        const int ref_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
-                        const int ref_mb_offset = mb_origin_y * input_picture_ptr->stride_y + mb_origin_x;
-                        uint8_t *ref_mb = encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx] + ref_basic_offset + ref_mb_offset;
 
-                        struct Buf2D ref_buf = { NULL, encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx] + ref_basic_offset,
-                                                  input_picture_ptr->width, input_picture_ptr->height,
-                                                  input_picture_ptr->stride_y };
-#endif
                         InterPredParams inter_pred_params;
                         svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                             mb_origin_x, 0, 0, 8, 0, 0,
@@ -603,11 +546,7 @@ void tpl_mc_flow_dispenser(
                         inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
                         av1_build_inter_predictor(pcs_ptr->av1_cm,
                             ref_mb,
-#if TPL_REC_BUFFER
                             ref_pic_ptr->stride_y,
-#else
-                            input_picture_ptr->stride_y,
-#endif
                             dst_buffer,
                             dst_buffer_stride,
                             &final_best_mv,
@@ -625,14 +564,9 @@ void tpl_mc_flow_dispenser(
                         above_row = above_data + 16;
                         left_col = left_data + 16;
                         TxSize tx_size = TX_16X16;
-#if TPL_REC_BUFFER
                         uint8_t *recon_buffer =
                             recon_picture_ptr->buffer_y + dst_basic_offset;
-#else
-                        uint8_t *recon_buffer =
-                            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] +
-                            dst_basic_offset;
-#endif
+     
                         update_neighbor_samples_array_open_loop_mb_recon(above_row - 1,
                             left_col - 1,
                             recon_buffer,
@@ -687,7 +621,6 @@ void tpl_mc_flow_dispenser(
     }
 
     // padding current recon picture
-#if TPL_REC_BUFFER
     generate_padding(
         recon_picture_ptr->buffer_y,
         recon_picture_ptr->stride_y,
@@ -695,15 +628,7 @@ void tpl_mc_flow_dispenser(
         recon_picture_ptr->height,
         recon_picture_ptr->origin_x,
         recon_picture_ptr->origin_y);
-#else
-    generate_padding(
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
-        input_picture_ptr->stride_y,
-        input_picture_ptr->width,
-        input_picture_ptr->height,
-        input_picture_ptr->origin_x,
-        input_picture_ptr->origin_y);
-#endif
+
     return;
 }
 
@@ -970,108 +895,22 @@ EbErrorType tpl_mc_flow(
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_ptr)
 {
-#if !IN_LOOP_TPL
-    InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
-    PictureParentControlSet          *temp_pcs_ptr;
-#endif
+
     PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = { NULL, };
-#if IN_LOOP_TPL
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
-#else
-    uint32_t                         inputQueueIndex;
-    int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
-#endif
     int32_t                         frame_idx;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
-#if !IN_LOOP_TPL
-    EbBool                           start_is_intra = EB_FALSE;
-    EbBool                           got_intra_in_sw = EB_FALSE;
-#endif
-#if TPL_REC_BUFFER
     EbPictureBufferDesc *            mc_flow_rec_picture_buffer_noref = NULL;
-#else
-    EbByte                           mc_flow_rec_picture_buffer_noref = NULL;
-#endif
 
     (void)scs_ptr;
     pcs_array[0] = pcs_ptr;
 
-#if IN_LOOP_TPL
-#if TPL_ZERO_LAD
     for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
         pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
-#else
-    for (frame_idx = 0; frame_idx < pcs_ptr->tpl_group_size; frame_idx++) {
-        PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_ptr->tpl_group[frame_idx];
-        // sort to be decode order
-        if (frame_idx == 0)
-            pcs_array[0] = pcs_tpl_group_frame_ptr;
-        else {
-            for (i = 0; i < frame_idx; i++) {
-#if INL_TPL_ENHANCEMENT
-                if (pcs_tpl_group_frame_ptr->tpl_data.decode_order < pcs_array[i]->tpl_data.decode_order) {
-#else
-                if (pcs_tpl_group_frame_ptr->decode_order < pcs_array[i]->decode_order) {
-#endif
-                    for (int32_t j = frame_idx; j > i; j--)
-                        pcs_array[j] = pcs_array[j - 1];
-                    pcs_array[i] = pcs_tpl_group_frame_ptr;
-                    break;
-                }
-            }
-            if (i == frame_idx)
-                pcs_array[i] = pcs_tpl_group_frame_ptr;
-        }
-    }
-#endif
-#else
-    // Walk the first N entries in the sliding window
-    inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (frame_idx = 0; frame_idx < pcs_ptr->frames_in_sw; frame_idx++) {
-        temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
-        temp_pcs_ptr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
 
-        // sort to be decode order
-        if (frame_idx == 0) {
-            pcs_array[0] = temp_pcs_ptr;
-        }
-        else {
-            for (i = 0; i < frame_idx; i++) {
-#if INL_TPL_ENHANCEMENT
-                if (temp_pcs_ptr->tpl_data.decode_order < pcs_array[i]->tpl_data.decode_order) {
-#else
-                if (temp_pcs_ptr->decode_order < pcs_array[i]->decode_order) {
-#endif
-                    for (int32_t j = frame_idx; j > i; j--)
-                        pcs_array[j] = pcs_array[j - 1];
-                    pcs_array[i] = temp_pcs_ptr;
-                    break;
-                }
-            }
-            if (i == frame_idx)
-                pcs_array[i] = temp_pcs_ptr;
-        }
 
-        // Increment the inputQueueIndex Iterator
-        inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
-    }
-    //anaghdin: why do we have this
-    for (frame_idx = 1; frame_idx < MIN(16, frames_in_sw); frame_idx++) {
-        if (frame_is_intra_only(pcs_array[frame_idx])) {
-            got_intra_in_sw = EB_TRUE;
-            break;
-        }
-    }
-    if (got_intra_in_sw) {
-        return EB_ErrorNone;
-    }
-#endif
-#if !IN_LOOP_TPL
-    start_is_intra = frame_is_intra_only(pcs_array[0]);
-#endif
-#if TPL_REC_BUFFER
     for (frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
         encode_context_ptr->poc_map_idx[frame_idx] = -1;
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
@@ -1106,48 +945,17 @@ EbErrorType tpl_mc_flow(
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
         }
     }
-#else
-    for (frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
-        encode_context_ptr->poc_map_idx[frame_idx] = -1;
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
-    }
-    EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
-    for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-#if INL_TPL_ENHANCEMENT
-        if (pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag) {
-#else
-        if (pcs_array[frame_idx]->is_used_as_reference_flag) {
-#endif
-            EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
-        }
-        else {
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
-        }
-    }
-    if (!encode_context_ptr->mc_flow_rec_picture_buffer_saved)
-        EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer_saved, pcs_ptr->enhanced_picture_ptr->luma_size);
-#endif
+
 #if INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 #else
     if (pcs_array[0]->temporal_layer_index == 0) {
 #endif
         // dispenser I0 or frame_idx0 pic in LA1
-#if IN_LOOP_TPL
         int32_t sw_length = frames_in_sw;
-#else
-        int32_t sw_length = MIN(17, (frames_in_sw));
-        EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
-#endif
+
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
         for (frame_idx = 0; frame_idx < sw_length; frame_idx++) {
-#if !IN_LOOP_TPL
-            if (!start_is_intra && frame_idx == 0) {
-                uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[0];
-                memcpy(dst_buffer, encode_context_ptr->mc_flow_rec_picture_buffer_saved, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
-                continue;
-            }
-#endif
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
@@ -1189,54 +997,15 @@ EbErrorType tpl_mc_flow(
         }
 #endif
 
-#if !IN_LOOP_TPL
-        // The second part is for the next base layer frame to use the available pictures.
-        // i.e. POC 16 have access to picture 1,2,...15. So dispenser and synthesizer are called.
-        // In the next call, the stats for POC 16 is updated using pictures 17,... 32
-        encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
-        for (frame_idx = 1; frame_idx < sw_length; frame_idx++) {
-            encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
-            if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
-                EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
-                uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[0];
-                // copy frame_idx0 input to rec before run frame_idx1 picture
-                memcpy(dst_buffer, input_picture_ptr->buffer_y, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
-            }
-            for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
-                memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
-            }
-
-            tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
-            if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
-                // save frame_idx1 picture buffer for next LA
-                memcpy(encode_context_ptr->mc_flow_rec_picture_buffer_saved, encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
-            }
-        }
-        // synthesizer
-        for (frame_idx = sw_length - 1; frame_idx >= 1; frame_idx--)
-            // to make sure synthesizer is not called more than one time
-            if (pcs_array[frame_idx]->picture_number <= pcs_array[1]->picture_number)
-                tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
-#endif
     }
 
-#if TPL_REC_BUFFER
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != mc_flow_rec_picture_buffer_noref)
             EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
     }
     EB_DELETE(mc_flow_rec_picture_buffer_noref);
-#else
-    for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-        if (encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != mc_flow_rec_picture_buffer_noref) {
-            EB_FREE_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
-        }
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
-    }
-    EB_FREE_ARRAY(mc_flow_rec_picture_buffer_noref);
-#endif
+
     return EB_ErrorNone;
 }
 #endif
@@ -6472,9 +6241,7 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
         if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE)
             q_adj_factor -= 0.15;
         // Make a further adjustment based on the kf zero motion measure.
-#if TPL_TUNING
-      //  q_adj_factor += 0.05 - (0.001 * (double)twopass->kf_zeromotion_pct);
-#else
+#if !TPL_TUNING
         q_adj_factor +=
             0.05 - (0.001 * (double)MAX(twopass->kf_zeromotion_pct, pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct));
 #endif
@@ -7254,16 +7021,11 @@ void *rate_control_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
 #if IN_LOOP_TPL
-            if (
-#if !TPL_ZERO_LAD
-                scs_ptr->static_config.look_ahead_distance != 0 &&
-#endif
-                scs_ptr->static_config.enable_tpl_la &&
+            if (scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
             }
 #endif
-
 
 #if INL_ME
             // Release the down scaled input

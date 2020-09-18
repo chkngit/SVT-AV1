@@ -1656,10 +1656,6 @@ void *inloop_me_kernel(void *input_ptr) {
 #if IN_LOOP_TPL
                 // Doing OIS search for TPL
                 if (scs_ptr->static_config.enable_tpl_la) {
-                    //printf("[%ld]: Doing open loop intra search for TPL, (%d, %d) => (%d, %d)\n",
-                    //        ppcs_ptr->picture_number,
-                    //        x_sb_start_index, y_sb_start_index,
-                    //        x_sb_end_index, y_sb_end_index);
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                             ++y_sb_index) {
                         for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;

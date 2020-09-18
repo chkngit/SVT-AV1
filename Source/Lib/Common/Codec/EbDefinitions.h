@@ -73,8 +73,6 @@ extern "C" {
 
 #define IN_LOOP_TPL 1
 #if IN_LOOP_TPL
-#define TPL_REC_BUFFER 1
-#define TPL_SETUP_REF 1
 #define TPL_ZERO_LAD 1
 #define TPL_TUNING 1
 #define INL_ME_FIX 1
