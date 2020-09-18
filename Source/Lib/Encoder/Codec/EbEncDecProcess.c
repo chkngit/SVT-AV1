@@ -1618,7 +1618,7 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
 #endif
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->ref_txt_cnt, pcs_ptr->txt_cnt, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM *TX_TYPES);
 #endif
@@ -2142,6 +2142,84 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         break;
     }
 }
+#if TX_TYPE_GROUPING
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
+
+    TxtControls* txt_ctrls = &mdctxt->txt_ctrls;
+
+    switch (txt_level)
+    {
+    case 0:
+        txt_ctrls->enabled = 0;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 1;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 1;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = 1;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 1:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 1;
+        txt_ctrls->intra_th = 5;
+        txt_ctrls->inter_th = 8;
+        break;
+    case 2:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 5;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 5;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 3:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 5;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 3;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 4:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 3;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 2;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if !REMOVE_TXT_STATS
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode) {
 
@@ -2262,20 +2340,23 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 2                                M5 - (G5/INTER)}
     // 3                                M6 - {For (>=tx_16x16) (G3/INTER) + For (<tx_16x16)(G5/INTER)}
     // 4                                M7 - {For (>=tx_16x16) (G4/INTRA & G2/INTER)  + For (<tx_16x16)(G3/INTER)}
+    uint8_t txt_level = 0;
     if (mode_offset == 0) {
         if (pd_pass == PD_PASS_0)
-            context_ptr->txt_level = 0;
+            txt_level = 0;
         else if (pd_pass == PD_PASS_1)
-            context_ptr->txt_level = 0;
+            txt_level = 0;
         else
             if (enc_mode <= ENC_M4)
-                context_ptr->txt_level = 1;
+                txt_level = 1;
             else if (enc_mode <= ENC_M5)
-                context_ptr->txt_level = 2;
+                txt_level = 2;
             else if (enc_mode <= ENC_M6)
-                context_ptr->txt_level = 3;
+                txt_level = 3;
             else
-                context_ptr->txt_level = 4;
+                txt_level = 4;
+
+        set_txt_controls(context_ptr, txt_level);
     }
 #else
     // Tx_search Level for Luma                       Settings
@@ -3320,7 +3401,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         }
     }
 }
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
 void generate_statistics_txt(
     SequenceControlSet  *scs_ptr,
     PictureControlSet   *pcs_ptr,
@@ -3645,7 +3726,7 @@ void generate_statistics_nsq(
         }
     }
 }
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
 /******************************************************
 * Generate probabilities for the txt_cycles_reduction
 ******************************************************/
@@ -4267,7 +4348,7 @@ void *mode_decision_kernel(void *input_ptr) {
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
 #endif
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
 #endif
@@ -4539,7 +4620,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                      context_ptr->md_context);
                     generate_statistics_nsq(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
                     generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
                     generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #endif
 
@@ -4583,7 +4664,7 @@ void *mode_decision_kernel(void *input_ptr) {
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)
                 pcs_ptr->pred_depth_count[pred_depth][part_idx] += context_ptr->md_context->pred_depth_count[pred_depth][part_idx];
 #endif
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
         // Accumulate tx_type selection
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++)
             for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)

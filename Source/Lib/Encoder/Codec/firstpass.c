@@ -1787,6 +1787,9 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->tpl_opt_flag = 1;
     return return_error;
 }
+#if TX_TYPE_GROUPING
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
+#endif
 #if !REMOVE_TXT_STATS
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode);
 #endif

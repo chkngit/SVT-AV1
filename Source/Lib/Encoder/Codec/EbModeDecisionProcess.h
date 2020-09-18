@@ -141,8 +141,23 @@ typedef struct  AMdCycleRControls {
     uint16_t switch_mode_th;
     uint8_t mode_offset;
 }AMdCycleRControls;
+#if TX_TYPE_GROUPING
+typedef struct  TxtControls {
+    uint8_t enabled;
+
+    uint8_t txt_group_inter_lt_16x16;
+    uint8_t txt_group_inter_gt_eq_16x16;
+
+    uint8_t txt_group_intra_lt_16x16;
+    uint8_t txt_group_intra_gt_eq_16x16;
+
+    uint8_t use_stats;    // On/Off feature control
+    uint16_t intra_th;    // Threshold to bypass intra TXT <the higher th the higher speed>
+    uint16_t inter_th;    // Threshold to bypass inter TXT <the higher th the higher speed>
+}TxtControls;
+#endif
 #if !REMOVE_TXT_STATS
-typedef struct  TxtCycleRControls {
+typedef struct  TxtCycleControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th;  // Threshold to bypass inter TXT <the higher th the higher speed>
@@ -447,7 +462,7 @@ typedef struct ModeDecisionContext {
     EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
 #if TX_TYPE_GROUPING
-    EbBool md_staging_txt_level;
+    EbBool md_staging_txt_level; // 0: OFF, 1: Use TxT Search
 #else
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
 #endif
@@ -486,9 +501,7 @@ typedef struct ModeDecisionContext {
     uint8_t      src_to_pred_decision; // Use src-to-pred distortion only (i.e. only md_stage_0() data)
 #endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
-#if TX_TYPE_GROUPING
-    uint8_t      txt_level;
-#else
+#if !TX_TYPE_GROUPING
     uint8_t      tx_search_level;
 #endif
     uint8_t      interpolation_search_level;
@@ -525,6 +538,9 @@ typedef struct ModeDecisionContext {
     PdPass pd_pass;
 
     EbBool        md_disable_cfl;
+#if TX_TYPE_GROUPING
+    TxtControls txt_ctrls;
+#endif
 #if !REMOVE_TXT_STATS
     TxtCycleRControls txt_cycles_red_ctrls;
 #endif
@@ -548,7 +564,7 @@ typedef struct ModeDecisionContext {
     uint32_t depth_prob[DEPTH_DELTA_NUM];
 #endif
     uint32_t ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint32_t txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif

@@ -52,7 +52,7 @@ typedef struct EbReferenceObject {
 #if !OPT_4
     uint32_t ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
 #endif
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
     uint32_t ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif
     int32_t              mi_cols;

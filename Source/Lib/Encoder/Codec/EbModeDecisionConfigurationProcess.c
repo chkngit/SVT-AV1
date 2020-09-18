@@ -1122,7 +1122,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Init pred_depth selection
         memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
 #endif
-#if !REMOVE_TXT_STATS
+#if !REMOVE_TXT_STATS || TX_TYPE_GROUPING
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
 #endif
