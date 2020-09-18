@@ -2256,17 +2256,23 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
 #if TX_TYPE_GROUPING
-    if (mode_offset == 0) {
+    //if (mode_offset == 0) {
     if (pd_pass == PD_PASS_0)
         context_ptr->md_txt_level = 0;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_txt_level = 0;
     else
-        if (enc_mode <= ENC_M7)
-            context_ptr->md_txt_level = 1;
-        else
+        if (enc_mode <= ENC_M4)
+            context_ptr->md_txt_level = 1; // All: all tx_type are used
+        else if (enc_mode <= ENC_M5)
             context_ptr->md_txt_level = 2;
-    }
+        else if (enc_mode <= ENC_M6)
+            context_ptr->md_txt_level = 3;
+        else if (enc_mode <= ENC_M7)
+            context_ptr->md_txt_level = 4;
+        else if (enc_mode <= ENC_M8)
+            context_ptr->md_txt_level = 5;
+    //}
 #else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
@@ -2304,8 +2310,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             txt_cycles_reduction_level = 5;
     }
-#if SHUT_TXT_STATS
-    txt_cycles_reduction_level = 0;
+#if TX_TYPE_GROUPING
+    // txt-stats only if all tx_type are used
+    if(context_ptr->md_txt_level > 1)
+        txt_cycles_reduction_level = 0;
 #endif
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
 #endif
