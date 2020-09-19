@@ -4649,9 +4649,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
-    int tx_type_group = get_tx_type_group(context_ptr, candidate_buffer, only_dct_dct);
+    int tx_type_tot_group = get_tx_type_group(context_ptr, candidate_buffer, only_dct_dct);
 
-    for (int tx_type_group_idx = 0; tx_type_group_idx < tx_type_group; ++tx_type_group_idx) {
+    for (int tx_type_group_idx = 0; tx_type_group_idx < tx_type_tot_group; ++tx_type_group_idx) {
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES; ++tx_type_idx) {
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
                 tx_type = tx_type_group_sc[tx_type_group_idx][tx_type_idx];
