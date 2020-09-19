@@ -45,6 +45,8 @@ extern "C" {
 #define FIX_10BIT     1 // PR:1484 fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // PR:1484 fix RC token check to include double dash
 
+#define TX_TYPE_GROUPING 1 // Define new levels for Tx Type Search
+
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove
