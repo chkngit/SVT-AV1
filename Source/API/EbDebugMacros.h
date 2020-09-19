@@ -106,6 +106,9 @@ extern "C" {
 #define INIT_BLOCK_OPT        1
 #define BYPASS_SIGNAL_SET     1
 #define ME_IDX_LUPT           1
+#define INIT_FAST_LOOP_OPT    1
+#define REMOVE_UNUSED_NEIG_ARRAY   1
+
 /************************************/
 #ifdef __cplusplus
 }

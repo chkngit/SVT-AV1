@@ -2592,12 +2592,16 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
 
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
+#if !REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#if !REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
@@ -2786,12 +2790,16 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
 
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
+#if !REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#if !REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =

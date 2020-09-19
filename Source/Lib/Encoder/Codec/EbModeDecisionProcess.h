@@ -64,9 +64,13 @@ typedef struct {
 typedef struct MdBlkStruct {
     unsigned             tested_blk_flag : 1; //tells whether this CU is tested in MD.
     unsigned             mdc_array_index : 7;
+#if REMOVE_UNUSED_NEIG_ARRAY
+    unsigned             count_non_zero_coeffs : 12;
+#else
     unsigned             count_non_zero_coeffs : 11;
     unsigned             top_neighbor_depth : 8;
     unsigned             left_neighbor_depth : 8;
+#endif
     unsigned             top_neighbor_mode : 2;
     unsigned             left_neighbor_mode : 2;
     unsigned             full_distortion : 32;
@@ -253,7 +257,9 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *mv_neighbor_array;
     NeighborArrayUnit *skip_flag_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
+#if !REMOVE_UNUSED_NEIG_ARRAY
     NeighborArrayUnit *leaf_depth_neighbor_array;
+#endif
     NeighborArrayUnit *luma_recon_neighbor_array;
     NeighborArrayUnit *cb_recon_neighbor_array;
     NeighborArrayUnit *cr_recon_neighbor_array;
