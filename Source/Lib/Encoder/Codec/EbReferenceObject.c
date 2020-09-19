@@ -209,20 +209,6 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
                eb_picture_buffer_desc_ctor,
                (EbPtr)picture_buffer_desc_init_data_ptr);
 
-#if INL_ME_DBG
-        hme_desc_init_data.left_padding = 68;
-        hme_desc_init_data.right_padding = 68;
-        hme_desc_init_data.top_padding = 68;
-        hme_desc_init_data.bot_padding = 68;
-        hme_desc_init_data.split_mode = EB_FALSE;
-#if INL_ME_DBG_MEM_OPT
-        hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //Only save 8bit luma
-        hme_desc_init_data.bit_depth = EB_8BIT;
-#endif
-        EB_NEW(reference_object->input_picture,
-                eb_picture_buffer_desc_ctor,
-                (EbPtr)&hme_desc_init_data);
-#endif
         initialize_samples_neighboring_reference_picture(
             reference_object,
             picture_buffer_desc_init_data_ptr,
@@ -243,6 +229,20 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
         }
     }
 
+#if INL_ME_DBG
+        hme_desc_init_data.left_padding = 68;
+        hme_desc_init_data.right_padding = 68;
+        hme_desc_init_data.top_padding = 68;
+        hme_desc_init_data.bot_padding = 68;
+        hme_desc_init_data.split_mode = EB_FALSE;
+#if INL_ME_DBG_MEM_OPT
+        hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //Only save 8bit luma
+        hme_desc_init_data.bit_depth = EB_8BIT;
+#endif
+        EB_NEW(reference_object->input_picture,
+                eb_picture_buffer_desc_ctor,
+                (EbPtr)&hme_desc_init_data);
+#endif
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
     uint32_t mi_cols = reference_object->reference_picture->width >> MI_SIZE_LOG2;
 

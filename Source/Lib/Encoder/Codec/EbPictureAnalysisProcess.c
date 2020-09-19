@@ -3252,6 +3252,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
         scs_ptr->pad_bottom >> subsampling_y);
 
     if (is16_bit_input) {
+#if INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_y)
+#endif
         pad_input_picture(
             &input_picture_ptr->buffer_bit_inc_y[input_picture_ptr->origin_x +
                                                  (input_picture_ptr->origin_y *
@@ -3850,6 +3853,9 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
 
     // PAD the bit inc buffer in 10bit
     if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
+#if INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->stride_bit_inc_y)
+#endif
         generate_padding(input_picture_ptr->buffer_bit_inc_y,
                 input_picture_ptr->stride_bit_inc_y,
                 input_picture_ptr->width,
