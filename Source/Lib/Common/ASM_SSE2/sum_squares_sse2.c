@@ -312,10 +312,10 @@ uint64_t aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
     else if (n > 64) {
         int k = n & ~(64 - 1);
         return aom_sum_squares_i16_64n_sse2(src, k) +
-            aom_sum_squares_i16_c(src + k, n - k);
+            aom_sum_squares_i16(src + k, n - k);
     }
     else {
-        return aom_sum_squares_i16_c(src, n);
+        return aom_sum_squares_i16(src, n);
     }
 }
 

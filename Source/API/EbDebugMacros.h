@@ -54,6 +54,8 @@ extern "C" {
 #define ENHANCED_FASTER_PD0 0
 /************************************/
 #define TF_CHROMA_BLIND 1
+#define TF_32x32_16x16_ADAPT 0 ///***
+#define TF_NOISE 0
 #define SHUT_TF 0
 /************************************/
 #define OPT_4           0
@@ -62,7 +64,7 @@ extern "C" {
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define REMOVE_TXT_STATS 0
 #define TX_TYPE_GROUPING 1
-
+#define EXIT_TX_TYPE_IF_HAS_COEFF 0  ///***
 #define COST_BASED_TXT 0
 #define DCT_VS_DST  0 // to test for only INTRA CLASS
 #define TXT_OFF 0
@@ -77,7 +79,6 @@ extern "C" {
 #define SHUT_FP_QUANT_INTER 0 
 #define SHUT_FP_QUANT_INTRA 0
 
-#define FAST_RDOQ 0 
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
 #define FAST_RDOQ_CHROMA 0 //--->
@@ -92,16 +93,45 @@ extern "C" {
 
 #define RES_VAR_BASED_DCT_DCT 0 //--->
 #define RES_VAR_BASED_FORCE_SKIP 0
-#define FAST_RDOQ_MODE 0
 
 #endif
 #define SKIP_TRELLIS_BASED_ON_SATD 1
 
+#define RDOQ_REFACTOR 0
+#define RDOQ_TEST0 0 // RDOQ do not perform rd_low for only abs_qc==1
+#define RDOQ_TEST1 0 // cnt fail
+#define RDOQ_TEST2 0 // ???
+#define FAST_RDOQ_MODE 0
+
+#define FAST_RDOQ_SATD 0
+#define FAST_RDOQ_ONLY_COEFF 0
+#define FAST_RDOQ_ONLY_EOB 0
+#if FAST_RDOQ_ONLY_COEFF
+#define FAST_RDOQ 1
+#endif
+#define USE_MD_SKIP_DECISION_0 0 // clean-up (semi-lossless)
+#define USE_MD_SKIP_DECISION_1 0 // clean-up (use md skip)
+/************************************/
+// PD0 ---------------->
+#define ON_THE_FLY_MDS1_BYPASS 0
 /************************************/
 #define OPTIMIZE_BUILD_QUANTIZER 1
 /************************************/
 #define OPT_IFS 1
-/************************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
+/***********************************/
 /***********************************/
 #define INIT_BLOCK_OPT        1
 #define BYPASS_SIGNAL_SET     1

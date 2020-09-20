@@ -3196,7 +3196,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
 #if OPT_IFS
     uint64_t rd = (uint64_t) ~0;
-    int32_t switchable_rate;
+    int32_t switchable_rate = 0;
 #else
     //set_default_interp_filters(mbmi, assign_filter);
     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = //EIGHTTAP_REGULAR ;
@@ -3380,8 +3380,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
-
+#endif
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
                         switchable_rate = tmp_rs;
@@ -3453,10 +3456,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
-                    const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 #if OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
                     if (tmp_rd <= rd) {
 #else
+                    const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
                     if (tmp_rd < rd) {
 #endif
                         rd              = tmp_rd;

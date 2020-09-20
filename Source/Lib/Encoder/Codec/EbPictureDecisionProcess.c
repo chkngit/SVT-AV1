@@ -782,6 +782,15 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->noise_based_window_adjust = 0;
 #endif
         break;
+#if TF_NOISE
+    case 4:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 1;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -1084,10 +1093,19 @@ EbErrorType signal_derivation_multi_processes_oq(
                 context_ptr->tf_level = 0;
         }
         else {
+#if TF_NOISE
+            if (pcs_ptr->slice_type == I_SLICE) 
+                context_ptr->tf_level = 3;
+            else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 4;
+            else
+                context_ptr->tf_level = 0;
+#else
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;
+#endif
         }
 #else
         else {

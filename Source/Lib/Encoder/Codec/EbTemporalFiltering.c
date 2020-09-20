@@ -300,7 +300,14 @@ void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t 
 }
 static void derive_tf_32x32_block_split_flag(MeContext *context_ptr) {
     int subblock_errors[4];
+
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
+#if TF_32x32_16x16_ADAPT   
+        if (!context_ptr->tf_16x16_search_do[idx_32x32]) {
+            context_ptr->tf_32x32_block_split_flag[idx_32x32] = 0;
+            continue;
+        }
+#endif
         int block_error = (int)context_ptr->tf_32x32_block_error[idx_32x32];
 
         // `block_error` is initialized as INT_MAX and will be overwritten after
@@ -330,6 +337,7 @@ static void derive_tf_32x32_block_split_flag(MeContext *context_ptr) {
         else { // Do split.
             context_ptr->tf_32x32_block_split_flag[idx_32x32] = 1;
         }
+
     }
 }
 // Create and initialize all necessary ME context structures
@@ -1470,6 +1478,7 @@ static void apply_filtering_block_plane_wise(
     }
 }
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128);
+
 static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
     PictureParentControlSet *pcs_ref,
     EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
@@ -1527,6 +1536,10 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
     uint32_t bsize = 16;
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
+#if TF_32x32_16x16_ADAPT   
+        context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] > 20 * 32 * 32) ? 1 : 0;
+        if(context_ptr->tf_16x16_search_do[idx_32x32])
+#endif
         for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
             uint32_t pu_index = index_16x16_from_subindexes[idx_32x32][idx_16x16];
 
@@ -1708,6 +1721,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
             mv_x = best_mv_x;
             mv_y = best_mv_y;
+
             // Perform 1/8 Pel MV Refinement
 #if TF_CHROMA_BLIND
             if (context_ptr->tf_hp)
@@ -1875,7 +1889,9 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         signed short mv_y = (_MVYT(context_ptr->p_best_mv32x32[mv_index])) << 1;
         signed short best_mv_x = mv_x;
         signed short best_mv_y = mv_y;
+
         // Perform 1/2 Pel MV Refinement
+
         for (signed short i = -4; i <= 4; i = i + 4) {
             for (signed short j = -4; j <= 4; j = j + 4) {
 
@@ -2017,6 +2033,7 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
         mv_x = best_mv_x;
         mv_y = best_mv_y;
+
         // Perform 1/8 Pel MV Refinement
 #if TF_CHROMA_BLIND
         if (context_ptr->tf_hp)
@@ -2088,9 +2105,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 }
             }
         }
+
         context_ptr->tf_32x32_mv_x[idx_32x32] = best_mv_x;
         context_ptr->tf_32x32_mv_y[idx_32x32] = best_mv_y;
     }
+
 }
 
 static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
@@ -2623,6 +2642,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
                     // Derive tf_32x32_block_split_flag
                     derive_tf_32x32_block_split_flag(context_ptr);
+
                     // Perform MC using the information acquired using the ME step
                     tf_inter_prediction(picture_control_set_ptr_central,
                                         context_ptr,

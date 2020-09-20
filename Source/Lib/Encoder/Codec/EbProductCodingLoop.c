@@ -4940,6 +4940,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         uint32_t y_has_coeff = y_count_non_zero_coeffs_txt[tx_type] > 0;
 
         // tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
+#if EXIT_TX_TYPE_IF_HAS_COEFF
+        if (y_has_coeff == 0 && tx_type != DCT_DCT)
+            break;
+#endif
         if (y_has_coeff == 0 && tx_type != DCT_DCT)
             continue;
 
@@ -7644,6 +7648,11 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
                     }
                 context_ptr->md_stage_1_count[cand_class_it] = cand_count;
             }
+#if ON_THE_FLY_MDS1_BYPASS
+        if (context_ptr->pd_pass == PD_PASS_2 && context_ptr->md_stage_1_count[cand_class_it] == 1) {
+            context_ptr->bypass_md_stage_1[cand_class_it] = 1;
+        }
+#endif
         context_ptr->md_stage_1_total_count += context_ptr->md_stage_1_count[cand_class_it];
     }
 }

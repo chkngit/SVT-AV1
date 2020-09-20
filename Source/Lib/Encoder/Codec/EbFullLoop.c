@@ -829,7 +829,11 @@ static INLINE int get_coeff_cost_general(int is_last, int ci, TranLow abs_qc, in
     }
     return cost;
 }
+#if RDOQ_REFACTOR
+static int64_t get_coeff_dist(TranLow tcoeff, TranLow dqcoeff, int shift) {
+#else
 static INLINE int64_t get_coeff_dist(TranLow tcoeff, TranLow dqcoeff, int shift) {
+#endif
     const int64_t diff = ((int64_t)tcoeff - dqcoeff) * (int64_t)(1lu << shift);
     return diff * diff;
 }
@@ -869,7 +873,11 @@ static INLINE int get_br_cost_with_diff(TranLow level, const int *coeff_lps, int
 
     return coeff_lps[base_range] + golomb_bits;
 }
+#if RDOQ_REFACTOR
+static int get_two_coeff_cost_simple(int ci, TranLow abs_qc, int coeff_ctx,
+#else
 static AOM_FORCE_INLINE int get_two_coeff_cost_simple(int ci, TranLow abs_qc, int coeff_ctx,
+#endif
                                                       const LvMapCoeffCost *txb_costs, int bwl,
                                                       TxClass tx_class, const uint8_t *levels,
                                                       int *cost_low) {
@@ -911,20 +919,32 @@ static INLINE int get_coeff_cost_eob(int ci, TranLow abs_qc, int sign, int coeff
     }
     return cost;
 }
-
+#if RDOQ_REFACTOR
+static void update_coeff_eob(
+#else
 static AOM_FORCE_INLINE void update_coeff_eob(
+#endif
     int *accu_rate, int64_t *accu_dist, uint16_t *eob, int *nz_num, int *nz_ci, int si,
     TxSize tx_size, TxClass tx_class, int bwl, int height, int dc_sign_ctx, int64_t rdmult,
     int shift, const int16_t *dequant, const int16_t *scan, const LvMapEobCost *txb_eob_costs,
     const LvMapCoeffCost *txb_costs, const TranLow *tcoeff, TranLow *qcoeff, TranLow *dqcoeff,
+#if RDOQ_TEST1
+    uint8_t *levels, int sharpness, int *lower_level_fail_cnt) {
+
+#else
     uint8_t *levels, int sharpness) {
+#endif
     const int dqv = dequant[si != 0];
     assert(si != *eob - 1);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
+
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
+
     if (qc == 0)
+
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
+
     else {
         int           lower_level = 0;
         const TranLow abs_qc      = abs(qc);
@@ -948,17 +968,21 @@ static AOM_FORCE_INLINE void update_coeff_eob(
             rate_low         = txb_costs->base_cost[coeff_ctx][0];
             rd_low           = RDCOST(rdmult, *accu_rate + rate_low, *accu_dist);
         } else {
+#if !RDOQ_TEST0
             get_qc_dqc_low(abs_qc, sign, dqv, shift, &qc_low, &dqc_low);
             abs_qc_low = abs_qc - 1;
             dist_low   = get_coeff_dist(tqc, dqc_low, shift) - dist0;
             rate_low   = get_coeff_cost_general(
                 0, ci, abs_qc_low, sign, coeff_ctx, dc_sign_ctx, txb_costs, bwl, tx_class, levels);
             rd_low = RDCOST(rdmult, *accu_rate + rate_low, *accu_dist + dist_low);
+#endif
         }
 
         int       lower_level_new_eob = 0;
         const int new_eob             = si + 1;
+
         const int coeff_ctx_new_eob   = get_lower_levels_ctx_eob(bwl, height, si);
+
         const int new_eob_cost = get_eob_cost(new_eob, txb_eob_costs, txb_costs, tx_class);
         int       rate_coeff_eob =
             new_eob_cost +
@@ -966,7 +990,9 @@ static AOM_FORCE_INLINE void update_coeff_eob(
                 ci, abs_qc, sign, coeff_ctx_new_eob, dc_sign_ctx, txb_costs, bwl, tx_class);
         int64_t dist_new_eob = dist;
         int64_t rd_new_eob   = RDCOST(rdmult, rate_coeff_eob, dist_new_eob);
-
+#if RDOQ_TEST0
+        if (abs_qc == 1) {
+#endif
         if (abs_qc_low > 0) {
             const int rate_coeff_eob_low =
                 new_eob_cost +
@@ -988,7 +1014,9 @@ static AOM_FORCE_INLINE void update_coeff_eob(
             rate        = rate_low;
             dist        = dist_low;
         }
-
+#if RDOQ_TEST0
+        }
+#endif
         if (sharpness == 0 && rd_new_eob < rd) {
             for (int ni = 0; ni < *nz_num; ++ni) {
                 int last_ci                          = nz_ci[ni];
@@ -1010,14 +1038,26 @@ static AOM_FORCE_INLINE void update_coeff_eob(
             qcoeff[ci]                      = qc_low;
             dqcoeff[ci]                     = dqc_low;
             levels[get_padded_idx(ci, bwl)] = AOMMIN(abs_qc_low, INT8_MAX);
+#if RDOQ_TEST1
+            *lower_level_fail_cnt = 0;
+#endif
         }
+#if RDOQ_TEST1
+        else {
+            (*lower_level_fail_cnt)++;
+        }
+#endif
         if (qcoeff[ci]) {
             nz_ci[*nz_num] = ci;
             ++*nz_num;
         }
     }
 }
+#if RDOQ_REFACTOR
+static void update_coeff_general(int *accu_rate, int64_t *accu_dist, int si, int eob,
+#else
 static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int si, int eob,
+#endif
                                         TxSize tx_size, TxClass tx_class, int bwl, int height,
                                         int64_t rdmult, int shift, int dc_sign_ctx,
                                         const int16_t *dequant, const int16_t *scan,
@@ -1027,6 +1067,7 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
     const int     ci      = scan[si];
     const TranLow qc      = qcoeff[ci];
     const int     is_last = si == (eob - 1);
+
     const int     coeff_ctx =
         get_lower_levels_ctx_general(is_last, si, bwl, height, levels, ci, tx_size, tx_class);
 
@@ -1052,6 +1093,7 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
             dist_low                      = dist0;
             rate_low                      = txb_costs->base_cost[coeff_ctx][0];
         } else {
+#if !RDOQ_TEST0
             get_qc_dqc_low(abs_qc, sign, dqv, shift, &qc_low, &dqc_low);
             abs_qc_low = abs_qc - 1;
             dist_low   = get_coeff_dist(tqc, dqc_low, shift);
@@ -1065,8 +1107,11 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
                                               bwl,
                                               tx_class,
                                               levels);
+#endif
         }
-
+#if RDOQ_TEST0
+        if (abs_qc == 1) {
+#endif
         rd_low = RDCOST(rdmult, rate_low, dist_low);
         if (rd_low < rd) {
             qcoeff[ci]                      = qc_low;
@@ -1078,13 +1123,27 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
             *accu_rate += rate;
             *accu_dist += dist - dist0;
         }
+#if RDOQ_TEST0
+        }
+        else {
+            *accu_rate += rate;
+            *accu_dist += dist - dist0;
+        }
+#endif
     }
 }
-
+#if RDOQ_REFACTOR
+static void update_coeff_simple(
+#else
 static AOM_FORCE_INLINE void update_coeff_simple(
+#endif
     int *accu_rate, int si, int eob, TxSize tx_size, TxClass tx_class, int bwl, int64_t rdmult,
     int shift, const int16_t *dequant, const int16_t *scan, const LvMapCoeffCost *txb_costs,
+#if RDOQ_TEST1
+    const TranLow *tcoeff, TranLow *qcoeff, TranLow *dqcoeff, uint8_t *levels,int *lower_level_fail_cnt) {
+#else
     const TranLow *tcoeff, TranLow *qcoeff, TranLow *dqcoeff, uint8_t *levels) {
+#endif
     const int dqv = dequant[1];
     (void)eob;
     // this simple version assumes the coeff's scan_idx is not DC (scan_idx != 0)
@@ -1093,7 +1152,9 @@ static AOM_FORCE_INLINE void update_coeff_simple(
     assert(si > 0);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
+
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
+
     if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     else {
@@ -1122,8 +1183,18 @@ static AOM_FORCE_INLINE void update_coeff_simple(
             dqcoeff[ci]                     = (-sign ^ abs_dqc_low) + sign;
             levels[get_padded_idx(ci, bwl)] = AOMMIN(abs_qc_low, INT8_MAX);
             *accu_rate += rate_low;
+#if RDOQ_TEST1
+            *lower_level_fail_cnt = 0;
+#endif
         } else
+#if RDOQ_TEST1
+        {
             *accu_rate += rate;
+            *(lower_level_fail_cnt)++;
+        }
+#else
+            *accu_rate += rate;
+#endif
     }
 }
 static INLINE void update_skip(int *accu_rate, int64_t accu_dist, uint16_t *eob, int nz_num,
@@ -1233,8 +1304,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     fast_mode = plane;
 #elif FAST_RDOQ_INTER
     fast_mode = is_inter;
-#elif FAST_RDOQ
-    fast_mode = 1;
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
@@ -1307,7 +1376,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
         --si;
     } else {
         assert(abs_qc == 1);
+
         const int coeff_ctx = get_lower_levels_ctx_eob(bwl, height, si);
+
         accu_rate += get_coeff_cost_eob(
             ci, abs_qc, sign, coeff_ctx, dc_sign_context, txb_costs, bwl, tx_class);
 
@@ -1318,7 +1389,50 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
         accu_dist += dist - dist0;
         --si;
     }
-
+#if FAST_RDOQ_ONLY_EOB
+    fast_mode = 1;
+#endif
+#if FAST_RDOQ_ONLY_COEFF 
+    fast_mode = 0;
+#endif
+#if RDOQ_TEST1
+    int lower_level_fail_cnt = 0;
+#endif
+#if RDOQ_REFACTOR
+#if RDOQ_TEST1
+    for (; si >= 0 && nz_num <= max_nz_num && !fast_mode && lower_level_fail_cnt < 1; --si) {
+#else
+    for (; si >= 0 && nz_num <= max_nz_num && !fast_mode; --si) {
+#endif
+        update_coeff_eob(&accu_rate,
+            &accu_dist,
+            eob,
+            &nz_num,
+            nz_ci,
+            si,
+            tx_size,
+            tx_class,
+            bwl,
+            height,
+            dc_sign_context,
+            rdmult,
+            shift,
+            p->dequant_qtx,
+            scan,
+            txb_eob_costs,
+            txb_costs,
+            coeff_ptr,
+            qcoeff_ptr,
+            dqcoeff_ptr,
+            levels,
+#if RDOQ_TEST1
+            sharpness,
+            &lower_level_fail_cnt);
+#else
+            sharpness);
+#endif
+    }
+#else
 #define UPDATE_COEFF_EOB_CASE(tx_class_literal)                       \
     case tx_class_literal:                                            \
         for (; si >= 0 && nz_num <= max_nz_num && !fast_mode; --si) { \
@@ -1353,7 +1467,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #undef UPDATE_COEFF_EOB_CASE
     default: assert(false);
     }
-
+#endif
     if (si == -1 && nz_num <= max_nz_num) {
         update_skip(&accu_rate,
                     accu_dist,
@@ -1368,6 +1482,35 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
                     sharpness);
     }
 
+#if RDOQ_REFACTOR
+#if RDOQ_TEST1
+    lower_level_fail_cnt = 0;
+    for (; si >= 1 && lower_level_fail_cnt < 1; --si) {
+#else
+        for (; si >= 1; --si) {
+#endif
+            update_coeff_simple(&accu_rate,
+                si,
+                *eob,
+                tx_size,
+                tx_class,
+                bwl,
+                rdmult,
+                shift,
+                p->dequant_qtx,
+                scan,
+                txb_costs,
+                coeff_ptr,
+                qcoeff_ptr,
+                dqcoeff_ptr,
+#if RDOQ_TEST1
+                levels,
+                &lower_level_fail_cnt);
+#else
+                levels);
+#endif
+        }
+#else
 #define UPDATE_COEFF_SIMPLE_CASE(tx_class_literal) \
     case tx_class_literal:                         \
         for (; si >= 1; --si) {                    \
@@ -1393,9 +1536,10 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
         UPDATE_COEFF_SIMPLE_CASE(TX_CLASS_HORIZ);
         UPDATE_COEFF_SIMPLE_CASE(TX_CLASS_VERT);
 #undef UPDATE_COEFF_SIMPLE_CASE
+
     default: assert(false);
     }
-
+#endif
     // DC position
     if (si == 0) {
         // no need to update accu_dist because it's not used after this point
@@ -1605,36 +1749,47 @@ int32_t av1_quantize_inv_quantize(
         perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
             md_context->rdoq_level);
     }
-
-#if SKIP_TRELLIS_BASED_ON_SATD || FAST_RDOQ_MODE
-     const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
-     const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
-     const int dc_qstep = candidate_plane.dequant_qtx[0] >> 3;
+#if FAST_RDOQ_MODE
+    int fast_mode = (is_inter && component_type);
 #endif
 #if SKIP_TRELLIS_BASED_ON_SATD
+     const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
+     const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
+
      if (perform_rdoq) {
          // Hsan
          int satd = svt_aom_satd(coeff, n_coeffs);
          const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
-         uint64_t coeff_opt_satd_threshold = (pcs_ptr->slice_type == I_SLICE) ? 128 : 64;
+         uint64_t rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 128 : 64;
          const int skip_block_trellis =
              ((uint64_t)satd >
-             (uint64_t)coeff_opt_satd_threshold * qstep * sqrt_tx_pixels_2d[txsize]);
+             (uint64_t)rdoq_ctrl_satd_th * qstep * sqrt_tx_pixels_2d[txsize]);
          if (skip_block_trellis)
              perform_rdoq = 0;
+
+#if FAST_RDOQ_SATD
+         uint64_t fast_rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 12 : 12;
+         if (!fast_mode) {
+             if ((uint64_t)satd >
+                 (uint64_t)fast_rdoq_ctrl_satd_th * qstep * sqrt_tx_pixels_2d[txsize]) {
+                 fast_mode = 1;
+             }
+         }
+#endif
+#if FAST_RDOQ
+         fast_mode = 1;
+#endif
      }
 #endif
 #if SHUT_RDOQ_CHROMA
     if(component_type)
     perform_rdoq = 0;
 #endif
-#if FAST_RDOQ_MODE
-    int fast_mode = (is_inter && component_type);
-#endif
 
-#if FAST_RDOQ_MODE
+
+#if FAST_RDOQ_TH
     if(pcs_ptr->slice_type != I_SLICE)
     if (component_type == COMPONENT_LUMA)
     {
@@ -1661,11 +1816,6 @@ int32_t av1_quantize_inv_quantize(
             const int perform_block_coeff_opt =
                 ((uint64_t)block_mse_q8 <=
                 (uint64_t)coeff_opt_dist_threshold * qstep * qstep);
-
-#if FAST_RDOQ_MODE
-            if (!perform_block_coeff_opt)
-                fast_mode = 1;
-#endif
 
         }
     }

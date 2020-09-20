@@ -386,6 +386,15 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
     //**********************************
     if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK ||
         component_mask == PICTURE_BUFFER_DESC_LUMA_MASK) {
+
+#if USE_MD_SKIP_DECISION_0
+        // Use MD info
+        if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[context_ptr->txb_itr] == 0) {
+            txb_ptr->nz_coef_count[0] = 0;
+            eob[0] = 0;
+        } else {
+#endif
+
         residual_kernel8bit(
             input_samples->buffer_y + input_luma_offset,
             input_samples->stride_y,
@@ -473,6 +482,9 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             }
         }
         txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
+#if USE_MD_SKIP_DECISION_0
+        }
+#endif
     }
 
     if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK ||
@@ -2043,8 +2055,10 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
     uint32_t              y_has_coeff;
     uint32_t              u_has_coeff;
     uint32_t              v_has_coeff;
+#if !USE_MD_SKIP_DECISION_0
     uint64_t              y_full_distortion[DIST_CALC_TOTAL];
     EB_ALIGN(16) uint64_t y_tu_full_distortion[DIST_CALC_TOTAL];
+#endif
     uint32_t              count_non_zero_coeffs[3];
     uint16_t              eobs[MAX_TXB_COUNT][3];
     uint64_t              y_txb_coeff_bits;
@@ -3030,6 +3044,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     }
                     context_ptr->txb_itr = 0;
                     // Transform Loop
+#if !USE_MD_SKIP_DECISION_0
                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[0] = EB_FALSE;
                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].u_has_coeff[0] = EB_FALSE;
                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].v_has_coeff[0] = EB_FALSE;
@@ -3038,7 +3053,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     y_full_distortion[DIST_CALC_RESIDUAL]   = 0;
                     y_full_distortion[DIST_CALC_PREDICTION] = 0;
 
-
+#endif
                     uint16_t tot_tu         = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
                     uint32_t component_mask = context_ptr->blk_geom->has_uv
                                                   ? PICTURE_BUFFER_DESC_FULL_MASK
@@ -3117,9 +3132,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     ? PICTURE_BUFFER_DESC_FULL_MASK
                                     : PICTURE_BUFFER_DESC_LUMA_MASK,
                                 eobs[context_ptr->txb_itr]);
-
+#if !USE_MD_SKIP_DECISION_0
                             // SKIP the CBF zero mode for DC path. There are problems with cost calculations
+#endif
                             {
+#if !USE_MD_SKIP_DECISION_0
                                 // Compute Tu distortion
                                 // LUMA DISTORTION
                                 picture_full_distortion32_bits(
@@ -3240,7 +3257,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     y_tu_full_distortion[DIST_CALC_RESIDUAL];
                                 y_full_distortion[DIST_CALC_PREDICTION] +=
                                     y_tu_full_distortion[DIST_CALC_PREDICTION];
-
+#endif
                                 if (allow_update_cdf) {
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
