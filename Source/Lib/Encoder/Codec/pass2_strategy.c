@@ -2240,7 +2240,6 @@ static void av1_rc_set_gf_interval_range(SequenceControlSet *scs_ptr,
 
     // Clamp min to max
     rc->min_gf_interval = AOMMIN(rc->min_gf_interval, rc->max_gf_interval);
-printf("av1_rc_set_gf_interval_range min/max_gf_interval=%d %d\n", rc->min_gf_interval, rc->max_gf_interval);
   }
 }
 
