@@ -696,7 +696,7 @@ extern "C" {
 #define USE_MDS1_PRUNING                 1 // Turn on md stage 1 pruning for M1-M5 with conservative settings
 
 #define SEPERATES_COMP   1// Separate the injection of  inter-inter compound modes
-
+#define FIX_COMP_SKIPPING_BUG 1 // fix a bug in compound that skips modes in a given reference frame, based on other reference frames (noise-level data)
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////

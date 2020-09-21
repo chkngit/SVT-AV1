@@ -1591,8 +1591,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                         {
                             set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+#if !FIX_COMP_SKIPPING_BUG
                          //hackkkk to macth ref
                             tot_comp_types = MD_COMP_AVG;
+#endif
                         }
 
                         EbBool mask_done = 0;
@@ -1837,8 +1839,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                             {
                                 set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+#if !FIX_COMP_SKIPPING_BUG
                                 //hackkkk to macth ref
                                 tot_comp_types = MD_COMP_AVG;
+#endif
                             }
 
                         EbBool mask_done = 0;
@@ -4687,7 +4691,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                             {
                                 set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+#if !FIX_COMP_SKIPPING_BUG
                                 tot_comp_types = MD_COMP_AVG;//hackkkkk  to match ref
+#endif
                             }
 
                         EbBool mask_done = 0;
@@ -5453,8 +5459,10 @@ void inject_predictive_me_candidates(
                             is_reference_best_pme(context_ptr, list_idx_1, ref_idx_1, 2) == 0)
                         {
                             set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+#if !FIX_COMP_SKIPPING_BUG
                            //hackk to match ref
                             tot_comp_types = MD_COMP_AVG;
+#endif
                         }
 
                     EbBool mask_done = 0;
