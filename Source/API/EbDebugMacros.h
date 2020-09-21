@@ -40,6 +40,9 @@ extern "C" {
 #define FIX_VBR_BUG 1 // Fix 1st pass bug (bug from rebasing the branch)
 #define FIX_10BIT     1 // fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // fix RC token check to include double dash
+#define FIX_VBR_GF_INTERVAL   1 // fix 2nd pass min/max_gf_interval error
+#define FIX_VBR_LAST_GOP_BITS 1 // fix 2nd pass last GOP too big frame size error
+#define FIX_VBR_240P_CMP      1 // fix 240p q_adj_factor in get_intra_q_and_bounds
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
