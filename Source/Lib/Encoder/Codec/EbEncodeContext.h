@@ -90,7 +90,7 @@ typedef struct EncodeContext {
     // Picture Buffer Fifos
     EbFifo *reference_picture_pool_fifo_ptr;
     EbFifo *pa_reference_picture_pool_fifo_ptr;
-#if INL_ME
+#if FEATURE_INL_ME
     EbFifo *down_scaled_picture_pool_fifo_ptr;
 #endif
 

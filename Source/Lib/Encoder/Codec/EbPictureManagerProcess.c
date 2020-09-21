@@ -105,7 +105,7 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
 
     context_ptr->picture_input_fifo_ptr =
         eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, 0);
-#if INL_ME
+#if FEATURE_INL_ME
     UNUSED(rate_control_index);
     context_ptr->picture_manager_output_fifo_ptr = eb_system_resource_get_producer_fifo(
         enc_handle_ptr->pic_mgr_res_srm, 0);
@@ -229,7 +229,7 @@ void copy_dep_cnt_cleaning_list(
 
 }
 
-#if INL_ME
+#if FEATURE_INL_ME
 static uint8_t tpl_setup_me_refs(
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_group_frame_ptr,
@@ -254,7 +254,7 @@ static uint8_t tpl_setup_me_refs(
                                       (uint32_t)(curr_poc + tpl_base_minigop - base_poc);
     uint32_t pred_struct_idx = curr_minigop_entry_idx + init_idx;
 
-#if !INL_TPL_ENHANCEMENT
+#if !TUNE_INL_TPL_ENHANCEMENT
     // 17/18/19, which is out side of the minigop
     *trailing_frames = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
 #endif
@@ -264,7 +264,7 @@ static uint8_t tpl_setup_me_refs(
         pred_struct_idx += tpl_base_minigop;
 
     PredictionStructureEntry *frame_pred_entry = base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx];
-#if !INL_TPL_ENHANCEMENT
+#if !TUNE_INL_TPL_ENHANCEMENT
     EB_MEMSET(pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[REF_LIST_0],
             0,
             REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
@@ -309,7 +309,7 @@ static uint8_t tpl_setup_me_refs(
         for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
             EbBool ref_in_slide_window = EB_FALSE;
 #if FEATURE_IN_LOOP_TPL
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
             pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_FALSE;
 #else
             pcs_tpl_group_frame_ptr->ref_in_slide_window[list_index][*ref_count_ptr] = EB_FALSE;
@@ -325,31 +325,31 @@ static uint8_t tpl_setup_me_refs(
 
             for (uint32_t j = 0; j < pcs_tpl_base_ptr->tpl_group_size; j++) {
                 if (ref_poc == pcs_tpl_base_ptr->tpl_group[j]->picture_number) {
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] = pcs_tpl_base_ptr->tpl_group[j]->ds_pics;
 #else
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] = pcs_tpl_base_ptr->tpl_group[j]->ds_pics;
 #endif
                     ref_in_slide_window = EB_TRUE;
 #if FEATURE_IN_LOOP_TPL
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.ref_in_slide_window[list_index][*ref_count_ptr] = EB_TRUE;
 #else
                     pcs_tpl_group_frame_ptr->ref_in_slide_window[list_index][*ref_count_ptr] = EB_TRUE;
 #endif
 #endif
                     *ref_count_ptr += 1;
-#if INL_TPL_ME_DBG_MSG
+#if TUNE_INL_TPL_ME_DBG_MSG
                     printf("\t L%d: %ld=>%ld, use input, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
 #endif
                     break;
                 }
             }
-#if !IME_REUSE_TPL_RESULT
+#if !TUNE_IME_REUSE_TPL_RESULT
             if (list_index == REF_LIST_1 && ref_in_slide_window) {
                 // Remove duplicate refs from list1 which is already in list0
                 for (uint8_t i=0; i<*ref0_count; i++) {
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     if (pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[0][i].picture_number == ref_poc) {
 #else
                     if (pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[0][i].picture_number == ref_poc) {
@@ -364,18 +364,18 @@ static uint8_t tpl_setup_me_refs(
             if (!ref_in_slide_window) {
                 ReferenceQueueEntry* ref_entry_ptr = search_ref_in_ref_queue(scs_ptr->encode_context_ptr, ref_poc);
                 if (ref_entry_ptr && ref_entry_ptr->reference_available) {
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
 #else
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
 #endif
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->ds_pics;
-#if INL_TPL_ME_DBG_MSG
+#if TUNE_INL_TPL_ME_DBG_MSG
                     printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
 #endif
-#if INL_TPL_ME_ON_INPUT_DBG
+#if TUNE_INL_TPL_ON_INPUT
                    // printf("\t Debug purpose, use input pic\n");
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_ptr =
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->input_picture;
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].sixteenth_picture_ptr =
@@ -400,7 +400,7 @@ static uint8_t tpl_setup_me_refs(
     }
 
 #if FEATURE_IN_LOOP_TPL
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref0_count = *ref0_count;
     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref1_count = *ref1_count;
 
@@ -421,7 +421,7 @@ static uint8_t tpl_setup_me_refs(
     pcs_tpl_group_frame_ptr->tpl_ref1_count = *ref1_count;
 #endif
 #endif
-#if INL_TPL_ME_DBG_MSG
+#if TUNE_INL_TPL_ME_DBG_MSG
 #if ENABLE_TPL_ZERO_LAD
     if (*trailing_frames)
         pcs_tpl_group_frame_ptr->max_number_of_pus_per_sb = pcs_tpl_base_ptr->max_number_of_pus_per_sb;
@@ -432,7 +432,7 @@ static uint8_t tpl_setup_me_refs(
             printf("\t\t Set ref on list: %d, total count %d: %lu => %lu, decode order %lu\n",
                     i, ref_count,
                     pcs_tpl_group_frame_ptr->picture_number,
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[i][j].picture_number,
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order);
 #else
@@ -445,7 +445,7 @@ static uint8_t tpl_setup_me_refs(
     return 0;
 }
 
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
 static EbErrorType tpl_init_pcs_tpl_data(
     PictureParentControlSet         *pcs_tpl_group_frame_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr,
@@ -503,7 +503,7 @@ static EbErrorType tpl_get_open_loop_me(
             uint8_t ref_list0_count = 0;
             uint8_t ref_list1_count = 0;
             EbBool  is_trailing_tpl_frame = EB_FALSE;
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
             tpl_init_pcs_tpl_data(pcs_tpl_group_frame_ptr,
                 pcs_tpl_base_ptr,
                 &is_trailing_tpl_frame);
@@ -523,7 +523,7 @@ static EbErrorType tpl_get_open_loop_me(
                     pcs_tpl_group_frame_ptr != pcs_tpl_base_ptr*/) {
 #endif
 #endif
-#if INL_TPL_ME_DBG_MSG
+#if TUNE_INL_TPL_ME_DBG_MSG
                 printf("[%ld]: Setup TPL ME refs for frame %lu\n",
                         pcs_tpl_base_ptr->picture_number,
                         pcs_tpl_group_frame_ptr->picture_number);
@@ -567,7 +567,7 @@ static EbErrorType tpl_get_open_loop_me(
                     // When TPL16, flag tpl_me_done of 17/18/19 will be set done during TPL32
                     if (!is_trailing_tpl_frame) {
                         pcs_tpl_group_frame_ptr->tpl_me_done = 1;
-#if INL_TPL_ME_DBG_MSG
+#if TUNE_INL_TPL_ME_DBG_MSG
                         printf("\t Picture %lu TPL ME done\n", pcs_tpl_group_frame_ptr->picture_number);
 #endif
                     }
@@ -616,7 +616,7 @@ void *picture_manager_kernel(void *input_ptr) {
     EbObjectWrapper *    input_picture_demux_wrapper_ptr;
     PictureDemuxResults *input_picture_demux_ptr;
 
-#if !INL_ME
+#if !FEATURE_INL_ME
     EbObjectWrapper * output_wrapper_ptr;
     RateControlTasks *rate_control_tasks_ptr;
 #endif
@@ -770,7 +770,7 @@ void *picture_manager_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)input_picture_demux_ptr->scs_wrapper_ptr->object_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
-#if INL_ME
+#if FEATURE_INL_ME
             ((EbReferenceObject *)input_picture_demux_ptr->reference_picture_wrapper_ptr->object_ptr)->ds_pics.picture_number =
                 input_picture_demux_ptr->picture_number;
 #endif
@@ -988,7 +988,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         eb_object_inc_live_count(child_pcs_wrapper_ptr, 1);
 
                         child_pcs_ptr = (PictureControlSet *)child_pcs_wrapper_ptr->object_ptr;
-#if INL_ME
+#if FEATURE_INL_ME
 
                         child_pcs_ptr->c_pcs_wrapper_ptr = child_pcs_wrapper_ptr;
 #endif
@@ -1494,7 +1494,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                                      1);
                         }
 
-#if INL_ME
+#if FEATURE_INL_ME
 
                         // Get TPL ME
                         tpl_get_open_loop_me(context_ptr, scs_ptr, child_pcs_ptr->parent_pcs_ptr);

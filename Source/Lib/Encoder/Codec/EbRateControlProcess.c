@@ -427,7 +427,7 @@ void tpl_mc_flow_dispenser(
                     for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                         if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
                             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
                             continue;
@@ -438,7 +438,7 @@ void tpl_mc_flow_dispenser(
 #endif
                         if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
                             continue;
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #else
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
@@ -478,7 +478,7 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                             best_ref_poc = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
 #else
                             best_ref_poc = pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
@@ -511,7 +511,7 @@ void tpl_mc_flow_dispenser(
                         uint32_t ref_frame_idx = 0;
                         uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                         if (pcs_ptr->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
 #else
                         if (pcs_ptr->ref_in_slide_window[list_index][ref_pic_index]) {
@@ -522,7 +522,7 @@ void tpl_mc_flow_dispenser(
                             ref_pic_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx];
                         }
                         else
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                             ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #else
                             ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
@@ -898,7 +898,7 @@ EbErrorType init_tpl_buffers(
         (EbPtr)&picture_buffer_desc_init_data);
 
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
         if (pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag) {
 #else
         if (pcs_array[frame_idx]->is_used_as_reference_flag) {
@@ -939,7 +939,7 @@ EbErrorType tpl_mc_flow(
         pcs_ptr,
         pcs_array);
 
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 #else
     if (pcs_array[0]->temporal_layer_index == 0) {
@@ -6991,7 +6991,7 @@ void *rate_control_kernel(void *input_ptr) {
 
         // Modify these for different temporal layers later
         switch (task_type) {
-#if !INL_ME
+#if !FEATURE_INL_ME
         case RC_PICTURE_MANAGER_RESULT:
 #else
         case RC_INPUT:
@@ -7021,7 +7021,7 @@ void *rate_control_kernel(void *input_ptr) {
             }
 #endif
 
-#if INL_ME
+#if FEATURE_INL_ME
             // Release the down scaled input
             if (scs_ptr->in_loop_me) {
                 eb_release_object(pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr);

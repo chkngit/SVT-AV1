@@ -28,7 +28,7 @@
 #include "EbGlobalMotionEstimation.h"
 
 #include "EbResize.h"
-#if INL_ME
+#if FEATURE_INL_ME
 #include "EbPictureDemuxResults.h"
 #include "EbRateControlTasks.h"
 #endif
@@ -352,7 +352,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     return return_error;
 };
 
-#if SIGNAL_TPL_ME_OQ
+#if TUNE_SIGNAL_TPL_ME_OQ
 EbErrorType signal_tpl_me_kernel_oq(SequenceControlSet *       scs_ptr,
                                            PictureParentControlSet *  pcs_ptr,
                                            MotionEstimationContext_t *context_ptr) {
@@ -764,7 +764,7 @@ void *motion_estimation_kernel(void *input_ptr) {
         PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
         SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#if !INL_ME
+#if !FEATURE_INL_ME
         EbPaReferenceObject *pa_ref_obj_ =
             (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
         // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
@@ -812,7 +812,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
             else
                 signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-#if INL_ME
+#if FEATURE_INL_ME
             EbPictureBufferDesc *sixteenth_picture_ptr = NULL;
             EbPictureBufferDesc *quarter_picture_ptr = NULL;
             EbPictureBufferDesc *input_padded_picture_ptr = NULL;
@@ -854,7 +854,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             // *** MOTION ESTIMATION CODE ***
-#if INL_ME
+#if FEATURE_INL_ME
             if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
 #else
             if (pcs_ptr->slice_type != I_SLICE) {
@@ -948,7 +948,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                         FULL_SAD_SEARCH);
                             }
                         }
-#if !INL_ME
+#if !FEATURE_INL_ME
                         context_ptr->me_context_ptr->me_alt_ref = EB_FALSE;
 #else
                         context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
@@ -1000,7 +1000,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             if (context_ptr->me_context_ptr->compute_global_motion &&
                 // Compute only when ME of all 64x64 SBs is performed
                 pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
-#if INL_ME
+#if FEATURE_INL_ME
                 if (!scs_ptr->in_loop_me)
                     global_motion_estimation(
                         pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
@@ -1026,7 +1026,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     }
             // ZZ SADs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
-#if INL_ME
+#if FEATURE_INL_ME
             if (scs_ptr->static_config.look_ahead_distance != 0 &&
                     pcs_ptr->picture_number > 0 &&
                     !scs_ptr->in_loop_me)
@@ -1045,7 +1045,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
             if (scs_ptr->static_config.look_ahead_distance != 0 &&
                     pcs_ptr->picture_number > 0 &&
                     scs_ptr->in_loop_me)
@@ -1077,7 +1077,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             eb_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
-#if !INL_ME
+#if !FEATURE_INL_ME
             if (scs_ptr->static_config.rate_control_mode
                 && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
                 ) {
@@ -1287,7 +1287,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
 
             // temporal filtering start
-#if !INL_ME
+#if !FEATURE_INL_ME
             context_ptr->me_context_ptr->me_alt_ref = EB_TRUE;
 #else
             context_ptr->me_context_ptr->me_type = ME_MCTF;
@@ -1303,7 +1303,7 @@ void *motion_estimation_kernel(void *input_ptr) {
     return NULL;
 }
 
-#if INL_ME
+#if FEATURE_INL_ME
 EbErrorType ime_context_ctor(EbThreadContext *  thread_context_ptr,
         const EbEncHandle *enc_handle_ptr, int index) {
     InLoopMeContext *context_ptr;
@@ -1463,7 +1463,7 @@ void *inloop_me_kernel(void *input_ptr) {
     uint32_t segment_col_count = 0;
     uint32_t segment_row_count = 0;
 
-#if IME_REUSE_TPL_RESULT
+#if TUNE_IME_REUSE_TPL_RESULT
     EbBool skip_me = EB_FALSE;
 #endif
     for (;;) {
@@ -1490,7 +1490,7 @@ void *inloop_me_kernel(void *input_ptr) {
             segment_row_count = ppcs_ptr->inloop_me_segments_row_count;
 
             if (task_type != 0) {
-#if SIGNAL_TPL_ME_OQ
+#if TUNE_SIGNAL_TPL_ME_OQ
                 signal_tpl_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 #else
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
@@ -1509,14 +1509,14 @@ void *inloop_me_kernel(void *input_ptr) {
                 for (int i = 0; i<= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
                     for (int j=0; j< context_ptr->me_context_ptr->num_of_ref_pic_to_search[i];j++) {
                         context_ptr->me_context_ptr->me_ds_ref_array[i][j] =
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                             ppcs_ptr->tpl_data.tpl_ref_ds_ptr_array[i][j];
 #else
                             ppcs_ptr->tpl_ref_ds_ptr_array[i][j];
 #endif
                     }
                 }
-#if IME_REUSE_TPL_RESULT
+#if TUNE_IME_REUSE_TPL_RESULT
                 skip_me = EB_FALSE;
 #endif
             } else if (ppcs_ptr->slice_type != I_SLICE) {
@@ -1546,7 +1546,7 @@ void *inloop_me_kernel(void *input_ptr) {
                         context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
                             ppcs_ptr->ref_pic_poc_array[i][j];
 
-#if INL_ME_ON_INPUT_DBG
+#if TUNE_INL_ME_ON_INPUT
                         context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
                             inl_reference_object->input_picture;
                         context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
@@ -1556,7 +1556,7 @@ void *inloop_me_kernel(void *input_ptr) {
 #endif
                     }
                 }
-#if IME_REUSE_TPL_RESULT
+#if TUNE_IME_REUSE_TPL_RESULT
                 skip_me = ppcs_ptr->tpl_me_done;
                 //if (skip_me)
                 //    printf("[%ld]: skip iME\n", ppcs_ptr->picture_number);
@@ -1566,7 +1566,7 @@ void *inloop_me_kernel(void *input_ptr) {
             // Segments
             segment_index = in_results_ptr->segment_index;
 
-#if IME_REUSE_TPL_RESULT
+#if TUNE_IME_REUSE_TPL_RESULT
             if (!skip_me && (ppcs_ptr->slice_type != I_SLICE || task_type != 0)) {
 #else
             if (ppcs_ptr->slice_type != I_SLICE || task_type != 0) {
@@ -1604,7 +1604,7 @@ void *inloop_me_kernel(void *input_ptr) {
                                 context_ptr->me_context_ptr,
                                 input_picture_ptr);
 
-#if IME_REUSE_TPL_RESULT
+#if TUNE_IME_REUSE_TPL_RESULT
                         {
 #else
                         if (task_type == 0) {
@@ -1644,7 +1644,7 @@ void *inloop_me_kernel(void *input_ptr) {
                 eb_post_full_object(out_results_wrapper_ptr);
             } else {
                 // TPL ME
-#if INL_TPL_ENHANCEMENT
+#if TUNE_INL_TPL_ENHANCEMENT
                 // Doing OIS search for TPL
                 if (scs_ptr->static_config.enable_tpl_la) {
                     //printf("[%ld]: Doing open loop intra search for TPL, (%d, %d) => (%d, %d)\n",
