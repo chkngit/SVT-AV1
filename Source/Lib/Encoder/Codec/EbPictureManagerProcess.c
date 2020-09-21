@@ -877,7 +877,12 @@ void *picture_manager_kernel(void *input_ptr) {
                         (SequenceControlSet *)entry_pcs_ptr->scs_wrapper_ptr->object_ptr;
 
                     availability_flag = EB_TRUE;
-                    if (entry_pcs_ptr->decode_order != decode_order && use_input_stat(scs_ptr))
+                    if (entry_pcs_ptr->decode_order != decode_order &&
+#if TUNE_INL_ME_DECODE_ORDER
+                        ((scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la) || use_input_stat(scs_ptr)))
+#else
+                        use_input_stat(scs_ptr))
+#endif
                         availability_flag = EB_FALSE;
 
                     // Check RefList0 Availability

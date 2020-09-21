@@ -66,6 +66,7 @@ extern "C" {
 #define TUNE_INL_GM_ON_INPUT          1 // Perform GM on input
 #define TUNE_INL_TPL_ON_INPUT         1 // Perform TPL on input
 #define TUNE_INL_ME_MEM_OPT           1 // Optimize memory usage when perform ME on input, only use 8bit luma
+#define TUNE_INL_ME_DECODE_ORDER      1 // Force decode order for inloopME
 #endif
 #if !TUNE_IME_REUSE_TPL_RESULT
 #define TUNE_SIGNAL_TPL_ME_OQ         1 // A separate signal_xxx_oq for TPL ME
