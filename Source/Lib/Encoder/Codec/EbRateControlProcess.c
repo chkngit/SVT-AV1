@@ -564,7 +564,7 @@ void tpl_mc_flow_dispenser(
                         TxSize tx_size = TX_16X16;
                         uint8_t *recon_buffer =
                             recon_picture_ptr->buffer_y + dst_basic_offset;
-     
+
                         update_neighbor_samples_array_open_loop_mb_recon(above_row - 1,
                             left_col - 1,
                             recon_buffer,
