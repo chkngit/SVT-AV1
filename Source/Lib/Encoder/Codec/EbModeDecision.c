@@ -1708,7 +1708,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 best_pred_mv[1].as_mv.row;
 #if INTER_COMP_REDESIGN
 
-#if SEPERATES_COMP//Bi3x3
+#if SEPERATES_COMP //Bi3x3
                             if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
                                 if (mask_done != 1)
                                 {
@@ -1820,7 +1820,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                                            to_inject_mv_y_l1,
                                                            to_inject_ref_type) == EB_FALSE)) {
 
-#if SEPERATES_COMP//Bi3x3
+#if SEPERATES_COMP //Bi3x3
                        
                         //Temp code
                         {
@@ -2733,7 +2733,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
 #if INTER_COMP_REDESIGN
 
 
-#if SEPERATES_COMP//MVP NR-NR
+#if SEPERATES_COMP //MVP NR-NR
                         if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
                             if (mask_done != 1)
                             {
@@ -2891,12 +2891,34 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 #if !INTER_COMP_REDESIGN
                     context_ptr->variance_ready = 0;
 #endif
+#if SEPERATES_COMP //NRST_NEW
+                    //Temp code
+                    {
+                        context_ptr->comp_inj_table[0] = context_ptr->comp_inj_table[1] = context_ptr->comp_inj_table[2] = context_ptr->comp_inj_table[3] = 0;
+                        for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++)
+                            context_ptr->comp_inj_table[cur_type] = 1;
+
+                        ///NEW SET
+                        //set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 0, 1, 0, 1);
+                    }
+
+                    if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
+                        ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                        set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+
+                    EbBool mask_done = 0;
+                    for (cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        if (context_ptr->comp_inj_table[cur_type] == 0)
+                            continue;
+#else
 #if INTER_COMP_REDESIGN
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                     ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     tot_comp_types = MD_COMP_AVG;
 #endif
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
 #if !INTER_COMP_REDESIGN
                         if (context_ptr->comp_mrp_dist_mode)
                             if (ref_idx_0 > MAX_REF_DISTANCE_COMPOUND - 1 &&
@@ -2974,10 +2996,20 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                         ++context_ptr->injected_mv_count_bipred;
                         //NRST_N
 #if INTER_COMP_REDESIGN
+#if SEPERATES_COMP //NRST_NEW
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1)
+                            {
+                                calc_pred_masked_compound(
+                                    pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx]);
-
+#endif
                         if (context_ptr->inter_comp_ctrls.similar_predictions)
                             if (cur_type > MD_COMP_AVG &&
                                 context_ptr->prediction_mse <=
@@ -3052,12 +3084,34 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 #if !INTER_COMP_REDESIGN
                     context_ptr->variance_ready = 0;
 #endif
+#if SEPERATES_COMP //NEW_NRST
+                    //Temp code
+                    {
+                        context_ptr->comp_inj_table[0] = context_ptr->comp_inj_table[1] = context_ptr->comp_inj_table[2] = context_ptr->comp_inj_table[3] = 0;
+                        for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++)
+                            context_ptr->comp_inj_table[cur_type] = 1;
+
+                        ///NEW SET
+                        //set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 0, 1, 0, 1);
+                    }
+
+                    if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
+                        ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                        set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+
+                    EbBool mask_done = 0;
+                    for (cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        if (context_ptr->comp_inj_table[cur_type] == 0)
+                            continue;
+#else
 #if INTER_COMP_REDESIGN
                     if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                         ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                         tot_comp_types = MD_COMP_AVG;
 #endif
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
 #if !INTER_COMP_REDESIGN
                         if (context_ptr->comp_mrp_dist_mode)
                             if (ref_idx_0 > MAX_REF_DISTANCE_COMPOUND - 1 &&
@@ -3133,11 +3187,20 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                         ++context_ptr->injected_mv_count_bipred;
                         //N_NRST
 #if INTER_COMP_REDESIGN
-
+#if SEPERATES_COMP //NEW_NRST
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1)
+                            {
+                                calc_pred_masked_compound(
+                                    pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx]);
-
+#endif
                         if (context_ptr->inter_comp_ctrls.similar_predictions)
                             if (cur_type > MD_COMP_AVG &&
                                 context_ptr->prediction_mse <=
@@ -3195,6 +3258,26 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 #if !INTER_COMP_REDESIGN
                         context_ptr->variance_ready = 0;
 #endif
+#if SEPERATES_COMP //NEW_NR
+                        //Temp code
+                        {
+                            context_ptr->comp_inj_table[0] = context_ptr->comp_inj_table[1] = context_ptr->comp_inj_table[2] = context_ptr->comp_inj_table[3] = 0;
+                            for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++)
+                                context_ptr->comp_inj_table[cur_type] = 1;
+
+                            ///NEW SET
+                            //set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 0, 1, 0, 1);
+                        }
+
+                        if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
+                            ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                            set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+                        EbBool mask_done = 0;
+                        for (cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            if (context_ptr->comp_inj_table[cur_type] == 0)
+                                continue;
+#else
 #if INTER_COMP_REDESIGN
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                     ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
@@ -3202,6 +3285,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
 #endif
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
 #if !INTER_COMP_REDESIGN
                             if (context_ptr->comp_mrp_dist_mode)
                                 if (ref_idx_0 > MAX_REF_DISTANCE_COMPOUND - 1 &&
@@ -3272,10 +3356,20 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
                             //NEW_NEARMV
 #if INTER_COMP_REDESIGN
+#if SEPERATES_COMP //NEW_NR
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1)
+                                {
+                                    calc_pred_masked_compound(
+                                        pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx]);
-
+#endif
                             if (context_ptr->inter_comp_ctrls.similar_predictions)
                                 if (cur_type > MD_COMP_AVG &&
                                     context_ptr->prediction_mse <=
@@ -3333,6 +3427,26 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 #if !INTER_COMP_REDESIGN
                         context_ptr->variance_ready = 0;
 #endif
+#if SEPERATES_COMP //NRST_NEW
+                        //Temp code
+                        {
+                            context_ptr->comp_inj_table[0] = context_ptr->comp_inj_table[1] = context_ptr->comp_inj_table[2] = context_ptr->comp_inj_table[3] = 0;
+                            for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++)
+                                context_ptr->comp_inj_table[cur_type] = 1;
+
+                            ///NEW SET
+                            //set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 0, 1, 0, 1);
+                        }
+
+                        if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
+                            ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                            set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+                        EbBool mask_done = 0;
+                        for (cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            if (context_ptr->comp_inj_table[cur_type] == 0)
+                                continue;
+#else
 #if INTER_COMP_REDESIGN
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                     ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
@@ -3340,6 +3454,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
 #endif
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
 #if !INTER_COMP_REDESIGN
                             if (context_ptr->comp_mrp_dist_mode)
                                 if (ref_idx_0 > MAX_REF_DISTANCE_COMPOUND - 1 &&
@@ -3408,10 +3523,20 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
                             //NEAR_NEWMV
 #if INTER_COMP_REDESIGN
+#if SEPERATES_COMP //NEAR_NEW
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1)
+                                {
+                                    calc_pred_masked_compound(
+                                        pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx]);
-
+#endif
                             if (context_ptr->inter_comp_ctrls.similar_predictions)
                                 if (cur_type > MD_COMP_AVG &&
                                     context_ptr->prediction_mse <=
@@ -4562,7 +4687,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                             {
                                 set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
-                                tot_comp_types = MD_COMP_AVG;///hackkkkk  to match ref
+                                tot_comp_types = MD_COMP_AVG;//hackkkkk  to match ref
                             }
 
                         EbBool mask_done = 0;
@@ -5030,7 +5155,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
                     //GLOB-GLOB
 #if INTER_COMP_REDESIGN
 
-#if 1//USELESS for GLOBAL
+#if !SEPERATES_COMP //USELESS for GLOBAL
                     if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                         calc_pred_masked_compound(
                             pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
