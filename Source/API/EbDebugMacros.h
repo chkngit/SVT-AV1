@@ -56,7 +56,7 @@ extern "C" {
 #define TF_CHROMA_BLIND 1
 #define TF_32x32_16x16_ADAPT 0 ///***
 #define TF_NOISE 0
-#define SHUT_TF 0
+#define SHUT_TF 1
 /************************************/
 #define OPT_4           0
 /************************************/
@@ -73,7 +73,7 @@ extern "C" {
 #define TEST_BLOCK_BASED 0
 /************************************/
 #define SHUT_RDOQ_CHROMA 0 
-#define SHUT_RDOQ 1 
+#define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
 #define SHUT_FP_QUANT_TX_TYPE 0
