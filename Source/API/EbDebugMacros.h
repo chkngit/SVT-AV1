@@ -54,9 +54,10 @@ extern "C" {
 #define ENHANCED_FASTER_PD0 0
 /************************************/
 #define TF_CHROMA_BLIND 1
-#define TF_32x32_16x16_ADAPT 0 ///***
+#define TF_32x32_OPNLY 1 ///***
+#define TF_32x32_16x16_ADAPT 1 ///***
 #define TF_NOISE 0
-#define SHUT_TF 1
+#define SHUT_TF 0
 /************************************/
 #define OPT_4           0
 /************************************/

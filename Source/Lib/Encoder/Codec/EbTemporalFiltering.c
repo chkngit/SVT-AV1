@@ -1538,6 +1538,9 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
 #if TF_32x32_16x16_ADAPT   
         context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] > 20 * 32 * 32) ? 1 : 0;
+#if TF_32x32_OPNLY
+        context_ptr->tf_16x16_search_do[idx_32x32] = 0;
+#endif
         if(context_ptr->tf_16x16_search_do[idx_32x32])
 #endif
         for (uint32_t idx_16x16 = 0; idx_16x16 < 4; idx_16x16++) {
