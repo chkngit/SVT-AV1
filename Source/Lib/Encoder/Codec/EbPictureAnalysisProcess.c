@@ -3854,7 +3854,7 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
     // PAD the bit inc buffer in 10bit
     if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
 #if TUNE_INL_TPL_ENHANCEMENT
-        if (input_picture_ptr->stride_bit_inc_y)
+        if (input_picture_ptr->buffer_bit_inc_y)
 #endif
         generate_padding(input_picture_ptr->buffer_bit_inc_y,
                 input_picture_ptr->stride_bit_inc_y,
