@@ -64,10 +64,11 @@ extern "C" {
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define REMOVE_TXT_STATS 0
 #define TX_TYPE_GROUPING 1
-#define EXIT_TX_TYPE_IF_HAS_COEFF 0  ///***
+#define EXIT_TX_TYPE_IF_HAS_COEFF 0 
 #define COST_BASED_TXT 0
 #define DCT_VS_DST  0 // to test for only INTRA CLASS
 #define TXT_OFF 0
+#define SKIP_TXT_RATE_ESTIMATION 1  ///***
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/

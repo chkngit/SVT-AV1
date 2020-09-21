@@ -4698,7 +4698,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     TxType   txk_end = tx_search_skip_flag ? DCT_DCT + 1 : TX_TYPES;
 #endif
     uint64_t best_cost_tx_search = (uint64_t)~0;
-#if COST_BASED_TXT
+#if COST_BASED_TXT || SKIP_TXT_RATE_ESTIMATION
     uint64_t best_dist_tx_search = (uint64_t)~0;
 #endif
     int32_t  tx_type;
@@ -5031,7 +5031,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] =
                 RIGHT_SIGNED_SHIFT(txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION], shift);
         }
+#if SKIP_TXT_RATE_ESTIMATION
 
+        if (txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] >= best_dist_tx_search)
+            continue;
+#endif
         //LUMA-ONLY
         if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;
@@ -5072,7 +5076,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (cost < best_cost_tx_search) {
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
-#if COST_BASED_TXT
+#if COST_BASED_TXT || SKIP_TXT_RATE_ESTIMATION
             best_dist_tx_search = txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL];
 #endif
         }
