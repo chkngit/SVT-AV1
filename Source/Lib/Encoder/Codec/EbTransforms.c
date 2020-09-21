@@ -3267,6 +3267,30 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_64x32_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
+#if PARTIAL_FREQUENCY
+        if (trans_coeff_shape == N2_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == N4_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i > 0) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+#endif
+
         *three_quad_energy = handle_transform64x32(coeff_buffer);
 
         break;
@@ -3278,6 +3302,30 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
         else
             eb_av1_fwd_txfm2d_32x64_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
+
+#if PARTIAL_FREQUENCY
+        if (trans_coeff_shape == N2_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == N4_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i > 0) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+#endif
 
         *three_quad_energy = handle_transform32x64(coeff_buffer);
 
@@ -3291,6 +3339,30 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_64x16_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
+#if PARTIAL_FREQUENCY
+        if (trans_coeff_shape == N2_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == N4_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i > 0) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+#endif
+
         *three_quad_energy = handle_transform64x16(coeff_buffer);
 
         break;
@@ -3302,6 +3374,30 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
         else
             eb_av1_fwd_txfm2d_16x64_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
+
+#if PARTIAL_FREQUENCY
+        if (trans_coeff_shape == N2_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == N4_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i > 0) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+#endif
 
         *three_quad_energy = handle_transform16x64(coeff_buffer);
 
@@ -3378,6 +3474,31 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
         eb_av1_fwd_txfm2d_64x64(
             residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
+
+
+#if PARTIAL_FREQUENCY
+        if (trans_coeff_shape == N2_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == N4_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+        else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+            for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+                if (i > 0) {
+                    coeff_buffer[i] = 0;
+                }
+            }
+        }
+#endif
 
         *three_quad_energy = handle_transform64x64(coeff_buffer);
 
