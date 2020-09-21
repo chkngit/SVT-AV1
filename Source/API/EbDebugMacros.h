@@ -68,7 +68,7 @@ extern "C" {
 #define COST_BASED_TXT 0
 #define DCT_VS_DST  0 // to test for only INTRA CLASS
 #define TXT_OFF 0
-#define SKIP_TXT_RATE_ESTIMATION 1  ///***
+#define SKIP_TXT_RATE_ESTIMATION 0  ///***
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/
@@ -85,7 +85,7 @@ extern "C" {
 #define FAST_RDOQ_CHROMA 0 //--->
 #define FAST_RDOQ_TH 0
 #define FAST_RDOQ_NO_I_SLICE 0 
-
+#define FAST_RDOQ_N2 0
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define COEFF_OPT 0 //--->
