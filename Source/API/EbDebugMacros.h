@@ -37,7 +37,7 @@ extern "C" {
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-#define PR1485       1 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
+#define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
