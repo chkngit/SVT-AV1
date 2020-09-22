@@ -56,7 +56,7 @@ extern "C" {
 /************************************/
 #define TF_CHROMA_BLIND 1
 #define TF_32x32_ONLY 0 ///***
-#define TF_32x32_16x16_ADAPT 1 ///***
+#define TF_32x32_16x16_ADAPT 0 ///***
 #define TF_NOISE 0
 #define TF_REFACTOR 1 ///***
 #define TF_3X3 1  ///***
