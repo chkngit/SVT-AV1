@@ -1836,8 +1836,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
             context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + idx_16x16] = best_mv_x;
             context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16] = best_mv_y;
 #if TF_REFACTOR
-            context_ptr->tf_16x16_distance[idx_32x32 * 4 + idx_16x16] = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
-            context_ptr->tf_16x16_d_factor[idx_32x32 * 4 + idx_16x16] = AOMMAX(context_ptr->tf_16x16_distance[idx_32x32 * 4 + idx_16x16] * distance_threshold_inv, 1);
+            float distance = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
+            context_ptr->tf_16x16_d_factor[idx_32x32 * 4 + idx_16x16] = AOMMAX(distance * distance_threshold_inv, 1);
 #endif
         }
     }
@@ -2157,8 +2157,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         context_ptr->tf_32x32_mv_x[idx_32x32] = best_mv_x;
         context_ptr->tf_32x32_mv_y[idx_32x32] = best_mv_y;
 #if TF_REFACTOR
-        context_ptr->tf_32x32_distance[idx_32x32] = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
-        context_ptr->tf_32x32_d_factor[idx_32x32] = AOMMAX(context_ptr->tf_32x32_distance[idx_32x32] * distance_threshold_inv, 1);
+        float distance = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
+        context_ptr->tf_32x32_d_factor[idx_32x32] = AOMMAX(distance * distance_threshold_inv, 1);
 #endif
     }
 
