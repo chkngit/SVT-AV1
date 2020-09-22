@@ -2667,7 +2667,7 @@ static void get_blk_fw_using_dist(
             //    (me_sum_16x16_subblock_vf[idx_32x32] << 4)) &&
             //        max_me_vf - min_me_vf < THRES_DIFF_LOW)) 
 
-            if(context_ptr->tf_32x32_block_split_flag[idx_32x32])
+            if(context_ptr->tf_32x32_block_split_flag[idx_32x32] == 0)
             {
                 // split into 32x32 sub-blocks
 
