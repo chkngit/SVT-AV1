@@ -961,7 +961,11 @@ static void apply_filtering_block(
             ss_y,
             altref_strength,
             blk_fw_32x32,
+#if TF_3X3
+            context_ptr->tf_32x32_block_split_flag[idx_32x32],
+#else
             0, // use_32x32
+#endif
             accum_ptr[C_Y],
             count_ptr[C_Y],
             accum_ptr[C_U],
@@ -999,7 +1003,11 @@ static void apply_filtering_block(
             ss_y,
             altref_strength,
             blk_fw_32x32,
+#if TF_3X3
+            context_ptr->tf_32x32_block_split_flag[idx_32x32],
+#else
             0, // use_32x32
+#endif
             accum_ptr[C_Y],
             count_ptr[C_Y],
             accum_ptr[C_U],
@@ -2600,6 +2608,87 @@ static void get_final_filtered_pixels(EbByte *   src_center_ptr_start,
 static void populate_list_with_value(int *list, int nelements, const int value) {
     for (int i = 0; i < nelements; i++) list[i] = value;
 }
+// get block filter weights using a distance metric
+static const uint32_t subblocks_from32x32_to_16x16[N_16X16_BLOCKS] = {
+    0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
+static void get_blk_fw_using_dist(int *me_32x32_subblock_vf, int *me_16x16_subblock_vf,
+    EbBool use_16x16_subblocks_only, int *blk_fw, EbBool is_highbd) {
+    uint32_t blk_idx, idx_32x32;
+
+    int me_sum_16x16_subblock_vf[4] = { 0 };
+    int max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
+        min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
+
+    int threshold_low, threshold_high;
+
+    if (!is_highbd) {
+        threshold_low = THRES_LOW;
+        threshold_high = THRES_HIGH;
+    }
+    else {
+        threshold_low = THRES_LOW * 16;
+        threshold_high = THRES_HIGH * 16;
+    }
+
+    if (use_16x16_subblocks_only) {
+        for (idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
+            // split into 16x16 sub-blocks
+
+            for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+                if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
+                    blk_fw[blk_idx] = me_16x16_subblock_vf[blk_idx] < threshold_low
+                        ? 2
+                        : me_16x16_subblock_vf[blk_idx] < threshold_high ? 1 : 0;
+                }
+            }
+        }
+    }
+    else {
+        for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+            idx_32x32 = subblocks_from32x32_to_16x16[blk_idx];
+
+            if (min_me_vf[idx_32x32] > me_16x16_subblock_vf[blk_idx])
+                min_me_vf[idx_32x32] = me_16x16_subblock_vf[blk_idx];
+            if (max_me_vf[idx_32x32] < me_16x16_subblock_vf[blk_idx])
+                max_me_vf[idx_32x32] = me_16x16_subblock_vf[blk_idx];
+
+            me_sum_16x16_subblock_vf[idx_32x32] += me_16x16_subblock_vf[blk_idx];
+        }
+
+        for (idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
+            if (((me_32x32_subblock_vf[idx_32x32] * 15 <
+                (me_sum_16x16_subblock_vf[idx_32x32] << 4)) &&
+                max_me_vf - min_me_vf < THRES_DIFF_HIGH) ||
+                ((me_32x32_subblock_vf[idx_32x32] * 14 <
+                (me_sum_16x16_subblock_vf[idx_32x32] << 4)) &&
+                    max_me_vf - min_me_vf < THRES_DIFF_LOW)) {
+                // split into 32x32 sub-blocks
+
+                int weight =
+                    me_32x32_subblock_vf[idx_32x32] < (threshold_low << THR_SHIFT)
+                    ? 2
+                    : me_32x32_subblock_vf[idx_32x32] < (threshold_high << THR_SHIFT) ? 1 : 0;
+
+                for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+                    if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32)
+                        blk_fw[blk_idx] = weight;
+                }
+            }
+            else {
+                // split into 16x16 sub-blocks
+
+                for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+                    if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
+                        blk_fw[blk_idx] =
+                            me_16x16_subblock_vf[blk_idx] < threshold_low
+                            ? 2
+                            : me_16x16_subblock_vf[blk_idx] < threshold_high ? 1 : 0;
+                    }
+                }
+            }
+        }
+    }
+}
 #endif
 // Produce the filtered alt-ref picture
 // - core function
@@ -2918,6 +3007,13 @@ static EbErrorType produce_temporally_filtered_pic(
 
                                 int blk_fw[N_16X16_BLOCKS];
                                 populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
+                                // Get sub-block filter weights depending on the variance
+                                get_blk_fw_using_dist(
+                                    (int *) &(context_ptr->tf_32x32_block_error[0]),
+                                    (int *) &(context_ptr->tf_16x16_block_error[0]),
+                                    0,//use_16x16_subblocks_only,
+                                    blk_fw,
+                                    is_highbd);
 
                                 apply_filtering_block(
                                     context_ptr, 
