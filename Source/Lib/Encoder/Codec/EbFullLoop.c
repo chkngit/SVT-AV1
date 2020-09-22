@@ -829,7 +829,7 @@ static INLINE int get_coeff_cost_general(int is_last, int ci, TranLow abs_qc, in
     }
     return cost;
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static int64_t get_coeff_dist(TranLow tcoeff, TranLow dqcoeff, int shift) {
 #else
 static INLINE int64_t get_coeff_dist(TranLow tcoeff, TranLow dqcoeff, int shift) {
@@ -873,7 +873,7 @@ static INLINE int get_br_cost_with_diff(TranLow level, const int *coeff_lps, int
 
     return coeff_lps[base_range] + golomb_bits;
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static int get_two_coeff_cost_simple(int ci, TranLow abs_qc, int coeff_ctx,
 #else
 static AOM_FORCE_INLINE int get_two_coeff_cost_simple(int ci, TranLow abs_qc, int coeff_ctx,
@@ -919,7 +919,7 @@ static INLINE int get_coeff_cost_eob(int ci, TranLow abs_qc, int sign, int coeff
     }
     return cost;
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static void update_coeff_eob(
 #else
 static AOM_FORCE_INLINE void update_coeff_eob(
@@ -1053,7 +1053,7 @@ static AOM_FORCE_INLINE void update_coeff_eob(
         }
     }
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static void update_coeff_general(int *accu_rate, int64_t *accu_dist, int si, int eob,
 #else
 static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int si, int eob,
@@ -1132,7 +1132,7 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
 #endif
     }
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static void update_coeff_simple(
 #else
 static AOM_FORCE_INLINE void update_coeff_simple(
@@ -1398,7 +1398,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #if RDOQ_TEST1
     int lower_level_fail_cnt = 0;
 #endif
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_1
 #if RDOQ_TEST1
     for (; si >= 0 && nz_num <= max_nz_num && !fast_mode && lower_level_fail_cnt < 1; --si) {
 #else
@@ -1482,7 +1482,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
                     sharpness);
     }
 
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_1
 #if RDOQ_TEST1
     lower_level_fail_cnt = 0;
     for (; si >= 1 && lower_level_fail_cnt < 1; --si) {

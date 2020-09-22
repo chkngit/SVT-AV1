@@ -3285,7 +3285,7 @@ static const uint8_t clip_max3[256] = {
 static INLINE int get_padded_idx(const int idx, const int bwl) {
     return idx + ((idx >> bwl) << TX_PAD_HOR_LOG2);
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static  int get_nz_mag(const uint8_t *const levels, const int bwl,
 #else
 static AOM_FORCE_INLINE int get_nz_mag(const uint8_t *const levels, const int bwl,
@@ -3313,7 +3313,7 @@ static AOM_FORCE_INLINE int get_nz_mag(const uint8_t *const levels, const int bw
 
     return mag;
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static  int get_nz_map_ctx_from_stats(const int stats,
 #else
 static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(const int stats,
@@ -3353,7 +3353,7 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(const int stats,
     }
     return 0;
 }
-#if RDOQ_REFACTOR
+#if RDOQ_REFACTOR_0
 static int get_lower_levels_ctx(const uint8_t *levels, int coeff_idx, int bwl,
 #else
 static AOM_FORCE_INLINE int get_lower_levels_ctx(const uint8_t *levels, int coeff_idx, int bwl,
