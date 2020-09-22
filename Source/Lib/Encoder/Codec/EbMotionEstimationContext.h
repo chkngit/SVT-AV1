@@ -416,10 +416,18 @@ typedef struct MeContext {
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t tf_16x16_block_error[16];
+#if TF_REFACTOR
+    float tf_16x16_distance[16];
+    float tf_16x16_d_factor[16];
+#endif
 
     signed short tf_32x32_mv_x[4];
     signed short tf_32x32_mv_y[4];
     uint64_t tf_32x32_block_error[4];
+#if TF_REFACTOR
+    float tf_32x32_distance[4];
+    float tf_32x32_d_factor[4];
+#endif
 
     int tf_32x32_block_split_flag[4];
 #if TF_32x32_16x16_ADAPT

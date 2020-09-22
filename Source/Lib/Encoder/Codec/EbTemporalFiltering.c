@@ -1521,6 +1521,10 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
+#if TF_REFACTOR
+    const float distance_threshold_inv =
+        1.0f / (float)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+#endif
     BlkStruct   blk_ptr;
     MacroBlockD av1xd;
     blk_ptr.av1xd = &av1xd;
@@ -1831,6 +1835,10 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
             }
             context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + idx_16x16] = best_mv_x;
             context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16] = best_mv_y;
+#if TF_REFACTOR
+            context_ptr->tf_16x16_distance[idx_32x32 * 4 + idx_16x16] = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
+            context_ptr->tf_16x16_d_factor[idx_32x32 * 4 + idx_16x16] = AOMMAX(context_ptr->tf_16x16_distance[idx_32x32 * 4 + idx_16x16] * distance_threshold_inv, 1);
+#endif
         }
     }
 }
@@ -1844,6 +1852,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+
+#if TF_REFACTOR
+    const float distance_threshold_inv =
+        1.0f / (float)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+#endif
 
     BlkStruct   blk_ptr;
     MacroBlockD av1xd;
@@ -2143,6 +2156,10 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
         context_ptr->tf_32x32_mv_x[idx_32x32] = best_mv_x;
         context_ptr->tf_32x32_mv_y[idx_32x32] = best_mv_y;
+#if TF_REFACTOR
+        context_ptr->tf_32x32_distance[idx_32x32] = sqrtf((float)(best_mv_y * best_mv_y + best_mv_x * best_mv_x));
+        context_ptr->tf_32x32_d_factor[idx_32x32] = AOMMAX(context_ptr->tf_32x32_distance[idx_32x32] * distance_threshold_inv, 1);
+#endif
     }
 
 }

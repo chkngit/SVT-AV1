@@ -37,7 +37,7 @@ extern "C" {
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-#define PR1485       1 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
+#define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
@@ -58,6 +58,7 @@ extern "C" {
 #define TF_32x32_ONLY 0 ///***
 #define TF_32x32_16x16_ADAPT 1 ///***
 #define TF_NOISE 0
+#define TF_REFACTOR 1 ///***
 #define SHUT_TF 0
 /************************************/
 #define OPT_4           0
@@ -70,7 +71,7 @@ extern "C" {
 #define COST_BASED_TXT 0
 #define DCT_VS_DST  0 // to test for only INTRA CLASS
 #define TXT_OFF 0
-#define SKIP_TXT_RATE_ESTIMATION 0  ///***
+#define SKIP_TXT_RATE_ESTIMATION 0  
 /************************************/
 #define TEST_BLOCK_BASED 0
 /************************************/

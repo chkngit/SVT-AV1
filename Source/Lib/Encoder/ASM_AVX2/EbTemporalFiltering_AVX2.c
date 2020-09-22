@@ -276,6 +276,27 @@ static void apply_temporal_filter_planewise(
             //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
             // Larger motion vector -> smaller filtering weight.
             MV mv;
+
+#if TF_REFACTOR
+            float d_factor;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+                // 16x16
+                d_factor = context_ptr->tf_16x16_d_factor[idx_32x32 * 4 + subblock_idx];
+            }
+            else {
+                //32x32
+                d_factor = context_ptr->tf_32x32_d_factor[idx_32x32];
+        }
+#if PR1485
+            // Compute filter weight.
+            double scaled_diff = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7);
+            int    adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#else
+            // Compute filter weight.
+            float scaled_diff = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7);
+            int   adjusted_weight = (int)(expf(-scaled_diff) * TF_WEIGHT_SCALE);
+#endif
+#else
             if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
                 // 16x16
                 mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
@@ -299,6 +320,7 @@ static void apply_temporal_filter_planewise(
             // Compute filter weight.
             float scaled_diff     = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7);
             int   adjusted_weight = (int)(expf(-scaled_diff) * TF_WEIGHT_SCALE);
+#endif
 #endif
             // updated the index
             count[i * stride2 + j] += adjusted_weight;
