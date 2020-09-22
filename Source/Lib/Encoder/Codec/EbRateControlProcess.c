@@ -340,7 +340,11 @@ void tpl_mc_flow_dispenser(
     };
     double q_val;  q_val = eb_av1_convert_qindex_to_q(qIndex, 8);
     int32_t delta_qindex;
+#if ENABLE_TPL_TRAILING
+    if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
+#else
     if (pcs_ptr->slice_type == I_SLICE)
+#endif
         delta_qindex = eb_av1_compute_qdelta(
             q_val,
             q_val * 0.25,
@@ -348,8 +352,13 @@ void tpl_mc_flow_dispenser(
     else
         delta_qindex = eb_av1_compute_qdelta(
             q_val,
+#if ENABLE_TPL_TRAILING // anaghdin add all
+            q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
+            [pcs_ptr->tpl_data.tpl_temporal_layer_index],
+#else
             q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
             [pcs_ptr->temporal_layer_index],
+#endif
             8);
     qIndex =
         (qIndex + delta_qindex);
@@ -498,7 +507,11 @@ void tpl_mc_flow_dispenser(
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
                     best_intra_cost = AOMMAX(best_intra_cost, 1);
+#if ENABLE_TPL_TRAILING
+                    if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
+#else
                     if (frame_is_intra_only(pcs_ptr))
+#endif
                         best_inter_cost = 0;
                     else
                         best_inter_cost = AOMMIN(best_intra_cost, best_inter_cost);
@@ -605,8 +618,11 @@ void tpl_mc_flow_dispenser(
                     }
                     tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
                     tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
-
+#if ENABLE_TPL_TRAILING
+                    if (pcs_ptr->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {
+#else
                     if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
+#endif
                         tpl_stats.mv = final_best_mv;
                         tpl_stats.ref_frame_poc = best_ref_poc;
                     }
@@ -827,7 +843,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
 
-   // SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
+    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
@@ -958,7 +974,7 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
         generate_r0beta(pcs_array[0]);
 
-#if 0 //AMIR_PRINTS
+#if 1 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
@@ -5768,8 +5784,16 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 int8_t tmp_layer_delta = (int8_t)pcs_ptr->parent_pcs_ptr->temporal_layer_index - (int8_t)ref_tmp_layer;
                 // active_best_quality is updated with the q index of the reference
                 if (rf_level == GF_ARF_LOW) {
+#if 0
+                    int c1, c2;
+                    c1 = 3;
+                        c2 = 1;
+                    while (tmp_layer_delta--)
+                        active_best_quality = (c1*active_best_quality + c2*cq_level + (c1+c2)/2) / (c1+c2);
+#else
                     while (tmp_layer_delta--)
                         active_best_quality = (active_best_quality + cq_level + 1) / 2;
+#endif
                 }
             }
             // For alt_ref and GF frames (including internal arf frames) adjust the

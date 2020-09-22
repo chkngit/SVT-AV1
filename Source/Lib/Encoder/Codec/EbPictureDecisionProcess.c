@@ -3916,7 +3916,7 @@ void store_tpl_pictures(
     else {
         memcpy(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
-#if !TUNE_TPL
+#if !TUNE_TPL || ENABLE_TPL_TRAILING
         //add 3 future pictures from PD future window
         for (uint32_t pic_i = 0; pic_i < 3; ++pic_i) {
             if (pcs->pd_window[2 + pic_i]) {
