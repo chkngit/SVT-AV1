@@ -1514,6 +1514,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     default: assert(false);
     }
 #endif
+#if !SHUT_RDOQ_SKIP
     if (si == -1 && nz_num <= max_nz_num) {
         update_skip(&accu_rate,
                     accu_dist,
@@ -1527,6 +1528,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
                     dqcoeff_ptr,
                     sharpness);
     }
+#endif
 
 #if RDOQ_REFACTOR_1
 #if RDOQ_TEST1

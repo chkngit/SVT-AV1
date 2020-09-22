@@ -101,7 +101,8 @@ extern "C" {
 #endif
 #define SKIP_TRELLIS_BASED_ON_SATD 1
 #define MAX_NZ_NUM    0
-#define RATE_BLIND 1
+#define RATE_BLIND 0
+#define SHUT_RDOQ_SKIP 1
 
 #define RDOQ_REFACTOR_0 0
 #define RDOQ_REFACTOR_1 0
