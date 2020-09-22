@@ -100,8 +100,8 @@ extern "C" {
 
 #endif
 #define SKIP_TRELLIS_BASED_ON_SATD 1
-
-#define RDOQ_REFACTOR_0 1
+#define MAX_NZ_NUM 1
+#define RDOQ_REFACTOR_0 0
 #define RDOQ_REFACTOR_1 0
 #define RDOQ_TEST0 0 // RDOQ do not perform rd_low for only abs_qc==1
 #define RDOQ_TEST1 0 // cnt fail

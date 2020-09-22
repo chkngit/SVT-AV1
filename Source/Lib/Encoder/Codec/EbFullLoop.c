@@ -1348,7 +1348,11 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     const TranLow qc         = qcoeff_ptr[ci];
     const TranLow abs_qc     = abs(qc);
     const int     sign       = qc < 0;
+#if MAX_NZ_NUM
+    const int     max_nz_num = 10;
+#else
     const int     max_nz_num = 2;
+#endif
     int           nz_num     = 1;
     int           nz_ci[3]   = {ci, 0, 0};
 
