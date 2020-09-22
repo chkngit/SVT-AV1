@@ -2615,11 +2615,11 @@ static void get_blk_fw_using_dist(uint64_t *me_32x32_subblock_vf, uint64_t *me_1
     EbBool use_16x16_subblocks_only, int *blk_fw, EbBool is_highbd) {
     uint32_t blk_idx, idx_32x32;
 
-    int me_sum_16x16_subblock_vf[4] = { 0 };
+    uint64_t me_sum_16x16_subblock_vf[4] = { 0 };
     uint64_t max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
              min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
 
-    int threshold_low, threshold_high;
+    uint64_t threshold_low, threshold_high;
 
     if (!is_highbd) {
         threshold_low = THRES_LOW;
@@ -3006,8 +3006,8 @@ static EbErrorType produce_temporally_filtered_pic(
                             else {
 
                                 int blk_fw[N_16X16_BLOCKS];
-                                populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
-#if 1
+                                populate_list_with_value(blk_fw, 16, 1/*INIT_WEIGHT*/);
+#if 0
                                 // Get sub-block filter weights depending on the variance
                                 get_blk_fw_using_dist(
                                     context_ptr->tf_32x32_block_error,
