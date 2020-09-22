@@ -2611,13 +2611,13 @@ static void populate_list_with_value(int *list, int nelements, const int value) 
 // get block filter weights using a distance metric
 static const uint32_t subblocks_from32x32_to_16x16[N_16X16_BLOCKS] = {
     0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
-static void get_blk_fw_using_dist(int *me_32x32_subblock_vf, int *me_16x16_subblock_vf,
+static void get_blk_fw_using_dist(uint64_t *me_32x32_subblock_vf, uint64_t *me_16x16_subblock_vf,
     EbBool use_16x16_subblocks_only, int *blk_fw, EbBool is_highbd) {
     uint32_t blk_idx, idx_32x32;
 
     int me_sum_16x16_subblock_vf[4] = { 0 };
-    int max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
-        min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
+    uint64_t max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
+             min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
 
     int threshold_low, threshold_high;
 
@@ -2944,7 +2944,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 // Step 2: temporal filtering using the motion compensated blocks
                 // ------------
 #if TF_3X3
-                const int use_planewise_strategy = (picture_control_set_ptr_central->slice_type == I_SLICE) ? 1: 0;
+                const int use_planewise_strategy = 0;
 #endif
                 // Hyper-parameter for filter weight adjustment.
                 int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution <=
@@ -3007,11 +3007,11 @@ static EbErrorType produce_temporally_filtered_pic(
 
                                 int blk_fw[N_16X16_BLOCKS];
                                 populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
-#if 0
+#if 1
                                 // Get sub-block filter weights depending on the variance
                                 get_blk_fw_using_dist(
-                                    (int *) &(context_ptr->tf_32x32_block_error[0]),
-                                    (int *) &(context_ptr->tf_16x16_block_error[0]),
+                                    context_ptr->tf_32x32_block_error,
+                                    context_ptr->tf_16x16_block_error,
                                     0,//use_16x16_subblocks_only,
                                     blk_fw,
                                     is_highbd);

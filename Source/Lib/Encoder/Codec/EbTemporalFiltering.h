@@ -74,11 +74,14 @@
 #define TF_SEARCH_DISTANCE_THRESHOLD 0.1
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
-
+#if TF_3X3
+#define INT_MAX_TF (uint64_t) ~0 //max value for an int
+#define INT_MIN_TF (-((uint64_t) ~0) - 1) //min value for an int
+#else
 #define INT_MAX_TF 2147483647 //max value for an int
 #define INT_MIN_TF (-2147483647 - 1) //min value for an int
+#endif
 #define THR_SHIFT 2 // should be 2
-
 #define INIT_WEIGHT 2
 #define WEIGHT_MULTIPLIER 16
 
