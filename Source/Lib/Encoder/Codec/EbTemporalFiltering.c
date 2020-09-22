@@ -596,7 +596,11 @@ static INLINE void calculate_squared_errors_highbd(const uint16_t *s, int s_stri
 }
 
 // Main function that applies filtering to a block according to the weights
-void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+void svt_av1_apply_filtering_c(
+#if TF_3X3
+                               MeContext *context_ptr,
+#endif
+                               const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
                                int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
                                int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre,
                                int uv_pre_stride, unsigned int block_width,
@@ -735,6 +739,9 @@ void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uin
 
 // Main function that applies filtering to a block according to the weights - highbd
 void svt_av1_apply_filtering_highbd_c(
+#if TF_3X3
+    MeContext *context_ptr,
+#endif
     const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
@@ -872,7 +879,11 @@ void svt_av1_apply_filtering_highbd_c(
     }
 }
 #if TF_3X3
-static void apply_filtering_block(int block_row, int block_col, EbByte *src, uint16_t **src_16bit,
+static void apply_filtering_block(
+#if TF_3X3
+    MeContext *context_ptr,
+#endif
+    int block_row, int block_col, EbByte *src, uint16_t **src_16bit,
     EbByte *pred, uint16_t **pred_16bit, uint32_t **accum,
     uint16_t **count, uint32_t *stride, uint32_t *stride_pred,
     int block_width, int block_height,
@@ -930,7 +941,11 @@ static void apply_filtering_block(int block_row, int block_col, EbByte *src, uin
         pred_ptr[C_V] = pred[C_V] + offset_block_buffer_v;
 
         // Apply the temporal filtering strategy
-        svt_av1_apply_filtering(src_ptr[C_Y],
+        svt_av1_apply_filtering(
+#if TF_3X3
+            context_ptr,
+#endif     
+            src_ptr[C_Y],
             stride[C_Y],
             pred_ptr[C_Y],
             stride_pred[C_Y],
@@ -964,7 +979,11 @@ static void apply_filtering_block(int block_row, int block_col, EbByte *src, uin
         pred_ptr_16bit[C_V] = pred_16bit[C_V] + offset_block_buffer_v;
 
         // Apply the temporal filtering strategy
-        svt_av1_apply_filtering_highbd(src_ptr_16bit[C_Y],
+        svt_av1_apply_filtering_highbd(
+#if TF_3X3
+            context_ptr,
+#endif          
+            src_ptr_16bit[C_Y],
             stride[C_Y],
             pred_ptr_16bit[C_Y],
             stride_pred[C_Y],
@@ -2900,7 +2919,9 @@ static EbErrorType produce_temporally_filtered_pic(
                                 int blk_fw[N_16X16_BLOCKS];
                                 populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
 
-                                apply_filtering_block(block_row,
+                                apply_filtering_block(
+                                    context_ptr, 
+                                    block_row,
                                     block_col,
                                     src_center_ptr,
                                     altref_buffer_highbd_ptr,

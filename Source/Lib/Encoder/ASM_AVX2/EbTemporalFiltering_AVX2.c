@@ -268,14 +268,6 @@ static void apply_temporal_filter_planewise(
                 (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) * block_balacne_inv;
 #endif
 
-            // Decay factors for non-local mean approach.
-            // Smaller q -> smaller filtering weight. WIP
-            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
-            // Smaller strength -> smaller filtering weight.  WIP
-            // CLIP(
-            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
-            // Larger motion vector -> smaller filtering weight.
-            MV mv;
 
 #if TF_REFACTOR
             float d_factor;
@@ -297,6 +289,14 @@ static void apply_temporal_filter_planewise(
             int   adjusted_weight = (int)(expf(-scaled_diff) * TF_WEIGHT_SCALE);
 #endif
 #else
+            // Decay factors for non-local mean approach.
+            // Smaller q -> smaller filtering weight. WIP
+            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
+            // Smaller strength -> smaller filtering weight.  WIP
+            // CLIP(
+            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
+            // Larger motion vector -> smaller filtering weight.
+            MV mv;
             if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
                 // 16x16
                 mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];

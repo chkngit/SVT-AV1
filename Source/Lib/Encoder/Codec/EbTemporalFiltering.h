@@ -98,7 +98,11 @@ int svt_av1_init_temporal_filtering(PictureParentControlSet ** list_picture_cont
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t                    segment_index);
 
-void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+void svt_av1_apply_filtering_c(
+#if TF_3X3
+                               MeContext *context_ptr,
+#endif
+                               const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
                                int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
                                int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre,
                                int uv_pre_stride, unsigned int block_width,
@@ -108,6 +112,9 @@ void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uin
                                uint32_t *v_accum, uint16_t *v_count);
 
 void svt_av1_apply_filtering_highbd_c(
+#if TF_3X3
+    MeContext *context_ptr,
+#endif
     const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,

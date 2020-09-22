@@ -970,6 +970,9 @@ static void av1_apply_temporal_filter_chroma(
 }
 
 void svt_av1_apply_temporal_filter_sse4_1(
+#if TF_3X3
+    MeContext *context_ptr,
+#endif
     const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
@@ -1011,7 +1014,9 @@ void svt_av1_apply_temporal_filter_sse4_1(
         y_pre_ptr += y_pre_stride;
         y_dist_ptr += DIST_STRIDE;
     }
-
+#if TF_3X3
+    if(context_ptr->tf_chroma) 
+#endif
     for (row = 0; row < chroma_height; row++) {
         for (blk_col = 0; blk_col < chroma_width; blk_col += 8) {
             store_dist_8(u_src_ptr + blk_col, u_pre_ptr + blk_col, u_dist_ptr + blk_col);
@@ -1044,7 +1049,9 @@ void svt_av1_apply_temporal_filter_sse4_1(
                                    y_dist_ptr,
                                    u_dist_ptr,
                                    v_dist_ptr);
-
+#if TF_3X3
+    if (context_ptr->tf_chroma)
+#endif
     av1_apply_temporal_filter_chroma(u_pre,
                                      v_pre,
                                      uv_pre_stride,
