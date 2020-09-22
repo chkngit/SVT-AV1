@@ -1587,15 +1587,16 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             //set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 0, 1, 0, 1);
                         }
 
-                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
-                            pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
-                        {
-                            set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
+                        if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+                            if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
+                                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                            {
+                                set_compound_to_inject(context_ptr, context_ptr->comp_inj_table, 1, 0, 0, 0);
 #if !FIX_COMP_SKIPPING_BUG
-                         //hackkkk to macth ref
-                            tot_comp_types = MD_COMP_AVG;
+                             //hackkkk to macth ref
+                                tot_comp_types = MD_COMP_AVG;
 #endif
-                        }
+                            }
 
                         EbBool mask_done = 0;
                         for (cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
