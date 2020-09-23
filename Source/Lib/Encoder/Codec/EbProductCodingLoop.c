@@ -9259,11 +9259,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if PD_MD_EXIT
             if ((tot_cost + tot_cost * (blk_geom->totns - (blk_geom->nsi + 1)) *
                 context_ptr->md_exit_th / (blk_geom->nsi + 1) / 100) >
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost))
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)
 #else
             if (tot_cost > context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)
-                skip_next_nsq = 1;
 #endif
+                skip_next_nsq = 1;
         }
         if (blk_geom->shape != PART_N) {
             if (blk_geom->nsi + 1 < blk_geom->totns)
