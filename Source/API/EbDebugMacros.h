@@ -59,9 +59,10 @@ extern "C" {
 #define TF_32x32_16x16_ADAPT 1 ///***
 #define TF_NOISE 0
 #define TF_REFACTOR 1 ///***
-#define TF_3X3 1  ///***
+#define TF_3X3 0  ///***
+#if TF_3X3
 #define ENHANCED_TF_3X3 1  ///***
-
+#endif
 #define SHUT_TF 0
 /************************************/
 #define ME_TUNING 1
