@@ -917,10 +917,8 @@ static void apply_filtering_block(
     uint16_t *src_ptr_16bit[COLOR_CHANNELS];
     uint16_t *pred_ptr_16bit[COLOR_CHANNELS];
 
-    for (int ifw = 0; ifw < 4; ifw++) {
-        int ifw_index = index_16x16_from_subindexes[idx_32x32][ifw];
-
-        blk_fw_32x32[ifw] = blk_fw[ifw_index];
+    for (int i = 0; i < 4; i++) {
+        blk_fw_32x32[i] = blk_fw[idx_32x32 * 4 + i];
     }
 
     accum_ptr[C_Y] = accum[C_Y] + offset_block_buffer_y;
