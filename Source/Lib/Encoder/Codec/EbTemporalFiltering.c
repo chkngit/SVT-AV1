@@ -2982,6 +2982,21 @@ static EbErrorType produce_temporally_filtered_pic(
                             pred_16bit, accum, count, BW, BH, ss_x, ss_y, use_planewise_strategy);
 #endif
                 } else {
+
+#if TF_3X3
+                    int blk_fw[N_16X16_BLOCKS];
+                    populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
+
+                    // Get sub-block filter weights depending on the variance
+                    get_blk_fw_using_dist(
+                        context_ptr,
+                        context_ptr->tf_32x32_block_error,
+                        context_ptr->tf_16x16_block_error,
+                        0,//use_16x16_subblocks_only,
+                        blk_fw,
+                        is_highbd);
+#endif
+
                     // split filtering function into 32x32 blocks
                     // TODO: implement a 64x64 SIMD version
                     for (int block_row = 0; block_row < 2; block_row++) {
@@ -3012,18 +3027,6 @@ static EbErrorType produce_temporally_filtered_pic(
 #if TF_3X3
                             else {
 
-                                int blk_fw[N_16X16_BLOCKS];
-                                populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
-#if 1
-                                // Get sub-block filter weights depending on the variance
-                                get_blk_fw_using_dist(
-                                    context_ptr,
-                                    context_ptr->tf_32x32_block_error,
-                                    context_ptr->tf_16x16_block_error,
-                                    0,//use_16x16_subblocks_only,
-                                    blk_fw,
-                                    is_highbd);
-#endif
                                 apply_filtering_block(
                                     context_ptr, 
                                     block_row,
