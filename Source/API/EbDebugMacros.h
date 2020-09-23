@@ -60,6 +60,7 @@ extern "C" {
 #define TF_NOISE 0
 #define TF_REFACTOR 1 ///***
 #define TF_3X3 1  ///***
+#define ENHANCED_TF_3X3 1  ///***
 
 #define SHUT_TF 0
 /************************************/
