@@ -2326,14 +2326,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PD_MD_EXIT
     // Derive MD Exit TH
     if (pd_pass == PD_PASS_0)
-        if(pcs_ptr->slice_type == I_SLICE)
-            context_ptr->md_exit_th = 50;
-        else
-            context_ptr->md_exit_th =  0;
+        context_ptr->md_exit_th = 0;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_exit_th = 0;
     else
-        context_ptr->md_exit_th = 0;
+        context_ptr->md_exit_th = 50;
 #endif
     if (pd_pass == PD_PASS_0)
         context_ptr->interpolation_search_level = IFS_OFF;
