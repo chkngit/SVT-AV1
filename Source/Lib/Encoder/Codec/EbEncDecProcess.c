@@ -2323,7 +2323,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
 #endif
-#if PD_MD_EXIT
+#if PD0_MD_EXIT
     // Derive MD Exit TH
     if (pd_pass == PD_PASS_0)
         context_ptr->md_exit_th = 0;

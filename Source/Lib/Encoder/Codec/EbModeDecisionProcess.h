@@ -591,7 +591,7 @@ typedef struct ModeDecisionContext {
 #if OPT_IFS
     uint8_t ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
 #endif
-#if PD_MD_EXIT
+#if PD0_MD_EXIT
     uint64_t     md_exit_th;
 #endif
 } ModeDecisionContext;
