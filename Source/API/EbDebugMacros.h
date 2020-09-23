@@ -54,8 +54,8 @@ extern "C" {
 #define FASTER_PD0 0
 #define ENHANCED_FASTER_PD0 0
 /************************************/
-#define PD0_CUT_DEPTH 0
-#define PD0_MD_EXIT 1
+#define PD0_CUT_DEPTH 1
+#define PD0_MD_EXIT 0
 
 /************************************/
 #define TF_CHROMA_BLIND 1

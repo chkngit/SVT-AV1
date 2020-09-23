@@ -2387,11 +2387,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    Allow cfl
     // 1                    Disable cfl
     context_ptr->md_disable_cfl = EB_FALSE;
-     // Set disallow_4x4
+#if PD0_CUT_DEPTH
+#if 0
+    if (pd_pass == PD_PASS_0)       
+        context_ptr->disallow_4x4 = EB_TRUE;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->disallow_4x4 = EB_TRUE;
+    else
+        if (enc_mode <= ENC_M1)
+            context_ptr->disallow_4x4 = EB_FALSE;
+        else
+            context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+
+#endif
+    context_ptr->disallow_4x4 = EB_TRUE;
+#else
      if (enc_mode <= ENC_M1)
          context_ptr->disallow_4x4 = EB_FALSE;
      else
          context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+#endif
      // If SB non-multiple of 4, then disallow_4x4 could not be used
      // SB Stats
      uint32_t sb_width =
