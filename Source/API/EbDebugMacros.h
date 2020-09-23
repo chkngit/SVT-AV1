@@ -63,6 +63,7 @@ extern "C" {
 
 #define SHUT_TF 0
 /************************************/
+#define HME_LEVEL_1 1
 #define HME_LEVEL_2 1
 /************************************/
 #define OPT_4           0
