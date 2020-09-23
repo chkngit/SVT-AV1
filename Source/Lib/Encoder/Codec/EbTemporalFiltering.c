@@ -2613,12 +2613,12 @@ static void get_blk_fw_using_dist(
     MeContext *context_ptr,
     uint64_t *me_32x32_subblock_vf, uint64_t *me_16x16_subblock_vf,
     EbBool use_16x16_subblocks_only, int *blk_fw, EbBool is_highbd) {
-    uint32_t blk_idx, idx_32x32;
+    //uint32_t blk_idx, idx_32x32;
 
-    uint64_t me_sum_16x16_subblock_vf[4] = { 0 };
-    uint64_t max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
-             min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
-
+    //uint64_t me_sum_16x16_subblock_vf[4] = { 0 };
+    //uint64_t max_me_vf[4] = { INT_MIN_TF, INT_MIN_TF, INT_MIN_TF, INT_MIN_TF },
+    //         min_me_vf[4] = { INT_MAX_TF, INT_MAX_TF, INT_MAX_TF, INT_MAX_TF };
+    uint32_t idx_32x32;
     uint64_t threshold_low, threshold_high;
 
     if (!is_highbd) {
@@ -2950,9 +2950,6 @@ static EbErrorType produce_temporally_filtered_pic(
                 // ------------
                 // Step 2: temporal filtering using the motion compensated blocks
                 // ------------
-#if TF_3X3
-                const int use_planewise_strategy = 0;
-#endif
                 // Hyper-parameter for filter weight adjustment.
                 int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution <=
                                      INPUT_SIZE_480p_RANGE)
@@ -2964,9 +2961,9 @@ static EbErrorType produce_temporally_filtered_pic(
 
                 // if frame to process is the center frame
                 if (frame_index == index_center) {
-#if !TF_3X3
+
                     const int use_planewise_strategy = 1;
-#endif
+
                     if (!is_highbd)
                         apply_filtering_central(
 #if TF_CHROMA_BLIND
@@ -3004,7 +3001,7 @@ static EbErrorType produce_temporally_filtered_pic(
                             context_ptr->tf_block_col = block_col;
                             context_ptr->tf_block_row = block_row;
 #if TF_3X3
-                            if (use_planewise_strategy)
+                            if (0)
 #endif
                             apply_filtering_block_plane_wise(context_ptr,
                                                              block_row,

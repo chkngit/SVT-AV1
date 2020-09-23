@@ -4972,14 +4972,12 @@ void* picture_decision_kernel(void *input_ptr)
                                     pcs_ptr->tf_segments_row_count    = scs_ptr->tf_segment_row_count;
                                     pcs_ptr->tf_segments_total_count = (uint16_t)(pcs_ptr->tf_segments_column_count  * pcs_ptr->tf_segments_row_count);
                                     pcs_ptr->temp_filt_seg_acc = 0;
-#if ENHANCED_TF_3X3
-                                    pcs_ptr->altref_strength = 2;
-#else
+
                                     if (pcs_ptr->temporal_layer_index == 0)
                                         pcs_ptr->altref_strength = scs_ptr->static_config.altref_strength;
                                     else
                                         pcs_ptr->altref_strength = 2;
-#endif
+
                                     for (seg_idx = 0; seg_idx < pcs_ptr->tf_segments_total_count; ++seg_idx) {
                                         eb_get_empty_object(
                                             context_ptr->picture_decision_results_output_fifo_ptr,
