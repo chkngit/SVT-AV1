@@ -9175,7 +9175,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
                 // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
                 // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
-#if PD0_MD_EXIT
+#if 0//PD0_MD_EXIT
                 if (parent_depth_cost != MAX_MODE_COST) {
 
                 uint64_t average_cost_per_child = current_depth_cost / context_ptr->blk_geom->quadi;
@@ -9191,7 +9191,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     next_non_skip_blk_idx_mds = parent_depth_idx_mds +
                         ns_depth_offset[sqnc_ptr->seq_header.sb_size == BLOCK_128X128]
                                        [context_ptr->blk_geom->depth - 1];
-#if PD0_MD_EXIT
+#if 0//PD0_MD_EXIT
                     }
 #endif
                 } else
