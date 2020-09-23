@@ -2557,6 +2557,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->spatial_sse_full_loop_level =
         sequence_control_set_ptr->static_config.spatial_sse_full_loop_level;
 
+#if SHUT_SPATIAL_SSE
+    context_ptr->spatial_sse_full_loop_level = EB_FALSE;
+#endif
     if (context_ptr->chroma_level <= CHROMA_MODE_1)
         context_ptr->blk_skip_decision = EB_TRUE;
     else
