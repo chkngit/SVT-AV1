@@ -630,11 +630,16 @@ void svt_av1_apply_filtering_c(
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors(
         y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se, block_width, block_height);
+#if TF_3X3
+    if (context_ptr->tf_chroma) {
+#endif
     calculate_squared_errors(
         u_src, uv_src_stride, u_pre, uv_pre_stride, u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors(
         v_src, uv_src_stride, v_pre, uv_pre_stride, v_diff_se, uv_block_width, uv_block_height);
-
+#if TF_3X3 //
+    }
+#endif
     for (i = 0; i < block_height; i++) {
         for (j = 0; j < block_width; j++) {
             const int pixel_value = y_pre[i * y_pre_stride + j];
@@ -683,6 +688,9 @@ void svt_av1_apply_filtering_c(
             y_accum[k] += modifier * pixel_value;
 
             // Process chroma component
+#if TF_3X3
+            if (context_ptr->tf_chroma)
+#endif
             if (!(i & ss_y) && !(j & ss_x)) {
                 const int u_pixel_value = u_pre[uv_r * uv_pre_stride + uv_c];
                 const int v_pixel_value = v_pre[uv_r * uv_pre_stride + uv_c];
@@ -768,11 +776,16 @@ void svt_av1_apply_filtering_highbd_c(
     // Calculate squared differences for each pixel of the block (pred-orig)
     calculate_squared_errors_highbd(
         y_src, y_src_stride, y_pre, y_pre_stride, y_diff_se, block_width, block_height);
+#if TF_3X3
+    if (context_ptr->tf_chroma) {
+#endif
     calculate_squared_errors_highbd(
         u_src, uv_src_stride, u_pre, uv_pre_stride, u_diff_se, uv_block_width, uv_block_height);
     calculate_squared_errors_highbd(
         v_src, uv_src_stride, v_pre, uv_pre_stride, v_diff_se, uv_block_width, uv_block_height);
-
+#if TF_3X3
+    }
+#endif
     for (i = 0; i < block_height; i++) {
         for (j = 0; j < block_width; j++) {
             const int pixel_value = y_pre[i * y_pre_stride + j];
@@ -822,6 +835,9 @@ void svt_av1_apply_filtering_highbd_c(
             y_accum[k] += final_y_mod * pixel_value;
 
             // Process chroma component
+#if TF_3X3
+            if (context_ptr->tf_chroma)
+#endif
             if (!(i & ss_y) && !(j & ss_x)) {
                 const int u_pixel_value = u_pre[uv_r * uv_pre_stride + uv_c];
                 const int v_pixel_value = v_pre[uv_r * uv_pre_stride + uv_c];
@@ -2607,8 +2623,6 @@ static void populate_list_with_value(int *list, int nelements, const int value) 
     for (int i = 0; i < nelements; i++) list[i] = value;
 }
 // get block filter weights using a distance metric
-static const uint32_t subblocks_from32x32_to_16x16[N_16X16_BLOCKS] = {
-    0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
 static void get_blk_fw_using_dist(
     MeContext *context_ptr, int *blk_fw, EbBool is_highbd) {
 

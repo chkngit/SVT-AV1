@@ -152,8 +152,10 @@ static void apply_temporal_filter_planewise(
     const float n_decay           = (float)decay_control * (0.7f + logf((float)sigma + 1.0f));
     const float n_decay_qr_inv    = 1.0f / (2 * n_decay * n_decay);
     const float block_balacne_inv = 1.0f / (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+#if !TF_REFACTOR
     const float distance_threshold_inv =
         1.0f / (float)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+#endif
 #endif
 
     uint16_t *frame_sse =
