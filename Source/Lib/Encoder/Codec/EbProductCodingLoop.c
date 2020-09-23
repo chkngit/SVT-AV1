@@ -9176,10 +9176,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
                 // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
 #if PD0_MD_EXIT
-                uint64_t pred_current_depth_cost = current_depth_cost + (context_ptr->md_exit_th * (current_depth_cost / context_ptr->blk_geom->quadi) * (4 - context_ptr->blk_geom->quadi)) / 100;
+                if (parent_depth_cost != MAX_MODE_COST) {
 
-                if (parent_depth_cost != MAX_MODE_COST && 
-                    (parent_depth_cost <= pred_current_depth_cost)) {
+                uint64_t average_cost_per_child = current_depth_cost / context_ptr->blk_geom->quadi;
+                uint64_t remaining_child_cost = average_cost_per_child * (4 - context_ptr->blk_geom->quadi);
+                uint64_t weighted_cost = (context_ptr->md_exit_th * remaining_child_cost) / 100;
+                uint64_t pred_current_depth_cost = current_depth_cost + weighted_cost;
+
+                if(parent_depth_cost <= pred_current_depth_cost) {
 #else
                 if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
 #endif
@@ -9187,7 +9191,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     next_non_skip_blk_idx_mds = parent_depth_idx_mds +
                         ns_depth_offset[sqnc_ptr->seq_header.sb_size == BLOCK_128X128]
                                        [context_ptr->blk_geom->depth - 1];
-
+#if PD0_MD_EXIT
+                    }
+#endif
                 } else
                     skip_next_sq = 0;
             }
