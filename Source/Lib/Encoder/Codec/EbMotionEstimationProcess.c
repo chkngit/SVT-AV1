@@ -199,7 +199,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
     else {
         me_context_ptr->hme_level2_search_area_in_width_array[0] =
-            me_context_ptr->hme_level2_search_area_in_width_array[1] = 1;// 8;
+            me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;// 8;
 
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
             me_context_ptr->hme_level2_search_area_in_height_array[1] = 1;//3;
