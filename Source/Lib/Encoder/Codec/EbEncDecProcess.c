@@ -4177,8 +4177,15 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
         if (pcs_ptr->slice_type == I_SLICE)
             min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
-        else
-            min_sq_size = 16;
+        else {
+            uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
+            uint64_t cost_th = (64 * 64);// RDCOST(fast_lambda, 8, 64 * 64);
+
+
+            min_sq_size = (cost < cost_th) ?
+                16 :
+                (context_ptr->disallow_4x4) ? 8 : 4;
+        }
 
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
