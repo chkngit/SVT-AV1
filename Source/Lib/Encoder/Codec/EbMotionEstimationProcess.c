@@ -154,7 +154,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         else {
 #if ME_TUNING
             me_context_ptr->search_area_width = 16;
-            me_context_ptr->search_area_height =16;
+            me_context_ptr->search_area_height =11;
             me_context_ptr->max_me_search_width = 64;
            me_context_ptr->max_me_search_height = 32;
 #else
