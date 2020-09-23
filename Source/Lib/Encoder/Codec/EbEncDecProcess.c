@@ -2329,7 +2329,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if(pcs_ptr->slice_type == I_SLICE)
             context_ptr->md_exit_th = 0;
         else
-            context_ptr->md_exit_th = 30;
+            context_ptr->md_exit_th = 50;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_exit_th = 0;
     else
