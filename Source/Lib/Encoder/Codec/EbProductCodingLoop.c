@@ -9176,11 +9176,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
                 // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
 #if PD0_MD_EXIT
+                uint64_t pred_current_depth_cost = current_depth_cost /*+ (context_ptr->md_exit_th * (current_depth_cost / context_ptr->blk_geom->quadi) * (4 - context_ptr->blk_geom->quadi)) / 100*/;
+
                 if (parent_depth_cost != MAX_MODE_COST && 
-                    (parent_depth_cost <=
-                     current_depth_cost +
-                    (current_depth_cost * (4 - context_ptr->blk_geom->quadi) *
-                        context_ptr->md_exit_th / context_ptr->blk_geom->quadi / 100))) {
+                    (parent_depth_cost <= pred_current_depth_cost)) {
 #else
                 if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
 #endif
