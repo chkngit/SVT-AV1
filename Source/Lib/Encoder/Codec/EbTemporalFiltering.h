@@ -86,8 +86,8 @@
 #define WEIGHT_MULTIPLIER 16
 
 #if ENHANCED_TF_3X3
-#define THRES_LOW 10000 / 2
-#define THRES_HIGH 20000 / 2
+#define THRES_LOW 10000 * 2
+#define THRES_HIGH 20000 * 2
 #else
 #define THRES_LOW 10000
 #define THRES_HIGH 20000
