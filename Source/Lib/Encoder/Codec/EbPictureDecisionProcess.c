@@ -775,7 +775,11 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 1;
         tf_ctrls->hp = 0;
+#if ENHANCED_TF_3X3
+        tf_ctrls->chroma = 1;
+#else
         tf_ctrls->chroma = 0;
+#endif
 #else
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
