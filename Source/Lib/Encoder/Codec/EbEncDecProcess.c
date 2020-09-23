@@ -4163,11 +4163,11 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
     else {
         uint64_t cost = RDCOST(fast_lambda, 1, pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index]);
-        //uint64_t cost_th = (64 * 64);// th0 RDCOST(fast_lambda, 8, 64 * 64);
-        uint64_t cost_th = RDCOST(fast_lambda, 2, 2 * 64 * 64);
-        //uint64_t cost_th = (3 * 64 * 64);// th2 RDCOST(fast_lambda, 8, 64 * 64);
+        uint64_t cost_th_0 = 0;// RDCOST(fast_lambda, 2, 1 * 64 * 64);
+        uint64_t cost_th_1 = RDCOST(fast_lambda, 4, 2 * 64 * 64);
 
-        min_sq_size = (cost < cost_th) ?
+        min_sq_size = (cost < cost_th_0) ?
+            16 : (cost < cost_th_1) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
     }
