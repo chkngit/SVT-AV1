@@ -2915,8 +2915,8 @@ static EbErrorType produce_temporally_filtered_pic(
                 // ------------
                 // Step 2: temporal filtering using the motion compensated blocks
                 // ------------
-#if TF_3X3
-                const int use_planewise_strategy = 0;
+#if ENHANCED_TF_3X3
+                const int use_planewise_strategy = (picture_control_set_ptr_central->slice_type == I_SLICE) ? 1 : 0;
 #endif
                 // Hyper-parameter for filter weight adjustment.
                 int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution <=
@@ -2987,8 +2987,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                                              decay_control,
                                                              is_highbd);
 #if TF_3X3
-                            else {
-
+                            else
                                 apply_filtering_block(
                                     context_ptr, 
                                     block_row,
@@ -3008,7 +3007,6 @@ static EbErrorType produce_temporally_filtered_pic(
                                     picture_control_set_ptr_central->altref_strength,
                                     blk_fw,
                                     is_highbd);
-                            }
 #endif
                         }
                     }
