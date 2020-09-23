@@ -191,11 +191,19 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 
 
 #if HME_LEVEL_2
-    me_context_ptr->hme_level2_search_area_in_width_array[0] =
-        me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] =
+            me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+    }
+    else {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
 
-    me_context_ptr->hme_level2_search_area_in_height_array[0] =
-        me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+    }
 #else
     me_context_ptr->hme_level2_search_area_in_width_array[0] =
         me_context_ptr->hme_level2_search_area_in_width_array[1] =
@@ -322,7 +330,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
+#if HME_LEVEL_2
+    context_ptr->me_context_ptr->enable_hme_level2_flag = 0;
+#else
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
+#endif
     // HME Search Method
     if (enc_mode <= ENC_MRS)
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
