@@ -199,10 +199,10 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
     else {
         me_context_ptr->hme_level2_search_area_in_width_array[0] =
-            me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
+            me_context_ptr->hme_level2_search_area_in_width_array[1] = 1;// 8;
 
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
-            me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 1;//3;
     }
 #else
     me_context_ptr->hme_level2_search_area_in_width_array[0] =
@@ -330,11 +330,8 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
-#if HME_LEVEL_2
-    context_ptr->me_context_ptr->enable_hme_level2_flag = 0;
-#else
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
-#endif
+
     // HME Search Method
     if (enc_mode <= ENC_MRS)
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
