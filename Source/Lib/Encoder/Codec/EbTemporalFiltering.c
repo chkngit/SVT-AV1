@@ -3014,7 +3014,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
                                 int blk_fw[N_16X16_BLOCKS];
                                 populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
-#if 1
+#if 0
                                 // Get sub-block filter weights depending on the variance
                                 get_blk_fw_using_dist(
                                     context_ptr,
