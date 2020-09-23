@@ -759,6 +759,9 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
 #endif
+#if TF_32x32_16x16_ADAPT   
+        tf_ctrls->block_32x32_16x16_th = 0;
+#endif
         break;
     case 2:
         tf_ctrls->enabled = 1;
@@ -768,6 +771,9 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 1;
 #endif
+#if TF_32x32_16x16_ADAPT   
+        tf_ctrls->block_32x32_16x16_th = 0;
+#endif
         break;
     case 3:
 #if TF_CHROMA_BLIND
@@ -776,6 +782,9 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->noise_based_window_adjust = 1;
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 0;
+#if TF_32x32_16x16_ADAPT   
+        tf_ctrls->block_32x32_16x16_th = 20 * 32 * 32;
+#endif
 #else
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;

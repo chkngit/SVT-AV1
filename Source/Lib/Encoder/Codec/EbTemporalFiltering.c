@@ -1733,11 +1733,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     uint32_t bsize = 16;
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
 #if TF_32x32_16x16_ADAPT   
-#if ENHANCED_TF_3X3
-        context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] > 30 * 32 * 32) ? 1 : 0;
-#else
-        context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] > 20 * 32 * 32) ? 1 : 0;
-#endif
+        context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] < context_ptr->tf_block_32x32_16x16_th) ? 0 : 1;
 #if TF_32x32_ONLY
         context_ptr->tf_16x16_search_do[idx_32x32] = 0;
 #endif
@@ -3325,6 +3321,9 @@ EbErrorType svt_av1_init_temporal_filtering(
 #if TF_CHROMA_BLIND
     me_context_ptr->me_context_ptr->tf_hp = picture_control_set_ptr_central->tf_ctrls.hp;
     me_context_ptr->me_context_ptr->tf_chroma = picture_control_set_ptr_central->tf_ctrls.chroma;
+#if TF_32x32_16x16_ADAPT   
+    me_context_ptr->me_context_ptr->tf_block_32x32_16x16_th = picture_control_set_ptr_central->tf_ctrls.block_32x32_16x16_th;
+#endif
 #endif
     altref_strength_ptr = &(picture_control_set_ptr_central->altref_strength);
 

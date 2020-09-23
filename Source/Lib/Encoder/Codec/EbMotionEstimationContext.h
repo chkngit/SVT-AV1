@@ -408,6 +408,9 @@ typedef struct MeContext {
 #if TF_CHROMA_BLIND
     uint8_t tf_hp;
     uint8_t tf_chroma;
+#if TF_32x32_16x16_ADAPT   
+    uint64_t tf_block_32x32_16x16_th;
+#endif
 #else
     uint8_t high_precision;
 #endif
