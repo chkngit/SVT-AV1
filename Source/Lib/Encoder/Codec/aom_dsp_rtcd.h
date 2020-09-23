@@ -1047,7 +1047,7 @@ extern "C" {
 
     void svt_av1_apply_temporal_filter_sse4_1(
 #if TF_3X3
-       struct  MeContext *context_ptr,
+       struct MeContext *context_ptr,
 #endif
         const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
@@ -1056,7 +1056,7 @@ extern "C" {
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
     void svt_av1_highbd_apply_temporal_filter_sse4_1(
 #if TF_3X3
-        struct  MeContext *context_ptr,
+        struct MeContext *context_ptr,
 #endif
         const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
         const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,

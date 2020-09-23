@@ -971,7 +971,7 @@ static void av1_apply_temporal_filter_chroma(
 
 void svt_av1_apply_temporal_filter_sse4_1(
 #if TF_3X3
-    MeContext *context_ptr,
+    struct MeContext *context_ptr,
 #endif
     const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
