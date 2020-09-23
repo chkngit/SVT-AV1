@@ -960,7 +960,7 @@ static void apply_filtering_block(
             altref_strength,
             blk_fw_32x32,
 #if TF_3X3
-            context_ptr->tf_32x32_block_split_flag[idx_32x32],
+            context_ptr->tf_32x32_block_split_flag[idx_32x32] == 0,
 #else
             0, // use_32x32
 #endif
@@ -1002,7 +1002,7 @@ static void apply_filtering_block(
             altref_strength,
             blk_fw_32x32,
 #if TF_3X3
-            context_ptr->tf_32x32_block_split_flag[idx_32x32],
+            context_ptr->tf_32x32_block_split_flag[idx_32x32] == 0,
 #else
             0, // use_32x32
 #endif
