@@ -2676,21 +2676,23 @@ static void get_blk_fw_using_dist(
                     ? 2
                     : me_32x32_subblock_vf[idx_32x32] < (threshold_high << THR_SHIFT) ? 1 : 0;
 
-                for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
-                    if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32)
-                        blk_fw[blk_idx] = weight;
+                //for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+                for (int i = 0; i < 4; ++i) {
+                   // if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32)
+                        blk_fw[idx_32x32 * 4 + i] = weight;
                 }
             }
             else {
                 // split into 16x16 sub-blocks
-
-                for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
-                    if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
-                        blk_fw[blk_idx] =
-                            me_16x16_subblock_vf[blk_idx] < threshold_low
+                for (int i = 0; i < 4; ++i) {
+                    //subblock_errors[i] = (int)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i];
+               // for (blk_idx = 0; blk_idx < N_16X16_BLOCKS; blk_idx++) {
+                    //if (subblocks_from32x32_to_16x16[blk_idx] == idx_32x32) {
+                        blk_fw[idx_32x32 * 4 + i] =
+                            me_16x16_subblock_vf[idx_32x32 * 4 + i] < threshold_low
                             ? 2
-                            : me_16x16_subblock_vf[blk_idx] < threshold_high ? 1 : 0;
-                    }
+                            : me_16x16_subblock_vf[idx_32x32 * 4 + i] < threshold_high ? 1 : 0;
+                    //}
                 }
             }
         }
@@ -3014,7 +3016,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
                                 int blk_fw[N_16X16_BLOCKS];
                                 populate_list_with_value(blk_fw, 16, INIT_WEIGHT);
-#if 0
+#if 1
                                 // Get sub-block filter weights depending on the variance
                                 get_blk_fw_using_dist(
                                     context_ptr,
