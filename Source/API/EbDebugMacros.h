@@ -54,6 +54,9 @@ extern "C" {
 #define FASTER_PD0 0
 #define ENHANCED_FASTER_PD0 0
 /************************************/
+#define PD_MD_EXIT 1
+
+/************************************/
 #define TF_CHROMA_BLIND 1
 #define TF_32x32_ONLY 0 ///***
 #define TF_32x32_16x16_ADAPT 1 ///***
@@ -69,7 +72,7 @@ extern "C" {
 #define HME_LEVEL_1 1
 #define HME_LEVEL_2 1
 /************************************/
-#define SHUT_SPATIAL_SSE 1
+#define SHUT_SPATIAL_SSE 0
 /************************************/
 #define OPT_4           0
 /************************************/

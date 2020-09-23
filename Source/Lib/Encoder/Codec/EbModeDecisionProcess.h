@@ -591,6 +591,9 @@ typedef struct ModeDecisionContext {
 #if OPT_IFS
     uint8_t ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
 #endif
+#if PD_MD_EXIT
+    uint64_t     md_exit_th;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
