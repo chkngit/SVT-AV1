@@ -55,7 +55,7 @@ extern "C" {
 #define ENHANCED_FASTER_PD0 0
 /************************************/
 #define PD0_CUT_4x4 0
-#define PD0_CUT_DEPTH 1
+#define PD0_CUT_DEPTH 0
 #define PD0_MD_EXIT 0
 
 /************************************/
