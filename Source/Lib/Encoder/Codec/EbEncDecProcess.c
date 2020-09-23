@@ -2387,7 +2387,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    Allow cfl
     // 1                    Disable cfl
     context_ptr->md_disable_cfl = EB_FALSE;
-#if PD0_CUT_DEPTH
+#if PD0_CUT_4x4
 #if 0
     if (pd_pass == PD_PASS_0)       
         context_ptr->disallow_4x4 = EB_TRUE;
@@ -3265,16 +3265,24 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
         // SQ/NSQ block(s) filter based on the SQ size
+#if PD0_CUT_4x4
+        uint8_t is_block_tagged =
+            (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
+            (blk_geom->sq_size == 4 && context_ptr->disallow_4x4)
+            ? 0
+            : 1;
+#else
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE)
             ? 0
             : 1;
-
+#endif
         // split_flag is f(min_sq_size)
         int32_t min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+
             uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
                 (blk_geom->sq_size >= 64 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_64x64) ||
                 (blk_geom->sq_size >= 32 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_32x32) ||
@@ -4049,7 +4057,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             e_depth = 1;
                             }
                     }
-
+#if !PD0_CUT_4x4
                     // Check that the start and end depth are in allowed range, given other features
                     // which restrict allowable depths
                     if (context_ptr->disallow_4x4) {
@@ -4058,6 +4066,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 : (blk_geom->sq_size == 32) ? MIN(2, e_depth)
                                 : e_depth;
                     }
+#endif
                     // Add current pred depth block(s)
                     for (unsigned block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block = 1;
@@ -4159,16 +4168,34 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     FORCED_BLK_SIZE;
             }
         }
+
+
+        // split_flag is f(min_sq_size)
+#if PD0_CUT_DEPTH
+
+        int32_t min_sq_size;
+
+        if (pcs_ptr->slice_type == I_SLICE)
+            min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
+        else
+            min_sq_size = 16;
+
         // SQ/NSQ block(s) filter based on the SQ size
+        uint8_t is_block_tagged =
+            (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
+            (blk_geom->sq_size < min_sq_size)
+            ? 0
+            : 1;
+#else
+       // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
             (blk_geom->sq_size == 4 && context_ptr->disallow_4x4)
             ? 0
             : 1;
 
-        // split_flag is f(min_sq_size)
         int32_t min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
-
+#endif
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
             uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
