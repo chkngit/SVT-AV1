@@ -4151,6 +4151,24 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
     int32_t force_blk_size = FORCED_BLK_SIZE;
+
+
+#if PD0_CUT_DEPTH
+    int32_t min_sq_size;
+    if (pcs_ptr->slice_type == I_SLICE)
+        min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
+    else {
+        uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
+        //uint64_t cost_th = (64 * 64);// th0 RDCOST(fast_lambda, 8, 64 * 64);
+        uint64_t cost_th = (2 * 64 * 64);// th1 RDCOST(fast_lambda, 8, 64 * 64);
+        //uint64_t cost_th = (3 * 64 * 64);// th2 RDCOST(fast_lambda, 8, 64 * 64);
+
+        min_sq_size = (cost < cost_th) ?
+            16 :
+            (context_ptr->disallow_4x4) ? 8 : 4;
+    }
+#endif
+
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
         if (use_output_stat(scs_ptr) && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
@@ -4169,25 +4187,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
             }
         }
 
-
-        // split_flag is f(min_sq_size)
 #if PD0_CUT_DEPTH
-
-        int32_t min_sq_size;
-
-        if (pcs_ptr->slice_type == I_SLICE)
-            min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
-        else {
-            uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
-            //uint64_t cost_th = (64 * 64);// th0 RDCOST(fast_lambda, 8, 64 * 64);
-            //uint64_t cost_th = (2 * 64 * 64);// th1 RDCOST(fast_lambda, 8, 64 * 64);
-            uint64_t cost_th = (3 * 64 * 64);// th2 RDCOST(fast_lambda, 8, 64 * 64);
-
-            min_sq_size = (cost < cost_th) ?
-                16 :
-                (context_ptr->disallow_4x4) ? 8 : 4;
-        }
-
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
@@ -4195,6 +4195,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
             ? 0
             : 1;
 #else
+       // split_flag is f(min_sq_size)
        // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
