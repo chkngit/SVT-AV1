@@ -60,7 +60,7 @@ extern "C" {
 #define PD0_MD_EXIT 0
 /************************************/
 #define SHUT_WARP 0
-#define ME_MAX_32_32 1
+#define ME_MAX_32_32 0
 /************************************/
 #define TF_CHROMA_BLIND 1
 #define TF_32x32_ONLY 0 ///***
