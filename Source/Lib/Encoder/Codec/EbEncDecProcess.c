@@ -4175,9 +4175,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost_th_1 = (5 * 64 * 64) >> 1;// th1 RDCOST(fast_lambda, 8, 64 * 64);
         //uint64_t cost_th = (3 * 64 * 64);// th2 RDCOST(fast_lambda, 8, 64 * 64);
 
-        min_sq_size = (cost < cost_th_0) ?
-            32 :
-            (cost < cost_th_1) ?
+        min_sq_size = (cost < cost_th_1) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
     }
