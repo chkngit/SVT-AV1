@@ -4177,7 +4177,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 #if CUT_NRF
         uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
             (5 * 64 * 64) / 4 :
-            (3 * 64 * 64)     ;
+            (7 * 64 * 64) / 4 ;
 #endif
         min_sq_size = (cost < cost_th) ?
             16 :
