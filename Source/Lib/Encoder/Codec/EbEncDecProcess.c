@@ -3882,6 +3882,11 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
 #endif
     }
+#if PD0_NO_REFINMENT_IF_NOT_DONE 
+    else {
+        return EB_FALSE;
+    }
+#endif
 #if COST_BASED_PRED_ONLY
     if (parent_to_current_deviation <= (mdctxt->depth_refinement_ctrls.parent_to_current_th + th_offset))
 #else
@@ -3931,7 +3936,11 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)(((int64_t)MAX(child_cost, 1) - (int64_t)MAX(mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost, 1)) * 100) /
             (int64_t)(MAX(mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost, 1));
     }
-
+#if PD0_NO_REFINMENT_IF_NOT_DONE 
+    else {
+        return EB_FALSE;
+    }
+#endif
 #if COST_BASED_PRED_ONLY
     if (child_to_current_deviation <= (mdctxt->depth_refinement_ctrls.sub_to_current_th + th_offset))
 #else
