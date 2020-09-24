@@ -48,7 +48,7 @@ extern "C" {
 #define LOSSLESS_OPT 1
 #define PD0_SHUT_SKIP_DC_SIGN_UPDATE 1 //---->
 /************************************/
-#define PD0_REDUCE_ME_INTER_CAND 1
+#define PD0_REDUCE_ME_INTER_CAND 0
 /************************************/
 #define PRED_ONLY 0
 #define FASTER_PD0 0
@@ -93,7 +93,6 @@ extern "C" {
 #define TEST_BLOCK_BASED 0
 /************************************/
 #define SHUT_RDOQ_CHROMA 0 
-#define SHUT_RDOQ 0 
 #define SHUT_FP_QUANT 0 
 #define SHUT_FP_QUANT_TX_SIZE 0
 #define SHUT_FP_QUANT_TX_TYPE 0
@@ -108,7 +107,10 @@ extern "C" {
 #define FAST_RDOQ_N2 0
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
-#define COEFF_OPT 0 //--->
+#define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
+#define SHUT_RDOQ 1 //--->
+
+#define COEFF_OPT 0
 
 #if COEFF_OPT
 
@@ -116,7 +118,7 @@ extern "C" {
 #define RES_VAR_BASED_FORCE_SKIP 0
 
 #endif
-#define SKIP_TRELLIS_BASED_ON_SATD 1
+
 #define MAX_NZ_NUM    0
 #define RATE_BLIND 0
 #define SHUT_RDOQ_SKIP 0
@@ -126,6 +128,7 @@ extern "C" {
 #define RDOQ_TEST0 0 // RDOQ do not perform rd_low for only abs_qc==1
 #define RDOQ_TEST1 0 // cnt fail
 #define RDOQ_TEST2 0 // ???
+
 #define FAST_RDOQ_MODE 0
 
 #define FAST_RDOQ_SATD 0
