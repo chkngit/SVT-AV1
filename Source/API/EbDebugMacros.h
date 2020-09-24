@@ -56,6 +56,9 @@ extern "C" {
 /************************************/
 #define PD0_CUT_4x4 0
 #define PD0_CUT_DEPTH 1
+#if PD0_CUT_DEPTH
+#define CUT_NRF 1
+#endif
 #define PD0_MD_EXIT 0
 /************************************/
 #define SHUT_WARP 0
@@ -109,7 +112,7 @@ extern "C" {
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
 
-#define RDOQ_ONLY_NOT_N2 1
+#define RDOQ_ONLY_NOT_N2 0
 #define TUNE_SATD 0
 
 #define FAST_RDOQ_SATD 0  //---> 
