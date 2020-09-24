@@ -56,9 +56,6 @@ extern "C" {
 /************************************/
 #define PD0_CUT_4x4 0
 #define PD0_CUT_DEPTH 1
-#if PD0_CUT_DEPTH
-#define CUT_NRF 1
-#endif
 #define PD0_MD_EXIT 0
 /************************************/
 #define SHUT_WARP 0

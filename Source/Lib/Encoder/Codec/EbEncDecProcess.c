@@ -4169,17 +4169,29 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     if (pcs_ptr->slice_type == I_SLICE)
         min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
     else {
+        // SB Stats
+        uint32_t sb_width =
+            MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_width - context_ptr->sb_ptr->origin_x);
+        uint32_t sb_height =
+            MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_height - context_ptr->sb_ptr->origin_y);
+        uint64_t disallow_block_below_8x8 = 1;
+        // If SB non-multiple of 16, then disallow_block_below_8x8 could not be used
+        if (sb_width % 16 != 0 || sb_height % 16 != 0) {
+            disallow_block_below_8x8 = 0;
+        }
+        // If SB non-multiple of 32, then disallow_block_below_16x16 could not be used
+        uint64_t disallow_block_below_16x16 = 1;
+        if (sb_width % 32 != 0 || sb_height % 32 != 0) {
+            disallow_block_below_16x16 = 0;
+        }
+
         uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
         // 64 * 64: 0.06% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
-        //uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-#if CUT_NRF
-        uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
-            (5 * 64 * 64) / 4 :
-            (7 * 64 * 64) / 4 ;
-#endif
-        min_sq_size = (cost < cost_th) ?
+        uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+
+        min_sq_size = (cost < cost_th && disallow_block_below_8x8) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
     }
