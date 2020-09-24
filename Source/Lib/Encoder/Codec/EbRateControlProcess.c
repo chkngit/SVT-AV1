@@ -5794,8 +5794,8 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
-#if 0 //ENABLE_TPL_TRAILING
-            double factor = 1;// (scs_ptr->scd_delay == 0) ? 2 : (scs_ptr->scd_delay < 8) ? 1.5 : 1;
+#if ENABLE_TPL_TRAILING
+            double factor = 1.5;
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
