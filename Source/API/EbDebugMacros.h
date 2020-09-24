@@ -48,7 +48,7 @@ extern "C" {
 #define LOSSLESS_OPT 1
 #define PD0_SHUT_SKIP_DC_SIGN_UPDATE 1 //---->
 /************************************/
-#define PD0_REDUCE_ME_INTER_CAND 0
+#define PD0_REDUCE_ME_INTER_CAND 1
 /************************************/
 #define PRED_ONLY 0
 #define FASTER_PD0 0
