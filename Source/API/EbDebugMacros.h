@@ -108,7 +108,7 @@ extern "C" {
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
-#define SHUT_RDOQ 0 //--->
+#define SHUT_RDOQ 1 //--->
 
 #define COEFF_OPT 0
 
