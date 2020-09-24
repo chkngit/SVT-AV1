@@ -108,7 +108,7 @@ extern "C" {
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
-#define RDOQ_DO_NOT_PROCESS_ZZ_COEF 1 // ---->
+#define RDOQ_DO_NOT_PROCESS_ZZ_COEF 0 // ---->
 #define SHUT_RDOQ 0 //--->
 #define FAST_RDOQ_MODE 0//--->
 
@@ -122,8 +122,8 @@ extern "C" {
 #endif
 
 #define MAX_NZ_NUM    0
-#define RATE_BLIND 0
-#define SHUT_RDOQ_SKIP 0
+#define RATE_BLIND 1
+#define SHUT_RDOQ_SKIP 1
 
 #define RDOQ_REFACTOR_0 0
 #define RDOQ_REFACTOR_1 0
