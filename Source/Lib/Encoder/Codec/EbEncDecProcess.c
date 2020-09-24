@@ -4170,12 +4170,11 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
     else {
         uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
-        //uint64_t cost_th = (64 * 64);// 0.06% BDRATE loss, 0.8% speed gain
-        uint64_t cost_th_0 = (3 * 64 * 64) / 2;// th1 RDCOST(fast_lambda, 8, 64 * 64);
-        uint64_t cost_th_1 = (5 * 64 * 64) >> 1;// th1 RDCOST(fast_lambda, 8, 64 * 64); to be used when refinment is shut whne not peformed
-        //uint64_t cost_th = (3 * 64 * 64);// th2 RDCOST(fast_lambda, 8, 64 * 64);
+        // 64 * 64: 0.06% BDRATE loss, 0.8% speed gain
+        // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
+        uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 
-        min_sq_size = (cost < cost_th_0) ?
+        min_sq_size = (cost < cost_th) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
     }
