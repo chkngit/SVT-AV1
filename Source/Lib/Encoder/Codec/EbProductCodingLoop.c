@@ -9184,7 +9184,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 uint64_t pred_current_depth_cost = current_depth_cost + weighted_cost;
 
 
-                if(parent_depth_cost <= current_depth_cost) {
+                if(parent_depth_cost <= pred_current_depth_cost) {
 #else
                 if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
 #endif
