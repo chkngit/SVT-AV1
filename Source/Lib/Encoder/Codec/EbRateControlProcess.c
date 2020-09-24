@@ -5552,9 +5552,11 @@ static int find_qindex_by_rate(int desired_bits_per_mb,
 int svt_av1_compute_qdelta_by_rate(const RATE_CONTROL *rc, FrameType frame_type,
                                int qindex, double rate_target_ratio,
 #if TUNE_SC_QPS_IMP
-                               const int is_screen_content_type,
+                                const int bit_depth,const int is_screen_content_type) {
+#else
+
+                                const int bit_depth) {
 #endif
-                               const int bit_depth) {
   // Look up the current projected bits per block for the base index
   const int base_bits_per_mb =
 #if TUNE_SC_QPS_IMP
@@ -5772,10 +5774,6 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
-#if TUNE_SC_QPS_IMP
-        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-            active_best_quality /= 2;
-#endif
         // Allow somewhat lower kf minq with small image formats.
         if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE)
             q_adj_factor -= 0.15;
@@ -6325,7 +6323,7 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
             active_best_quality /= 3;
         }
 #if TUNE_SC_QPS_IMP
-        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected && encode_context_ptr->rc_cfg.mode == AOM_VBR)
             active_best_quality /= 2;
 #endif
         // Allow somewhat lower kf minq with small image formats.
