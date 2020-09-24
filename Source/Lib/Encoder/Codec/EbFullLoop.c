@@ -1827,7 +1827,7 @@ int32_t av1_quantize_inv_quantize(
              perform_rdoq = 0;
 
 #if FAST_RDOQ_SATD
-         uint64_t fast_rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 64 : 32;
+         uint64_t fast_rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 16 : 8;
          if (!fast_mode) {
              if ((uint64_t)satd >
                  (uint64_t)fast_rdoq_ctrl_satd_th * qstep * sqrt_tx_pixels_2d[txsize]) {
