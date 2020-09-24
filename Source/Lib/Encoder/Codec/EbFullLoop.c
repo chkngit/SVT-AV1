@@ -1362,7 +1362,10 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     const int              width           = get_txb_wide(tx_size);
     const int              height          = get_txb_high(tx_size);
 
-
+#if RDOQ_ONLY_NOT_N2
+    if (*eob <= n_coeffs / 4)
+        return;
+#endif
 #if FAST_RDOQ_EOB
     fast_mode = (*eob > ((width * height * 3) /4));
 #endif

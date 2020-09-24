@@ -108,7 +108,9 @@ extern "C" {
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
-#define TUNE_SATD 1
+
+#define RDOQ_ONLY_NOT_N2 1
+#define TUNE_SATD 0
 
 #define FAST_RDOQ_SATD 0  //---> 
 #define RDOQ_DO_NOT_PROCESS_ZZ_COEF 0 // ---->
