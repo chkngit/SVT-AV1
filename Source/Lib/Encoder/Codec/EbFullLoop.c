@@ -1820,6 +1820,9 @@ int32_t av1_quantize_inv_quantize(
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
          uint64_t rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 128 : 64;
+#if TUNE_SATD
+         rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 64 : 32;
+#endif
          const int skip_block_trellis =
              ((uint64_t)satd >
              (uint64_t)rdoq_ctrl_satd_th * qstep * sqrt_tx_pixels_2d[txsize]);
