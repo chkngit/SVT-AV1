@@ -1799,6 +1799,7 @@ int32_t av1_quantize_inv_quantize(
     }
 #if FAST_RDOQ_MODE
     int fast_mode = (is_inter && component_type);
+    fast_mode = 1;
 #endif
 #if SKIP_TRELLIS_BASED_ON_SATD
      const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
