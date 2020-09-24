@@ -4173,10 +4173,11 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         // 64 * 64: 0.06% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
-        uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+        //uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #if CUT_NRF
-        if(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            cost_th = (uint64_t)~0;
+        uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
+            (5 * 64 * 64) / 4 :
+            (2 * 64 * 64)     ;
 #endif
         min_sq_size = (cost < cost_th) ?
             16 :
