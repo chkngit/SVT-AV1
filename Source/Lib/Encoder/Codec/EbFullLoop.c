@@ -938,7 +938,10 @@ static AOM_FORCE_INLINE void update_coeff_eob(
     assert(si != *eob - 1);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
-
+#if RDOQ_DO_NOT_PROCESS_ZZ_COEF
+    if (qc == 0)
+        return;
+#endif
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
 
     if (qc == 0)
@@ -1085,7 +1088,10 @@ static INLINE void update_coeff_general(int *accu_rate, int64_t *accu_dist, int 
     const int     ci      = scan[si];
     const TranLow qc      = qcoeff[ci];
     const int     is_last = si == (eob - 1);
-
+#if RDOQ_DO_NOT_PROCESS_ZZ_COEF
+    if (qc == 0)
+        return;
+#endif
     const int     coeff_ctx =
         get_lower_levels_ctx_general(is_last, si, bwl, height, levels, ci, tx_size, tx_class);
 
@@ -1182,7 +1188,10 @@ static AOM_FORCE_INLINE void update_coeff_simple(
     assert(si > 0);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
-
+#if RDOQ_DO_NOT_PROCESS_ZZ_COEF
+    if (qc == 0)
+        return;
+#endif
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
 
     if (qc == 0)
