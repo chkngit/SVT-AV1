@@ -1325,7 +1325,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #if FAST_RDOQ_MODE
     int fast_mode,
 #endif
-#if FAST_RDOQ_NO_I_SLICE
+#if PER_REFERENCE_RDOQ
     PictureControlSet *pcs_ptr,
 #endif
                        int16_t txb_skip_context,
@@ -1344,6 +1344,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     // Perform a fast RDOQ stage for inter and chroma blocks
 #if !FAST_RDOQ_MODE
     int                    fast_mode       = (is_inter && plane);
+#endif
+#if PER_REFERENCE_RDOQ
+    fast_mode = (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag);
 #endif
 #if FAST_RDOQ_NO_I_SLICE
     fast_mode = (pcs_ptr->slice_type != I_SLICE);
@@ -1816,19 +1819,18 @@ int32_t av1_quantize_inv_quantize(
      const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
      const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
 
-     if (perform_rdoq) {
+     if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
          // Hsan
          int satd = svt_aom_satd(coeff, n_coeffs);
          const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
-         uint64_t rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 128 : 64;
 #if TUNE_SATD
          rdoq_ctrl_satd_th = (pcs_ptr->slice_type == I_SLICE) ? 64 : 32;
 #endif
          const int skip_block_trellis =
              ((uint64_t)satd >
-             (uint64_t)rdoq_ctrl_satd_th * qstep * sqrt_tx_pixels_2d[txsize]);
+             (uint64_t)md_context->rdoq_ctrls.satd_factor * qstep * sqrt_tx_pixels_2d[txsize]);
          if (skip_block_trellis)
              perform_rdoq = 0;
 
@@ -1886,34 +1888,8 @@ int32_t av1_quantize_inv_quantize(
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
-#if SHUT_FP_QUANT_TX_SIZE
-    if (perform_rdoq && width >= 16 && height >= 16) {
-#elif SHUT_FP_QUANT_TX_TYPE
-
-        //DCT_DCT, // DCT  in both horizontal and vertical
-        //ADST_DCT, // ADST in vertical, DCT in horizontal
-        //DCT_ADST, // DCT  in vertical, ADST in horizontal
-        //ADST_ADST, // ADST in both directions
-        //FLIPADST_DCT,
-        //DCT_FLIPADST,
-        //FLIPADST_FLIPADST,
-        //ADST_FLIPADST,
-        //FLIPADST_ADST,
-        //IDTX,
-        //V_DCT,
-        //H_DCT,
-        //V_ADST,
-        //H_ADST,
-        //V_FLIPADST,
-        //H_FLIPADST,
-
-    if (perform_rdoq && tx_type != ADST_DCT && tx_type != DCT_ADST) {
-#elif SHUT_FP_QUANT_CHROMA    
-    if (perform_rdoq && component_type == COMPONENT_LUMA) {
-#elif SHUT_FP_QUANT_INTER
-    if (perform_rdoq && !is_inter) {
-#elif SHUT_FP_QUANT
-    if(0) {
+#if SHUT_FP_QUANT_CHROMA    
+    if (perform_rdoq && ((!component_type && md_context->rdoq_ctrls.fp_quant_luma) || (component_type && md_context->rdoq_ctrls.fp_quant_chroma))) {
 #else
     if (perform_rdoq) {
 #endif
@@ -1967,7 +1943,7 @@ int32_t av1_quantize_inv_quantize(
 #if FAST_RDOQ_MODE
             fast_mode,
 #endif
-#if FAST_RDOQ_NO_I_SLICE
+#if PER_REFERENCE_RDOQ
                           pcs_ptr,
 #endif
                           txb_skip_context,

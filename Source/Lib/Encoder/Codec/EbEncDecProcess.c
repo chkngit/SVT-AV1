@@ -1735,14 +1735,18 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
         break;
     case 5:
         depth_refinement_ctrls->enabled = 1;
-#if PARENT_COST
-        depth_refinement_ctrls->parent_to_current_th = 10;
-#else
         depth_refinement_ctrls->parent_to_current_th = -10;
-#endif
         depth_refinement_ctrls->sub_to_current_th = 5;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         break;
+#if TUNE_REF
+    case 6:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -20;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -1853,7 +1857,18 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
         md_pme_ctrls->post_fp_pme_to_me_mv_th = 32;
         break;
-
+#if TUNE_PME
+    case 4:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 0;
+        md_pme_ctrls->full_pel_search_width = 5;
+        md_pme_ctrls->full_pel_search_height = 3;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = 100;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = 32;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = 64;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -2068,6 +2083,52 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     default: assert(0); break;
     }
 }
+
+#if RDOQ_CTRLS
+/*
+ * Control RDOQ
+ */
+void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
+    RdoqCtrls *rdoq_ctrls = &mdctxt->rdoq_ctrls;
+
+    switch (rdoq_level) {
+    case 0:
+        rdoq_ctrls->enabled = 0;
+        break;
+    case 1:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->fast_mode_luma_inter = 0;
+        rdoq_ctrls->fast_mode_luma_intra = 0;
+        rdoq_ctrls->fast_mode_chroma_inter = 1;
+        rdoq_ctrls->fast_mode_chroma_intra = 0;
+        rdoq_ctrls->fp_quant_luma = 1;
+        rdoq_ctrls->fp_quant_chroma = 1;
+        rdoq_ctrls->satd_factor = (uint8_t) ~0;
+        break;
+    case 2:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->fast_mode_luma_inter = 0;
+        rdoq_ctrls->fast_mode_luma_intra = 0;
+        rdoq_ctrls->fast_mode_chroma_inter = 1;
+        rdoq_ctrls->fast_mode_chroma_intra = 0;
+        rdoq_ctrls->fp_quant_luma = 1;
+        rdoq_ctrls->fp_quant_chroma = 0;
+        rdoq_ctrls->satd_factor = 128;
+        break;
+    case 3:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->fast_mode_luma_inter = 0;
+        rdoq_ctrls->fast_mode_luma_intra = 0;
+        rdoq_ctrls->fast_mode_chroma_inter = 1;
+        rdoq_ctrls->fast_mode_chroma_intra = 0;
+        rdoq_ctrls->fp_quant_luma = 1;
+        rdoq_ctrls->fp_quant_chroma = 0;
+        rdoq_ctrls->satd_factor = 64;
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
 /******************************************************
 * Derive SB classifier thresholds
 ******************************************************/
@@ -2269,14 +2330,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_txt_level = 0;
     else
         if (enc_mode <= ENC_M4)
-            context_ptr->md_txt_level = 1; // All: all tx_type are used
+            context_ptr->md_txt_level = 0; // All: all tx_type are used
         else if (enc_mode <= ENC_M5)
-            context_ptr->md_txt_level = 2;
+            context_ptr->md_txt_level = 0;
         else if (enc_mode <= ENC_M6)
-            context_ptr->md_txt_level = 3;
-        else if (enc_mode <= ENC_M7)
-            context_ptr->md_txt_level = 4;
-        else if (enc_mode <= ENC_M8)
+            context_ptr->md_txt_level = 0;
+
+        else
             context_ptr->md_txt_level = 5;
     //}
 #else
@@ -2589,6 +2649,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->blk_skip_decision = EB_FALSE;
 
+#if RDOQ_CTRLS
+    // Set RDOQ level
+    if (pd_pass == PD_PASS_0)
+        context_ptr->rdoq_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->rdoq_level = 0;
+    else
+        if (enc_mode <= ENC_M7)
+            context_ptr->rdoq_level = 1;
+        else
+            context_ptr->rdoq_level = (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) ? 2 : 3;
+
+    set_rdoq_controls(context_ptr, context_ptr->rdoq_level);
+#else
     if (pd_pass == PD_PASS_0)
         context_ptr->rdoq_level = EB_FALSE;
     else if (pd_pass == PD_PASS_1)
@@ -2602,7 +2676,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->rdoq_level =
             sequence_control_set_ptr->static_config.rdoq_level;
-
+#endif
     // Derive redundant block
     if (pd_pass == PD_PASS_0)
         context_ptr->redundant_blk = EB_FALSE;
@@ -2955,12 +3029,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
     }
     else {
+#if TUNE_REF
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 4;
+        }
+        else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+            context_ptr->block_based_depth_refinement_level = 5;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 6;
+        }
+#else
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 4;
         }
         else {
             context_ptr->block_based_depth_refinement_level = 5;
         }
+#endif
     }
 #else
     if (enc_mode <= ENC_M6)
@@ -3016,8 +3102,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 1;
         else if (enc_mode <= ENC_M6)
             context_ptr->md_pme_level = 2;
+#if TUNE_PME
+        else if (enc_mode <= ENC_M7)
+            context_ptr->md_pme_level = 3;
+        else
+            context_ptr->md_pme_level = 4;
+#else
         else
             context_ptr->md_pme_level = 3;
+#endif
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 
     if (pd_pass == PD_PASS_0)
@@ -3027,9 +3120,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (enc_mode <= ENC_M4)
             context_ptr->md_subpel_me_level = 1;
+#if TUNE_SUBPEL
+        else if (enc_mode <= ENC_M7)
+            context_ptr->md_subpel_me_level = 2;
+        else
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                context_ptr->md_subpel_me_level = 2;
+            else
+                context_ptr->md_subpel_me_level = 0;
+#else
         else
             context_ptr->md_subpel_me_level = 2;
-
+#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     if (pd_pass == PD_PASS_0)
@@ -3039,9 +3141,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (enc_mode <= ENC_M4)
             context_ptr->md_subpel_pme_level = 1;
+#if TUNE_SUBPEL
+        else if (enc_mode <= ENC_M7)
+            context_ptr->md_subpel_me_level = 2;
+        else
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                context_ptr->md_subpel_me_level = 2;
+            else
+                context_ptr->md_subpel_me_level = 0;
+#else
         else
             context_ptr->md_subpel_pme_level = 2;
-
+#endif
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     // Set max_ref_count @ MD
     if (pd_pass == PD_PASS_0)
@@ -4098,8 +4209,16 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
                         uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); // 
                         uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); // 
+#if RDOQ_PER_LAYER
+                        uint64_t cost_th_6 = RDCOST(full_lambda, 16, 1200 * blk_geom->bwidth * blk_geom->bheight); // 
 
+                        if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_6) {
+                            s_depth = 0;
+                            e_depth = 0;
+                        } else  if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
+#else
                         if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
+#endif
                             s_depth = 0;
                             e_depth = 0;
                         }
@@ -4166,22 +4285,56 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
     int32_t min_sq_size;
 
-    if (pcs_ptr->slice_type == I_SLICE)
+    if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
         min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
     else {
+        // SB Stats
+        uint32_t sb_width =
+            MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_width - context_ptr->sb_ptr->origin_x);
+        uint32_t sb_height =
+            MIN(scs_ptr->sb_size_pix, pcs_ptr->parent_pcs_ptr->aligned_height - context_ptr->sb_ptr->origin_y);
+        uint64_t disallow_block_below_8x8 = 1;
+        // If SB non-multiple of 16, then disallow_block_below_8x8 could not be used
+        if (sb_width % 16 != 0 || sb_height % 16 != 0) {
+            disallow_block_below_8x8 = 0;
+        }
+#if 0
+        // If SB non-multiple of 32, then disallow_block_below_16x16 could not be used
+        uint64_t disallow_block_below_16x16 = 1;
+        if (sb_width % 32 != 0 || sb_height % 32 != 0) {
+            disallow_block_below_16x16 = 0;
+        }
+#endif
+#if PD0_CUT_BIS
+        uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
+            context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+            context_ptr->fast_lambda_md[EB_8_BIT_MD];
+
+        uint64_t cost = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index]);
+#else
         uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
+#endif
         // 64 * 64: 0.06% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
-        //uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-#if CUT_NRF
-        uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
-            (5 * 64 * 64) / 4 :
-            (7 * 64 * 64) / 4 ;
+#if PD0_CUT_BIS
+        //uint64_t cost_th_1 = RDCOST(fast_lambda, 16 * 1024, (5 * 64 * 64) / 4);
+        uint64_t cost_th_1 = RDCOST(fast_lambda, 32 * 1024, (4 * 64 * 64) / 4);
+#else
+        uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #endif
-        min_sq_size = (cost < cost_th) ?
+#if 1
+        min_sq_size = (cost < cost_th_1 && disallow_block_below_8x8) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
+#else
+        uint64_t cost_th_0 = (4 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+        min_sq_size = (cost < cost_th_0 && disallow_block_below_16x16) ?
+            32 :
+            (cost < cost_th_1 && disallow_block_below_8x8) ?
+                16 :
+                (context_ptr->disallow_4x4) ? 8 : 4;
+#endif
     }
 #endif
 
@@ -4523,6 +4676,9 @@ void *mode_decision_kernel(void *input_ptr) {
                             pcs_ptr->slice_type == I_SLICE,
                             &pcs_ptr->ec_ctx_array[sb_index]);
                         // Initial Rate Estimation of the Motion vectors
+#if PD0_D_OPT
+                        if(pcs_ptr->parent_pcs_ptr->sc_content_detected || pcs_ptr->slice_type == B_SLICE)
+#endif
                         av1_estimate_mv_rate(pcs_ptr,
                             &context_ptr->md_context->rate_est_table,
                             &pcs_ptr->ec_ctx_array[sb_index]);

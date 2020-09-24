@@ -4355,7 +4355,11 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
     const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult, uint8_t hbd_mode_decision) {
     mv_cost_params->ref_mv = ref_mv;
     mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
+#if SHUT_MV_COST
+    mv_cost_params->mv_cost_type = MV_COST_NONE;
+#else
     mv_cost_params->mv_cost_type = MV_COST_ENTROPY;
+#endif
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
     mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx] : sad_per_bit16lut_8[base_q_idx];
     mv_cost_params->mvjcost = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;

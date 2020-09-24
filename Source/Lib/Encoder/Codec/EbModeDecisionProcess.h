@@ -233,6 +233,21 @@ typedef struct CoeffBSwMdCtrls {
     uint8_t mode_offset;            // Offset to the mode to switch to
     uint8_t skip_block;             // Allow skipping NSQ blocks
 }CoeffBSwMdCtrls;
+#if RDOQ_CTRLS
+typedef struct RdoqCtrls {
+    uint8_t enabled;
+
+    uint8_t fast_mode_luma_inter;
+    uint8_t fast_mode_luma_intra;
+    uint8_t fast_mode_chroma_inter;
+    uint8_t fast_mode_chroma_intra;
+
+    uint8_t fp_quant_luma;
+    uint8_t fp_quant_chroma;
+
+    uint8_t satd_factor;
+}RdoqCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -312,7 +327,9 @@ typedef struct ModeDecisionContext {
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
     uint32_t         best_candidate_index_array[MAX_NFL_BUFF];
+#if !PD0_A_OPT
     uint32_t         sorted_candidate_index_array[MAX_NFL];
+#endif
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
     uint8_t          sb_sz;
@@ -538,6 +555,9 @@ typedef struct ModeDecisionContext {
 #endif
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
+#if RDOQ_CTRLS
+    RdoqCtrls rdoq_ctrls;
+#endif
     uint8_t disallow_4x4;
     uint8_t       md_disallow_nsq;
     uint64_t best_nsq_default_cost;

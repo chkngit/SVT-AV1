@@ -165,13 +165,23 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
         else {
 #if ME_TUNING
+#if ME_16x11
+            me_context_ptr->search_area_width = 16;
+           me_context_ptr->search_area_height = 11;
+#else
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+#endif
 #if ME_MAX_32_32
             me_context_ptr->max_me_search_width = 32;
             me_context_ptr->max_me_search_height = 32;
 #else
+#if HME_48x32
+            me_context_ptr->max_me_search_width = 48;
+            me_context_ptr->max_me_search_height = 32;
+#else
             me_context_ptr->max_me_search_width = 64;
             me_context_ptr->max_me_search_height = 32;
+#endif
 #endif
 #else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
