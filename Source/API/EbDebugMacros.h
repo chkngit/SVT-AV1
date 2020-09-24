@@ -108,7 +108,8 @@ extern "C" {
 /************************************/
 #define SHUT_FP_QUANT_CHROMA 1 //---> 
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //---> 
-#define SHUT_RDOQ 1 //--->
+#define SHUT_RDOQ 0 //--->
+#define FAST_RDOQ_MODE 1//--->
 
 #define COEFF_OPT 0
 
@@ -129,7 +130,7 @@ extern "C" {
 #define RDOQ_TEST1 0 // cnt fail
 #define RDOQ_TEST2 0 // ???
 
-#define FAST_RDOQ_MODE 0
+
 
 #define FAST_RDOQ_SATD 0
 #define FAST_RDOQ_ONLY_COEFF 0
