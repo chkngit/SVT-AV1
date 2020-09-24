@@ -80,6 +80,7 @@ extern "C" {
 #define TUNE_TPL 1   // Tuning TPL algorithm for QP assignment
 #define ENABLE_TPL_TRAILING 1
 #endif
+#define TUNE_SC_QPS_IMP 1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove
