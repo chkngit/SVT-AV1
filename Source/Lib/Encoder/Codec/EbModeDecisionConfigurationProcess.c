@@ -779,6 +779,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
+#if SHUT_WARP
+    enable_wm = EB_FALSE;
+#endif
+
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion =

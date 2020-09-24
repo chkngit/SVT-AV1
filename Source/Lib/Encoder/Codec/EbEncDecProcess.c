@@ -4172,6 +4172,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
         // 64 * 64: 0.06% BDRATE loss, 0.8% speed gain
         // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
+        // (3 * 64 * 64) / 2: 0.29% BDRATE loss, 0.8% speed gain
         uint64_t cost_th = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 
         min_sq_size = (cost < cost_th) ?
