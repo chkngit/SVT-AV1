@@ -44,7 +44,7 @@ extern "C" {
 /************************************/
 #define TUNE_PME 0
 #define TUNE_SUBPEL 0
-#define SHUT_MV_COST 0
+#define SHUT_MV_COST 1
 #define TUNE_REF 0
 /************************************/
 #define COST_BASED_PRED_ONLY 1
