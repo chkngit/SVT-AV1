@@ -4726,7 +4726,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
                     //uint64_t cost_th_0 = (2 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
                     uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-                    uint64_t cost_th_2 = (8 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+                    uint64_t cost_th_2 = (16 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
                     context_ptr->md_context->sb_me_cplx_lev = 0;
                     //if (cost < cost_th_0)
                     //    context_ptr->md_context->sb_me_cplx_lev = 2;
