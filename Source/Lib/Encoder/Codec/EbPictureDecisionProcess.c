@@ -1110,7 +1110,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 context_ptr->tf_level = 0;
 #else
+#if ADD_GM_TO_M7
+            if (pcs_ptr->temporal_layer_index == 0)
+#else
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+#endif
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;

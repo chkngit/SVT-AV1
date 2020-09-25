@@ -175,6 +175,7 @@ extern "C" {
 #define INIT_FAST_LOOP_OPT    1
 #define REMOVE_UNUSED_NEIG_ARRAY   1
 
+#define ADD_GM_TO_M7 1 // Add GM to M7; change CFL and TF settings to offset speed loss
 /************************************/
 #ifdef __cplusplus
 }

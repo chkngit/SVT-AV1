@@ -2386,7 +2386,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // Level                Settings
     // 0                    Allow cfl
     // 1                    Disable cfl
+#if ADD_GM_TO_M7
+    if (enc_mode <= ENC_M6)
+        context_ptr->md_disable_cfl = EB_FALSE;
+    else
+        context_ptr->md_disable_cfl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->md_disable_cfl = EB_FALSE;
+#endif
 #if PD0_CUT_4x4
 #if 0
     if (pd_pass == PD_PASS_0)       
@@ -2438,6 +2445,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             if (enc_mode <= ENC_M6)
                 context_ptr->global_mv_injection = 1;
+#if ADD_GM_TO_M7
+            else if (enc_mode <= ENC_M8)
+                context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
             else
                 context_ptr->global_mv_injection = 0;
     }

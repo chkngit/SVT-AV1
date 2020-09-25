@@ -381,6 +381,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+#if ADD_GM_TO_M7
+        else if (enc_mode <= ENC_M8)
+            context_ptr->me_context_ptr->compute_global_motion = pcs_ptr->is_used_as_reference_flag ? EB_TRUE : EB_FALSE;
+#endif
         else
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
         //TODO: enclose all gm signals into a control
