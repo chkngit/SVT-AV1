@@ -4319,10 +4319,10 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
 
         // If SB non-multiple of 32, then disallow_block_below_16x16 could not be used
-        uint64_t disallow_block_below_16x16 = 1;
-        if (sb_width % 32 != 0 || sb_height % 32 != 0) {
-            disallow_block_below_16x16 = 0;
-        }
+        //uint64_t disallow_block_below_16x16 = 1;
+        //if (sb_width % 32 != 0 || sb_height % 32 != 0) {
+        //    disallow_block_below_16x16 = 0;
+        //}
 
 #if 0
 #if PD0_CUT_BIS
@@ -4351,8 +4351,9 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost_th_0 = (4 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #endif
 #endif
-        min_sq_size = (context_ptr->sb_me_cplx_lev == 2 && disallow_block_below_16x16) ?
-            32 :
+        min_sq_size = 
+            //(context_ptr->sb_me_cplx_lev == 2 && disallow_block_below_16x16) ?
+            //32 :
             (context_ptr->sb_me_cplx_lev == 1 && disallow_block_below_8x8) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
@@ -4723,13 +4724,17 @@ void *mode_decision_kernel(void *input_ptr) {
 
 #if PD0_CUT_BYPASS
                     uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
-                    uint64_t cost_th_0 = (2 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+                    //uint64_t cost_th_0 = (2 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
                     uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-
+                    uint64_t cost_th_2 = (8 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
                     context_ptr->md_context->sb_me_cplx_lev = 0;
-                    if (cost < cost_th_0)
-                        context_ptr->md_context->sb_me_cplx_lev = 2;
-                    else if (cost < cost_th_1)
+                    //if (cost < cost_th_0)
+                    //    context_ptr->md_context->sb_me_cplx_lev = 2;
+                    //else 
+                    uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
+                        cost_th_1 : cost_th_2;
+
+                    if (cost < cost_th)
                         context_ptr->md_context->sb_me_cplx_lev = 1;
 
                     MultiPassPdLevel multi_pass_pd_level = pcs_ptr->parent_pcs_ptr->multi_pass_pd_level;
