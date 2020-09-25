@@ -3134,7 +3134,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M7)
             context_ptr->md_pme_level = 3;
         else
-            context_ptr->md_pme_level = 3;
+            context_ptr->md_pme_level = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 4;
 #else
         else
             context_ptr->md_pme_level = 3;
