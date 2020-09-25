@@ -3060,6 +3060,10 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                     skip_search = 1;
                 }
             }
+#if TUNE_PME
+            if (ctx->md_pme_level == 5)
+                skip_search = 1;
+#endif
             if (!skip_search) {
                 // Set ref MV
                 ctx->ref_mv.col = best_mvp_x;
