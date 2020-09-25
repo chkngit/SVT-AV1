@@ -2972,7 +2972,10 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
 
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
-
+#if TUNE_PME
+            if (!me_data_present) 
+                continue;
+#endif
             if (me_data_present) {
 
                 int16_t me_mv_x;
