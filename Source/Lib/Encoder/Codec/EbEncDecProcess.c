@@ -2627,14 +2627,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
     }
     else
-#if REF_VS_NRF
-        if(pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            context_ptr->md_staging_mode = MD_STAGING_MODE_0;
-        else
-            context_ptr->md_staging_mode = MD_STAGING_MODE_1;
-#else
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
-#endif
+
     // Set md staging count level
     // Level 0              minimum count = 1
     // Level 1              set towards the best possible partitioning (to further optimize)

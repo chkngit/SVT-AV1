@@ -1314,6 +1314,13 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     else
         memset(context_ptr->bypass_md_stage_2, EB_TRUE, CAND_CLASS_TOTAL);
 
+#if REF_VS_NRF
+    if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+        memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
+        memset(context_ptr->bypass_md_stage_2, EB_TRUE, CAND_CLASS_TOTAL);
+    }
+#endif
+
     if (context_ptr->md_staging_count_level == 0) {
         // Stage 1 Cand Count
         context_ptr->md_stage_1_count[CAND_CLASS_0] = 1;
