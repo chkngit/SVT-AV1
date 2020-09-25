@@ -4350,7 +4350,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost_th_0 = (4 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #endif
 #endif
-        min_sq_size = (context_ptr->is_easy_sb && disallow_block_below_8x8) ?
+        min_sq_size = (context_ptr->sb_me_cplx_lev && disallow_block_below_8x8) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
 
@@ -4721,17 +4721,29 @@ void *mode_decision_kernel(void *input_ptr) {
 #if PD0_CUT_BYPASS
                     uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
                     uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-                    context_ptr->md_context->is_easy_sb = 0;
+                    context_ptr->md_context->sb_me_cplx_lev = 0;
                     if (cost < cost_th_1)
-                        context_ptr->md_context->is_easy_sb = 1;
+                        context_ptr->md_context->sb_me_cplx_lev = 1;
+
+                    MultiPassPdLevel multi_pass_pd_level = pcs_ptr->parent_pcs_ptr->multi_pass_pd_level;
+                    if (context_ptr->md_context->sb_me_cplx_lev)
+                        multi_pass_pd_level = MULTI_PASS_PD_OFF;
 #endif
 
                     // Multi-Pass PD
+#if PD0_CUT_BYPASS
+                   if ((multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0 ||
+                        multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||
+                        multi_pass_pd_level == MULTI_PASS_PD_LEVEL_2 ||
+                        multi_pass_pd_level == MULTI_PASS_PD_LEVEL_3 ||
+                        multi_pass_pd_level == MULTI_PASS_PD_LEVEL_4)
+#else
                     if ((pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0 ||
                          pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||
                          pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_2 ||
                          pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_3 ||
                          pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_4)
+#endif
                         ) {
                         // Save a clean copy of the neighbor arrays
                         copy_neighbour_arrays(pcs_ptr,
@@ -4780,11 +4792,17 @@ void *mode_decision_kernel(void *input_ptr) {
                                               0,
                                               sb_origin_x,
                                               sb_origin_y);
-
+#if PD0_CUT_BYPASS
+                        if (multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||
+                            multi_pass_pd_level == MULTI_PASS_PD_LEVEL_2 ||
+                            multi_pass_pd_level == MULTI_PASS_PD_LEVEL_3 ||
+                            multi_pass_pd_level == MULTI_PASS_PD_LEVEL_4) {
+#else
                         if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||
                             pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_2 ||
                             pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_3 ||
                             pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_4) {
+#endif
                             // [PD_PASS_1] Signal(s) derivation
                             context_ptr->md_context->pd_pass = PD_PASS_1;
                             signal_derivation_enc_dec_kernel_oq(
@@ -4828,7 +4846,11 @@ void *mode_decision_kernel(void *input_ptr) {
                     else
                         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context, 0);
                     // Re-build mdc_blk_ptr for the 3rd PD Pass [PD_PASS_2]
+#if PD0_CUT_BYPASS
+                    if (multi_pass_pd_level != MULTI_PASS_PD_OFF)
+#else
                     if(pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_OFF)
+#endif
                     build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
                     else
                         // Build the t=0 cand_block_array

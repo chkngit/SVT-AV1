@@ -615,7 +615,7 @@ typedef struct ModeDecisionContext {
     uint64_t     md_exit_th;
 #endif
 #if PD0_CUT_BYPASS
-    uint8_t is_easy_sb;
+    uint8_t sb_me_cplx_lev;
 #endif
 } ModeDecisionContext;
 
