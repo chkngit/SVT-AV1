@@ -41,7 +41,12 @@ extern "C" {
 
 #if 1 // ALL_OFF
 #if 1 // ONLY_LOSSLESS
-
+/************************************/
+#define TUNE_PME 1
+#define TUNE_SUBPEL 0
+#define SHUT_MV_COST 0
+#define TUNE_REF 0
+/************************************/
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
 #define PARENT_COST 0
@@ -88,11 +93,7 @@ extern "C" {
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define TX_TYPE_GROUPING 1
 
-/************************************/
-#define TUNE_REF 0
-#define TUNE_PME 0
-#define TUNE_SUBPEL 0
-#define SHUT_MV_COST 0
+
 #endif
 #define ALL_LOSSLES_OPT 1
 #if ALL_LOSSLES_OPT
