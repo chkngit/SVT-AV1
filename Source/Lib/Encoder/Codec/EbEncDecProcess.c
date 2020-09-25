@@ -4732,7 +4732,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     uint64_t cost_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ?
                         cost_th_1 : cost_th_2;
 
-                    if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[0]/*cost < cost_th_0*/)
+                    if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[0] && cost < cost_th_0)
                         context_ptr->md_context->sb_me_cplx_lev = 2;
                     else if (cost < cost_th) 
                         context_ptr->md_context->sb_me_cplx_lev = 1;
