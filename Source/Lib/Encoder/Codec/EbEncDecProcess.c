@@ -1742,7 +1742,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 #if TUNE_REF
     case 6:
         depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->parent_to_current_th = -15;
+        depth_refinement_ctrls->parent_to_current_th = -10;
         depth_refinement_ctrls->sub_to_current_th = 0;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         break;
@@ -3145,7 +3145,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
                 context_ptr->md_subpel_me_level = 2;
             else
-                context_ptr->md_subpel_me_level = 0;
+                context_ptr->md_subpel_me_level = 3;
 #else
         else
             context_ptr->md_subpel_me_level = 2;
@@ -3166,7 +3166,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
                 context_ptr->md_subpel_me_level = 2;
             else
-                context_ptr->md_subpel_me_level = 0;
+                context_ptr->md_subpel_me_level = 3;
 #else
         else
             context_ptr->md_subpel_pme_level = 2;
