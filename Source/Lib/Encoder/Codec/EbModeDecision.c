@@ -3441,6 +3441,11 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
 
         //single ref/list
         if (rf[1] == NONE_FRAME) {
+#if FEATURE_SKIP_GM_UNIPRED
+            // Level 2 skips unipred injection for GM cands
+            if (context_ptr->global_mv_injection >= 2)
+                continue;
+#endif
             MvReferenceFrame frame_type = rf[0];
             uint8_t          list_idx = get_list_idx(rf[0]);
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);

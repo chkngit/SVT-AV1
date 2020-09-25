@@ -185,6 +185,10 @@ extern "C" {
 #define USE_MD_SKIP_DECISION_1 0 // clean-up (use md skip)
 #define ON_THE_FLY_MDS1_BYPASS 0
 #endif
+
+#define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
+#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
