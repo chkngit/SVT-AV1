@@ -4866,7 +4866,14 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                     ? 3
                     : 2;
-
+#if TXT_TUNE
+                if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                    tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                        ? 3
+                        : 1;
+                }
+#endif
 
             }
         }
