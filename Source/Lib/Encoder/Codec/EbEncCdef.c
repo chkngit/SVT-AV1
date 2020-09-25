@@ -1169,7 +1169,12 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     }
     return best_tot_mse;
 }
-
+#if CDEF_OPT
+#define STORE_CDEF_FILTER_STRENGTH(cdef_strength, pick_method, strength_idx) \
+  get_cdef_filter_strengths((pick_method), &pri_strength, &sec_strength,     \
+                            (strength_idx));                                 \
+  cdef_strength = pri_strength * CDEF_SEC_STRENGTHS + sec_strength;
+#endif
 void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                         int32_t selected_strength_cnt[64]) {
     (void)context_ptr;
@@ -1195,7 +1200,14 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t       mid_gi;
     int32_t       start_gi;
     int32_t       end_gi;
+#if CDEF_OPT
+    CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 6 ? CDEF_FAST_SEARCH_LVL1
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 7 ?  CDEF_FAST_SEARCH_LVL2 
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 8 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 
+    const int fast = (pick_method >= CDEF_FAST_SEARCH_LVL1 &&
+                pick_method <= CDEF_FAST_SEARCH_LVL3);
+#endif
     assert(sb_index != NULL);
     assert(selected_strength != NULL);
 
@@ -1205,7 +1217,12 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_level == 5
                     ? (AOMMAX(0, mid_gi - gi_step))
                     : 0;
+#if CDEF_OPT
+    end_gi =  ppcs->cdef_level > 9 ? 1 : ppcs->cdef_level > 5 ? nb_cdef_strengths[pick_method] :
+        ppcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step)
+#else
     end_gi = ppcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step)
+#endif
                                                : ppcs->cdef_level == 5 ? 8 : total_strengths;
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
@@ -1330,7 +1347,21 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         default: break;
         }
     }
+#if CDEF_OPT
+  if (fast) {
+    for (int j = 0; j < ppcs->nb_cdef_strengths; j++) {
 
+      const int luma_strength = frm_hdr->cdef_params.cdef_y_strength[j];
+      const int chroma_strength = frm_hdr->cdef_params.cdef_uv_strength[j];
+      int pri_strength, sec_strength;
+
+      STORE_CDEF_FILTER_STRENGTH(frm_hdr->cdef_params.cdef_y_strength[j], pick_method,
+                                 luma_strength);
+      STORE_CDEF_FILTER_STRENGTH(frm_hdr->cdef_params.cdef_uv_strength[j], pick_method,
+                                 chroma_strength);
+    }
+  }
+#endif
     //cdef_pri_damping & cdef_sec_damping consolidated to cdef_damping
     frm_hdr->cdef_params.cdef_damping = pri_damping;
     for (i = 0; i < total_strengths; i++)

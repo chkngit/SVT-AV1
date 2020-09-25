@@ -47,7 +47,7 @@ extern "C" {
 /************************************/
 #define RDOQ_CTRLS 1
 #if RDOQ_CTRLS
-#define SHUT_FP_QUANT_CHROMA 1 //---> 
+#define SHUT_FP_QUANT_CHROMA 1 //--->
 #define SKIP_TRELLIS_BASED_ON_SATD 1 //--->
 #define RDOQ_PER_LAYER 0
 #endif
@@ -129,18 +129,18 @@ extern "C" {
 /************************************/
 #define OPT_4           0
 #define REMOVE_TXT_STATS 0
-#define EXIT_TX_TYPE_IF_HAS_COEFF 0 
+#define EXIT_TX_TYPE_IF_HAS_COEFF 0
 #define COST_BASED_TXT 0
 #define DCT_VS_DST  0 // to test for only INTRA CLASS
 #define TXT_OFF 0
-#define SKIP_TXT_RATE_ESTIMATION 0  
+#define SKIP_TXT_RATE_ESTIMATION 0
 #define TEST_BLOCK_BASED 0
 /************************************/
-#define SHUT_RDOQ_CHROMA 0 
-#define SHUT_FP_QUANT 0 
+#define SHUT_RDOQ_CHROMA 0
+#define SHUT_FP_QUANT 0
 #define SHUT_FP_QUANT_TX_SIZE 0
 #define SHUT_FP_QUANT_TX_TYPE 0
-#define SHUT_FP_QUANT_INTER 0 
+#define SHUT_FP_QUANT_INTER 0
 #define SHUT_FP_QUANT_INTRA 0
 #define FAST_RDOQ_INTER 0
 #define FAST_RDOQ_EOB 0
@@ -154,7 +154,7 @@ extern "C" {
 #define RDOQ_ONLY_NOT_N2 0
 #define TUNE_SATD 0
 
-#define FAST_RDOQ_SATD 0  //---> 
+#define FAST_RDOQ_SATD 0  //--->
 #define RDOQ_DO_NOT_PROCESS_ZZ_COEF 0 // ---->
 #define SHUT_RDOQ 0 //--->
 #if FAST_RDOQ_SATD
@@ -188,7 +188,7 @@ extern "C" {
 
 #define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
 #define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
-
+#define CDEF_OPT                1 // Added new fast search for CDEF
 #ifdef __cplusplus
 }
 #endif // __cplusplus
