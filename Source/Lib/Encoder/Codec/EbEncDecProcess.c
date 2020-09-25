@@ -4317,6 +4317,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
             disallow_block_below_8x8 = 0;
         }
 #if 0
+#if 0
         // If SB non-multiple of 32, then disallow_block_below_16x16 could not be used
         uint64_t disallow_block_below_16x16 = 1;
         if (sb_width % 32 != 0 || sb_height % 32 != 0) {
@@ -4342,17 +4343,17 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #endif
 #if 1
-        min_sq_size = (cost < cost_th_1 && disallow_block_below_8x8) ?
+        min_sq_size = (context_ptr->is_easy_sb && disallow_block_below_8x8) ?
             16 :
             (context_ptr->disallow_4x4) ? 8 : 4;
 #else
         uint64_t cost_th_0 = (4 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
-        min_sq_size = (cost < cost_th_0 && disallow_block_below_16x16) ?
-            32 :
-            (cost < cost_th_1 && disallow_block_below_8x8) ?
-                16 :
-                (context_ptr->disallow_4x4) ? 8 : 4;
 #endif
+#endif
+        min_sq_size = (context_ptr->is_easy_sb && disallow_block_below_8x8) ?
+            16 :
+            (context_ptr->disallow_4x4) ? 8 : 4;
+
     }
 #endif
 
@@ -4716,6 +4717,15 @@ void *mode_decision_kernel(void *input_ptr) {
                     // Configure the SB
                     mode_decision_configure_sb(
                         context_ptr->md_context, pcs_ptr, (uint8_t)sb_ptr->qindex);
+
+#if PD0_CUT_BYPASS
+                    uint64_t cost = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];// RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index]);
+                    uint64_t cost_th_1 = (5 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
+                    context_ptr->md_context->is_easy_sb = 0;
+                    if (cost < cost_th_1)
+                        context_ptr->md_context->is_easy_sb = 1;
+#endif
+
                     // Multi-Pass PD
                     if ((pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0 ||
                          pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||

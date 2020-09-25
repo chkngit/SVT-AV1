@@ -614,6 +614,9 @@ typedef struct ModeDecisionContext {
 #if PD0_MD_EXIT
     uint64_t     md_exit_th;
 #endif
+#if PD0_CUT_BYPASS
+    uint8_t is_easy_sb;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,

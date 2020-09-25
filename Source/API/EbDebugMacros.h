@@ -41,7 +41,6 @@ extern "C" {
 
 #if 1 // ALL_OFF
 #if 1 // ONLY_LOSSLESS
-#define REF_VS_NRF 1
 
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
@@ -66,7 +65,9 @@ extern "C" {
 #define PD0_CUT_DEPTH 1
 #define PD0_CUT_BIS 0
 #define PD0_MD_EXIT 0
-
+#define REF_VS_NRF_0 0
+#define REF_VS_NRF_1 0
+#define PD0_CUT_BYPASS 1
 /*****************TF*******************/
 #define TF_CHROMA_BLIND 1
 #define TF_32x32_ONLY 0 ///***
