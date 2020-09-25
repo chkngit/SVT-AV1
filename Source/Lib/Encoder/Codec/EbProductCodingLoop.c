@@ -2973,6 +2973,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
 
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
 #if TUNE_PME
+            if(!pcs->parent_pcs_ptr->is_used_as_reference_flag)
             if (!me_data_present) 
                 continue;
 #endif
