@@ -1861,16 +1861,6 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
     case 4:
         md_pme_ctrls->enabled = 1;
         md_pme_ctrls->use_ssd = 0;
-        md_pme_ctrls->full_pel_search_width = 0;// 5;
-        md_pme_ctrls->full_pel_search_height = 0;
-        md_pme_ctrls->pre_fp_pme_to_me_cost_th = 0;// 100;
-        md_pme_ctrls->pre_fp_pme_to_me_mv_th = 32;
-        md_pme_ctrls->post_fp_pme_to_me_cost_th = 0;// 25;
-        md_pme_ctrls->post_fp_pme_to_me_mv_th = 64;
-        break;
-    case 5:
-        md_pme_ctrls->enabled = 1;
-        md_pme_ctrls->use_ssd = 0;
         md_pme_ctrls->full_pel_search_width = 5;
         md_pme_ctrls->full_pel_search_height = 3;
         md_pme_ctrls->pre_fp_pme_to_me_cost_th = 100;
