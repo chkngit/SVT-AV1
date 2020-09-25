@@ -3017,8 +3017,11 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             // Step 1: derive the best MVP in term of distortion
             int16_t best_mvp_x = 0;
             int16_t best_mvp_y = 0;
-
+#if TUNE_PME
+            for (int8_t mvp_index = 0; mvp_index < 1; mvp_index++) {
+#else
             for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list_idx][ref_idx]; mvp_index++) {
+#endif
 
                 // Set a ref MV (MVP under eval) for the MVP under eval
                 ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
