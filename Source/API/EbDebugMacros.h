@@ -41,6 +41,8 @@ extern "C" {
 
 #if 1 // ALL_OFF
 #if 1 // ONLY_LOSSLESS
+#define REF_VS_NRF 1
+
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
 #define PARENT_COST 0
