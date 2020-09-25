@@ -1742,8 +1742,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 #if TUNE_REF
     case 6:
         depth_refinement_ctrls->enabled = 1;
-        depth_refinement_ctrls->parent_to_current_th = -20;
-        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->parent_to_current_th = -15;
+        depth_refinement_ctrls->sub_to_current_th = 0;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         break;
 #endif
