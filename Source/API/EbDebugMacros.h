@@ -42,7 +42,7 @@ extern "C" {
 #if 1 // ALL_OFF
 #if 1 // ONLY_LOSSLESS
 /************************************/
-#define TUNE_PME 1
+#define TUNE_PME 0
 #define TUNE_SUBPEL 0
 #define SHUT_MV_COST 0
 #define TUNE_REF 0
@@ -190,7 +190,7 @@ extern "C" {
 #define ON_THE_FLY_MDS1_BYPASS 0
 #endif
 
-#if 0 // just double check
+#if 1 // just double check
 #define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
 #define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
 #define CDEF_OPT                1 // Added new fast search for CDEF
