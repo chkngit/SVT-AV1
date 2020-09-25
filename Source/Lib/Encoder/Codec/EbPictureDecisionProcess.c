@@ -1095,10 +1095,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->tpl_opt_flag = 1;
 #if ENABLE_TPL_TRAILING
+    // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
     if (pcs_ptr->enc_mode <= ENC_M4)
-        pcs_ptr->tpl_trailing_frame_count = SCD_LAD;
+        pcs_ptr->tpl_trailing_frame_count = 6;
     else
         pcs_ptr->tpl_trailing_frame_count = 0;
+
+    pcs_ptr->tpl_trailing_frame_count = MAX(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
 #endif
     return return_error;
 }

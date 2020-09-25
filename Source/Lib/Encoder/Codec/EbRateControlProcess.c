@@ -352,7 +352,7 @@ void tpl_mc_flow_dispenser(
     else
         delta_qindex = eb_av1_compute_qdelta(
             q_val,
-#if ENABLE_TPL_TRAILING // anaghdin add all
+#if ENABLE_TPL_TRAILING
             q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
             [pcs_ptr->tpl_data.tpl_temporal_layer_index],
 #else

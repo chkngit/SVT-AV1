@@ -2277,7 +2277,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
 
 #if FEATURE_INL_ME
-    if (scs_ptr->static_config.rate_control_mode != 0 && use_input_stat(scs_ptr))
+    if (scs_ptr->static_config.rate_control_mode != 0 && !use_input_stat(scs_ptr))
         scs_ptr->in_loop_me = 0;
     else
         scs_ptr->in_loop_me = 1;
