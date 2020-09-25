@@ -4850,15 +4850,6 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                     ? MAX_TX_TYPE_GROUP
                     : 4;
-
-#if TXT_TUNE
-                if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-                    tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                        ? 1
-                        : 1;
-                }
-#endif
             }
             else {
                 //TEST1
@@ -4866,19 +4857,24 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                     ? 3
                     : 2;
-#if TXT_TUNE
-                if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-                    tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                        context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                        ? 2
-                        : 2;
-                }
-#endif
-
             }
         }
     }
+#if TXT_TUNE
+    else if (context_ptr->md_staging_txt_level == 6) {
+        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
 
+            tx_type_tot_group = 1;
+        }
+        else {
+            //TEST1
+            tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                ? 3
+                : 2;
+        }
+    }
+#endif
 #if DCT_VS_DST
     uint64_t best_cost_txt_group_array[MAX_TX_TYPE_GROUP] = { (uint64_t)~0 };
 #endif
