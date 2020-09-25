@@ -861,6 +861,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 for (uint32_t blkx_offset = 0; blkx_offset < blks; blkx_offset++) {
                     uint32_t blkx = ((sb_x * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blkx_offset;
                     uint32_t blky = ((sb_y * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) + blky_offset;
+
                     if ((blkx >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_width_in_mb ||
                         (blky >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_height_in_mb)
                         continue;
@@ -875,6 +876,18 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
+                //if (pcs_ptr->picture_number == 0)
+                //SVT_LOG(
+                //        "generate_r0beta ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
+                //        "mc_dep=%lld\tbeta=%f\n",
+                //        pcs_ptr->picture_number,
+                //        sb_x,
+                //        sb_y,
+                //        pcs_ptr->r0,
+                //        rk,
+                //        intra_cost,
+                //        mc_dep_cost,
+                //        beta);
                 assert(beta > 0.0);
             }
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
@@ -973,6 +986,8 @@ EbErrorType tpl_mc_flow(
         for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--)
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
         generate_r0beta(pcs_array[0]);
+      //  for (frame_idx = 1;  frame_idx < frames_in_sw; frame_idx++)
+      //      generate_r0beta(pcs_array[frame_idx]);
 
 #if 1 //AMIR_PRINTS
         SVT_LOG("LOG displayorder:%ld\n",
@@ -5795,7 +5810,14 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
 #if ENABLE_TPL_TRAILING
-            double factor = 1.5;
+            double factor;
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+                factor = 2;
+            else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
@@ -6043,16 +6065,15 @@ static void sb_qp_derivation_tpl_la(
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
         for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
             sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
+
             double beta = ppcs_ptr->tpl_beta[sb_addr];
             int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
-            offset = AOMMIN(offset,  pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 - 1);
-            offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 + 1);
-
+            offset = AOMMIN(offset, pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
+            offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
             sb_ptr->qindex = CLIP3(
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
                 255 - pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
                 ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
-
             sb_setup_lambda(pcs_ptr, sb_ptr);
         }
     }
@@ -6245,11 +6266,26 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
             double div_factor = 1;
+#if ENABLE_TPL_TRAILING
+            double factor;
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+                factor = 2;
+            else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+
+            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = factor;
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 1.0 / factor;
+#else
 
             if (rc->frames_to_key > (int) pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
                 div_factor = 2;
             else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
                 div_factor = 0.5;
+#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
 #endif

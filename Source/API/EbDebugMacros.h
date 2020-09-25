@@ -78,9 +78,9 @@ extern "C" {
 #if FEATURE_IN_LOOP_TPL
 #define ENABLE_TPL_ZERO_LAD 1 // Enable TPL in loop to work with zero LAD
 #define TUNE_TPL 1   // Tuning TPL algorithm for QP assignment
-#define ENABLE_TPL_TRAILING 1
+#define ENABLE_TPL_TRAILING 1 //enable trailing pictures for TPL
 #endif
-#define TUNE_SC_QPS_IMP 1
+#define TUNE_SC_QPS_IMP   1 // Improve QP assignment for SC
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

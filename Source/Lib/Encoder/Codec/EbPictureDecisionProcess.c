@@ -1094,6 +1094,12 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tpl_opt_flag = 0;
     else
         pcs_ptr->tpl_opt_flag = 1;
+#if ENABLE_TPL_TRAILING
+    if (pcs_ptr->enc_mode <= ENC_M4)
+        pcs_ptr->tpl_trailing_frame_count = SCD_LAD;
+    else
+        pcs_ptr->tpl_trailing_frame_count = 0;
+#endif
     return return_error;
 }
 
@@ -3929,7 +3935,7 @@ void store_tpl_pictures(
 #endif
 #if ENABLE_TPL_TRAILING
         //add 6 future pictures from PD future window
-        for (uint32_t pic_i = 0; pic_i < SCD_LAD; ++pic_i) {
+        for (uint32_t pic_i = 0; pic_i < pcs->tpl_trailing_frame_count; ++pic_i) {
             if (pcs->pd_window[2 + pic_i]) {
                 pcs->tpl_group[mg_size + pic_i] = pcs->pd_window[2 + pic_i];
                 pcs->tpl_group_size++;
