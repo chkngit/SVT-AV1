@@ -40,7 +40,7 @@ extern "C" {
 #define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #if 1 // ALL_OFF
-#if 1 // ONLY_LOSSLESS
+#if 0 // ONLY_LOSSLESS
 /************************************/
 #if 0
 #define TUNE_PME 1
@@ -102,25 +102,25 @@ extern "C" {
 #if ALL_LOSSLES_OPT
 /***********LOSSLESS I **************/
 
-#define REMOVE_USELESS_0 1
+#define REMOVE_USELESS_0 1 // 1
 #define REMOVE_USELESS_1 1
-#define LOSSLESS_OPT 1
-#define OPTIMIZE_BUILD_QUANTIZER 1
-#define OPT_IFS 1
-
-#define PD0_OPT 1
-#if PD0_OPT
-#define PD0_A_OPT 1
-#define PD0_B_OPT 1
-#define PD0_C_OPT 1
-#define PD0_D_OPT 1
-#endif
+//#define LOSSLESS_OPT 1
+//#define OPTIMIZE_BUILD_QUANTIZER 1
+//#define OPT_IFS 1
+//
+//#define PD0_OPT 1
+//#if PD0_OPT
+//#define PD0_A_OPT 1
+//#define PD0_B_OPT 1
+//#define PD0_C_OPT 1
+//#define PD0_D_OPT 1
+//#endif
 /***********LOSSLESS II **************/
-#define INIT_BLOCK_OPT        1
-#define BYPASS_SIGNAL_SET     1
-#define ME_IDX_LUPT           1
-#define INIT_FAST_LOOP_OPT    1
-#define REMOVE_UNUSED_NEIG_ARRAY   1
+//#define INIT_BLOCK_OPT        1
+//#define BYPASS_SIGNAL_SET     1
+//#define ME_IDX_LUPT           1
+//#define INIT_FAST_LOOP_OPT    1
+//#define REMOVE_UNUSED_NEIG_ARRAY   1
 #endif
 
 /***********TOOLS****************/
