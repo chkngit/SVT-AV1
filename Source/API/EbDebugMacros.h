@@ -193,15 +193,15 @@ extern "C" {
 #define ON_THE_FLY_MDS1_BYPASS 0
 #endif
 
-#if 0 // just double check
-#define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
-#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
-#define FASTER_GM 0
-#define ERROR_GM 0
-#define GM_LIST_0 0
-#define GM_AFFINE 0
+#if 1 // just double check
+//#define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
+//#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
+//#define FASTER_GM 0
+//#define ERROR_GM 0
+//#define GM_LIST_0 0
+//#define GM_AFFINE 0
 #define CDEF_OPT                1 // Added new fast search for CDEF
-#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
+//#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
 #endif
 #ifdef __cplusplus
 }
