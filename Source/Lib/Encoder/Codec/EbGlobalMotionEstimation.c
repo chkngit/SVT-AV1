@@ -145,7 +145,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
                                    ref_wmtype, list_index, ref_pic_index,
                                   pcs_ptr->frm_hdr.allow_high_precision_mv);
 
-                                  if (list_index == 0 && ref_pic_index) {
+                                  if (list_index == 0 && ref_pic_index == 0) {
                                       ref_wmtype = pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype;
                                   }
 #else
@@ -227,8 +227,11 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
         TransformationType model;
         EbWarpedMotionParams tmp_wm_params;
+#if GM_AFFINE
+#define GLOBAL_TRANS_TYPES_ENC ROTZOOM
+#else
 #define GLOBAL_TRANS_TYPES_ENC 3
-
+#endif
         const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
         for (model = ROTZOOM; model <= GLOBAL_TRANS_TYPES_ENC; ++model) {
 
