@@ -2512,7 +2512,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             if (enc_mode <= ENC_M6)
                 context_ptr->global_mv_injection = 1;
-#if ADD_GM_TO_M8
+#if 0//ADD_GM_TO_M8 // GM
             else if (enc_mode <= ENC_M8)
 #if FEATURE_SKIP_GM_UNIPRED
                 context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
