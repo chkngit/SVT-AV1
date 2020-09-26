@@ -193,7 +193,7 @@ extern "C" {
 
 #if 1 // just double check
 #define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
-#define FEATURE_SKIP_GM_UNIPRED 0 // Add ability to skip GM unipred injection, and use bipred only
+#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
 #define CDEF_OPT                1 // Added new fast search for CDEF
 #endif
 #define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
