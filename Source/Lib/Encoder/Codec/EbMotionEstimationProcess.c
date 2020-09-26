@@ -399,6 +399,12 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
         //TODO: enclose all gm signals into a control
         context_ptr->me_context_ptr->gm_identiy_exit = EB_TRUE;
+#if GM_AFFINE
+        if (enc_mode <= ENC_M7)
+            context_ptr->me_context_ptr->gm_test_affine = EB_TRUE;
+        else
+            context_ptr->me_context_ptr->gm_test_affine = EB_FALSE;
+#endif
     } else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 

@@ -137,8 +137,11 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             } else {
                 ref_picture_ptr = (EbPictureBufferDesc *)reference_object->input_padded_picture_ptr;
             }
-
+#if GM_AFFINE
+            compute_global_motion(context_ptr, input_picture_ptr, 
+#else
             compute_global_motion(input_picture_ptr,
+#endif
                                   ref_picture_ptr,
                                   &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
 #if GM_LIST_0
@@ -185,8 +188,11 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
     else
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
-
+#if GM_AFFINE 
+void compute_global_motion(MeContext *context_ptr, EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
+#else
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
+#endif
                            EbWarpedMotionParams *bestWarpedMotion, 
 #if GM_LIST_0
                            TransformationType ref_wmtype, uint32_t list_index, uint32_t ref_pic_index,
@@ -227,14 +233,15 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
         TransformationType model;
         EbWarpedMotionParams tmp_wm_params;
-#if GM_AFFINE
-#define GLOBAL_TRANS_TYPES_ENC ROTZOOM
-#else
-#define GLOBAL_TRANS_TYPES_ENC 3
-#endif
-        const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
-        for (model = ROTZOOM; model <= GLOBAL_TRANS_TYPES_ENC; ++model) {
 
+#define GLOBAL_TRANS_TYPES_ENC 3
+
+        const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
+#if GM_AFFINE
+        for (model = ROTZOOM; model <= (context_ptr->gm_test_affine ? GLOBAL_TRANS_TYPES_ENC : ROTZOOM); ++model) {
+#else
+        for (model = ROTZOOM; model <= GLOBAL_TRANS_TYPES_ENC; ++model) {
+#endif
 #if GM_LIST_0
             if ((list_index || ref_pic_index) && ref_wmtype != model)
                 continue;

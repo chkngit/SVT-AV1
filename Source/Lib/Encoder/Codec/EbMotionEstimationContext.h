@@ -399,6 +399,9 @@ typedef struct MeContext {
     int16_t hme_factor;
     //exit gm search if first reference detection is identity
     uint8_t gm_identiy_exit;
+#if GM_AFFINE
+    uint8_t gm_test_affine;
+#endif
     // ------- Context for Alt-Ref ME ------
     uint16_t adj_search_area_width;
     uint16_t adj_search_area_height;
