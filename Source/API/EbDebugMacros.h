@@ -201,7 +201,7 @@ extern "C" {
 //#define GM_LIST_0 0
 //#define GM_AFFINE 0
 #define CDEF_OPT                1 // Added new fast search for CDEF
-//#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
+#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
 #endif
 #ifdef __cplusplus
 }
