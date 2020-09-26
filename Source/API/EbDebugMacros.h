@@ -104,9 +104,9 @@ extern "C" {
 
 #define REMOVE_USELESS_0 1 // 1
 #define REMOVE_USELESS_1 1
-//#define LOSSLESS_OPT 1
-//#define OPTIMIZE_BUILD_QUANTIZER 1
-//#define OPT_IFS 1
+#define LOSSLESS_OPT 1 //2
+#define OPTIMIZE_BUILD_QUANTIZER 1
+#define OPT_IFS 1
 //
 //#define PD0_OPT 1
 //#if PD0_OPT
