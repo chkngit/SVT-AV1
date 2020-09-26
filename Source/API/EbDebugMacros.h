@@ -116,11 +116,11 @@ extern "C" {
 #define PD0_D_OPT 1
 #endif
 /***********LOSSLESS II **************/
-//#define INIT_BLOCK_OPT        1
-//#define BYPASS_SIGNAL_SET     1
-//#define ME_IDX_LUPT           1
-//#define INIT_FAST_LOOP_OPT    1
-//#define REMOVE_UNUSED_NEIG_ARRAY   1
+#define INIT_BLOCK_OPT        1 // 5
+#define BYPASS_SIGNAL_SET     1
+#define ME_IDX_LUPT           1
+#define INIT_FAST_LOOP_OPT    1
+#define REMOVE_UNUSED_NEIG_ARRAY   1
 #endif
 
 /***********TOOLS****************/
