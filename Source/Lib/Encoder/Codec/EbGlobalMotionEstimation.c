@@ -92,6 +92,10 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     else
         global_motion_estimation_level = 3;
 #endif
+
+#if GM_LIST_0
+    TransformationType ref_wmtype = IDENTITY;
+#endif
     if (global_motion_estimation_level)
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint32_t num_of_ref_pic_to_search;
@@ -137,7 +141,16 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             compute_global_motion(input_picture_ptr,
                                   ref_picture_ptr,
                                   &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
+#if GM_LIST_0
+                                   ref_wmtype, list_index, ref_pic_index,
                                   pcs_ptr->frm_hdr.allow_high_precision_mv);
+
+                                  if (list_index == 0 && ref_pic_index) {
+                                      ref_wmtype = pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype;
+                                  }
+#else
+                                  pcs_ptr->frm_hdr.allow_high_precision_mv);
+#endif
         }
 
         if (context_ptr->gm_identiy_exit) {
@@ -174,7 +187,11 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
 }
 
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
-                           EbWarpedMotionParams *bestWarpedMotion, int allow_high_precision_mv) {
+                           EbWarpedMotionParams *bestWarpedMotion, 
+#if GM_LIST_0
+                           TransformationType ref_wmtype, uint32_t list_index, uint32_t ref_pic_index,
+#endif
+    int allow_high_precision_mv) {
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
     for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) {
         memset(&params_by_motion[m], 0, sizeof(params_by_motion[m]));
@@ -214,6 +231,12 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
         const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
         for (model = ROTZOOM; model <= GLOBAL_TRANS_TYPES_ENC; ++model) {
+
+#if GM_LIST_0
+            if ((list_index || ref_pic_index) && ref_wmtype != model)
+                continue;
+#endif
+
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
