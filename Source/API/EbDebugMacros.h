@@ -196,8 +196,8 @@ extern "C" {
 #define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
 #define FASTER_GM 0
 #define ERROR_GM 0
-#define GM_LIST_0 1
-#define GM_AFFINE 0
+#define GM_LIST_0 0
+#define GM_AFFINE 1
 #define CDEF_OPT                1 // Added new fast search for CDEF
 #endif
 #define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
