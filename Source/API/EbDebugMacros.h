@@ -112,8 +112,8 @@ extern "C" {
 #if PD0_OPT
 #define PD0_A_OPT 1 // 3
 #define PD0_B_OPT 1
-//#define PD0_C_OPT 1
-//#define PD0_D_OPT 1
+#define PD0_C_OPT 1 // 4
+#define PD0_D_OPT 1
 #endif
 /***********LOSSLESS II **************/
 //#define INIT_BLOCK_OPT        1
