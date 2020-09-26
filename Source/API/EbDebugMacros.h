@@ -107,14 +107,14 @@ extern "C" {
 #define LOSSLESS_OPT 1 //2
 #define OPTIMIZE_BUILD_QUANTIZER 1
 #define OPT_IFS 1
-//
-//#define PD0_OPT 1
-//#if PD0_OPT
-//#define PD0_A_OPT 1
-//#define PD0_B_OPT 1
+
+#define PD0_OPT 1
+#if PD0_OPT
+#define PD0_A_OPT 1 // 3
+#define PD0_B_OPT 1
 //#define PD0_C_OPT 1
 //#define PD0_D_OPT 1
-//#endif
+#endif
 /***********LOSSLESS II **************/
 //#define INIT_BLOCK_OPT        1
 //#define BYPASS_SIGNAL_SET     1
