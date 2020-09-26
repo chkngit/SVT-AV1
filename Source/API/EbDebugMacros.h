@@ -42,7 +42,7 @@ extern "C" {
 #if 1 // ALL_OFF
 #if 1 // ONLY_LOSSLESS
 /************************************/
-#if 1
+#if 0
 #define TUNE_PME 1
 #define TUNE_SUBPEL 0
 #define SHUT_MV_COST 0
