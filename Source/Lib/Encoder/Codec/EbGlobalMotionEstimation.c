@@ -72,6 +72,17 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     // 1: use up to 1 ref per list @ the GMV params derivation
     // 2: use up to 2 ref per list @ the GMV params derivation
     // 3: all refs @ the GMV params derivation
+#if FASTER_GM
+    uint16_t offset = 5;
+    if (average_me_sad <= (GMV_ME_SAD_TH_0 + offset))
+        global_motion_estimation_level = 0;
+    else if (average_me_sad < (GMV_ME_SAD_TH_1 + offset))
+        global_motion_estimation_level = 1;
+    else if (average_me_sad < (GMV_ME_SAD_TH_2 + offset))
+        global_motion_estimation_level = 2;
+    else
+        global_motion_estimation_level = 3;
+#else
     if (average_me_sad == GMV_ME_SAD_TH_0)
         global_motion_estimation_level = 0;
     else if (average_me_sad < GMV_ME_SAD_TH_1)
@@ -80,7 +91,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;
-
+#endif
     if (global_motion_estimation_level)
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint32_t num_of_ref_pic_to_search;
