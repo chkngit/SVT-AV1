@@ -297,7 +297,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                     (double)best_warp_error / ref_frame_error,
                     gm_get_params_cost(&global_motion, ref_params, allow_high_precision_mv),
 #if ERROR_GM
-                GM_ERRORADV_TR_2 /* TODO: check error advantage */)) {
+                GM_ERRORADV_TR_1 /* TODO: check error advantage */)) {
 #else
                     GM_ERRORADV_TR_0 /* TODO: check error advantage */)) {
 #endif
