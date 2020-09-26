@@ -73,7 +73,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     // 2: use up to 2 ref per list @ the GMV params derivation
     // 3: all refs @ the GMV params derivation
 #if FASTER_GM
-    uint16_t offset = 5;
+    uint16_t offset = 2;
     if (average_me_sad <= (GMV_ME_SAD_TH_0 + offset))
         global_motion_estimation_level = 0;
     else if (average_me_sad < (GMV_ME_SAD_TH_1 + offset))
