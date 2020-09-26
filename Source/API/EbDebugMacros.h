@@ -40,7 +40,7 @@ extern "C" {
 #define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #if 1 // ALL_OFF
-#if 0 // ONLY_LOSSLESS
+#if 1 // ONLY_LOSSLESS
 /************************************/
 #if 0
 #define TUNE_PME 1
@@ -50,9 +50,9 @@ extern "C" {
 #define TXT_TUNE 1
 #endif
 /************************************/
-#define COST_BASED_PRED_ONLY 1
-#define ADD_LEVELS 1
-#define PARENT_COST 0
+//#define COST_BASED_PRED_ONLY 1
+//#define ADD_LEVELS 1
+//#define PARENT_COST 0
 /************************************/
 #define RDOQ_CTRLS 1
 #if RDOQ_CTRLS
