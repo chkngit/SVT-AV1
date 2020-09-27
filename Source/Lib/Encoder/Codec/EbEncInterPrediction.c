@@ -6587,7 +6587,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
 #if OPT_IFS
-    if(!md_context_ptr->ifs_is_regular_last)
+    if(!md_context_ptr->ifs_is_regular_last || candidate_buffer_ptr->candidate_ptr->motion_mode != SIMPLE_TRANSLATION)
 #endif
     av1_inter_prediction(
             picture_control_set_ptr,
