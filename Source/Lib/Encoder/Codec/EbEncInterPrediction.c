@@ -3479,13 +3479,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = best_filters;
         } else {
 
-#if OPT_IFS// potential bug
-        candidate_buffer_ptr->candidate_ptr->interp_filters = //EIGHTTAP_REGULAR ;
-            av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
+        candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+#if OPT_IFS
         switchable_rate = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
 #endif
-        candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
-
         }
         // Update fast_luma_rate to take into account switchable_rate
 
