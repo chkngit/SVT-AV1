@@ -1806,12 +1806,17 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_rdoq;
 
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
+    
+#if !TX_TYPE_GROUPING
     if (scs_ptr->static_config.rdoq_level != DEFAULT && md_context->pd_pass == PD_PASS_2)
         perform_rdoq = scs_ptr->static_config.rdoq_level;
     else {
+#endif
         perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
             md_context->rdoq_level);
+#if !TX_TYPE_GROUPING
     }
+#endif
 #if FAST_RDOQ_MODE
     int fast_mode = (is_inter && component_type);
 #endif

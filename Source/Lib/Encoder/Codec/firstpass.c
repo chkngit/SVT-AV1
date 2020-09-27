@@ -1791,8 +1791,12 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->tpl_opt_flag = 1;
     return return_error;
 }
+#if TX_TYPE_GROUPING
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
+#else
 #if !REMOVE_TXT_STATS
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode);
+#endif
 #endif
 void set_nsq_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint16_t nsq_cycles_red_mode);
 void set_depth_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint8_t depth_cycles_red_mode) ;
@@ -1828,19 +1832,20 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     context_ptr->enable_area_based_cycles_allocation = 0;
 #if TX_TYPE_GROUPING
     context_ptr->md_staging_txt_level = 0;
+    set_txt_controls(context_ptr, 0);
 #else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
     // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
     // TX_SEARCH_ALL_TX_TYPES                         Tx search all type(s)
     context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
-#endif
 #if !REMOVE_TXT_STATS
     uint8_t txt_cycles_reduction_level = 0;
 #if SHUT_TXT_STATS
     txt_cycles_reduction_level = 0;
 #endif
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
+#endif
 #endif
     context_ptr->interpolation_search_level = IFS_OFF;
     // Set Chroma Mode

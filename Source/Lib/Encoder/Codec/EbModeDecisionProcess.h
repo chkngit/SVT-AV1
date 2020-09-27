@@ -145,12 +145,28 @@ typedef struct  AMdCycleRControls {
     uint16_t switch_mode_th;
     uint8_t mode_offset;
 }AMdCycleRControls;
+#if TX_TYPE_GROUPING
+typedef struct  TxtControls {
+    uint8_t enabled;
+
+    uint8_t txt_group_inter_lt_16x16;       // group to use when inter and tx block < 16x16
+    uint8_t txt_group_inter_gt_eq_16x16;    // group to use when inter and tx block >= 16x16
+
+    uint8_t txt_group_intra_lt_16x16;       // group to use when intra and tx block < 16x16
+    uint8_t txt_group_intra_gt_eq_16x16;    // group to use when intra and tx block >= 16x16
+
+    uint8_t use_stats;    // On/Off feature control
+    uint16_t intra_th;    // Threshold to bypass intra TXT <the higher th the higher speed>
+    uint16_t inter_th;    // Threshold to bypass inter TXT <the higher th the higher speed>
+}TxtControls;
+#else
 #if !REMOVE_TXT_STATS
 typedef struct  TxtCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th;  // Threshold to bypass inter TXT <the higher th the higher speed>
 }TxtCycleRControls;
+#endif
 #endif
 typedef struct  TxsCycleRControls {
     uint8_t enabled;    // On/Off feature control
@@ -511,9 +527,7 @@ typedef struct ModeDecisionContext {
     uint8_t      src_to_pred_decision; // Use src-to-pred distortion only (i.e. only md_stage_0() data)
 #endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
-#if TX_TYPE_GROUPING
-    uint8_t      md_txt_level;
-#else
+#if !TX_TYPE_GROUPING
     uint8_t      tx_search_level;
 #endif
     uint8_t      interpolation_search_level;
@@ -550,8 +564,12 @@ typedef struct ModeDecisionContext {
     PdPass pd_pass;
 
     EbBool        md_disable_cfl;
+#if TX_TYPE_GROUPING
+    TxtControls txt_ctrls;
+#else
 #if !REMOVE_TXT_STATS
     TxtCycleRControls txt_cycles_red_ctrls;
+#endif
 #endif
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;

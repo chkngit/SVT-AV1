@@ -4630,22 +4630,38 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
     if (pcs_ptr->slice_type == I_SLICE) {
         if (is_inter) { // INTER path
             if (inter_txt_cycles_reduction_th[depth_idx][pred_depth_refinement][tx_size_idx][freq_band][(tx_type - 1)]
+#if TX_TYPE_GROUPING
+                < context_ptr->txt_ctrls.inter_th)
+#else
                 < context_ptr->txt_cycles_red_ctrls.inter_th)
+#endif
                 return EB_TRUE;
         }
         else { // INTRA path
             if (intra_txt_cycles_reduction_th[depth_idx][pred_depth_refinement][tx_size_idx][freq_band][(tx_type - 1)]
+#if TX_TYPE_GROUPING
+                < context_ptr->txt_ctrls.intra_th)
+#else
                 < context_ptr->txt_cycles_red_ctrls.intra_th)
+#endif
                 return EB_TRUE;
         }
     }
     else {
         if (is_inter) { // INTER path
+#if TX_TYPE_GROUPING
+            if (context_ptr->txt_prob[pred_depth_refinement][tx_type] < context_ptr->txt_ctrls.inter_th)
+#else
             if (context_ptr->txt_prob[pred_depth_refinement][tx_type] < context_ptr->txt_cycles_red_ctrls.inter_th)
+#endif
                 return EB_TRUE;
         }
         else { // INTRA path
+#if TX_TYPE_GROUPING
+            if (context_ptr->txt_prob[pred_depth_refinement][tx_type] < context_ptr->txt_ctrls.intra_th)
+#else
             if (context_ptr->txt_prob[pred_depth_refinement][tx_type] < context_ptr->txt_cycles_red_ctrls.intra_th)
+#endif
                 return EB_TRUE;
         }
     }
@@ -4667,6 +4683,28 @@ static const uint16_t dc_coeff_scale[TX_SIZES_ALL] = {
   2896, 0,    0,    2048, 2048, 4096, 4096, 0,    0
 };
 #endif
+
+#if TX_TYPE_GROUPING
+uint8_t get_tx_type_group(ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer, EbBool only_dct_dct) {
+    int tx_type_group = 1;
+    if (!only_dct_dct) {
+        if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
+            tx_type_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                ? context_ptr->txt_ctrls.txt_group_intra_lt_16x16
+                : context_ptr->txt_ctrls.txt_group_intra_gt_eq_16x16;
+        }
+        else {
+            tx_type_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
+                ? context_ptr->txt_ctrls.txt_group_inter_lt_16x16
+                : context_ptr->txt_ctrls.txt_group_inter_gt_eq_16x16;
+        }
+    }
+    return tx_type_group;
+}
+#endif
+
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer,
 #if TX_TYPE_GROUPING
@@ -4818,8 +4856,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint8_t default_md_staging_skip_rdoq = context_ptr->md_staging_skip_rdoq;
 #endif
     uint8_t default_md_staging_spatial_sse_full_loop = context_ptr->md_staging_spatial_sse_full_loop_level;
+#if !TX_TYPE_GROUPING
     if (scs_ptr->static_config.spatial_sse_full_loop_level == 1 && context_ptr->pd_pass == PD_PASS_2)
         context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
+#endif
     // local variables for all TX types
     uint16_t eob_txt[TX_TYPES] = { 0 };
     int32_t  quantized_dc_txt[TX_TYPES] = { 0 };
@@ -4827,54 +4867,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t y_txb_coeff_bits_txt[TX_TYPES] = { 0 };
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #if TX_TYPE_GROUPING
-    int tx_type_tot_group = 1;
-    if (context_ptr->md_staging_txt_level) {
-
-      
-        if (context_ptr->md_staging_txt_level == 1) {
-            tx_type_tot_group = MAX_TX_TYPE_GROUP;
-        }
-        else if (context_ptr->md_staging_txt_level == 2) {
-            tx_type_tot_group = MAX_TX_TYPE_GROUP;
-        }
-        else if (context_ptr->md_staging_txt_level == 3) {
-            tx_type_tot_group = MAX_TX_TYPE_GROUP;
-        }
-        else if (context_ptr->md_staging_txt_level == 4) {
-            tx_type_tot_group = MAX_TX_TYPE_GROUP;
-        }
-        else if (context_ptr->md_staging_txt_level == 5) {
-            if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
-
-                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                    ? MAX_TX_TYPE_GROUP
-                    : 4;
-            }
-            else {
-                //TEST1
-                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                    ? 3
-                    : 2;
-            }
-        }
-#if TXT_TUNE
-        else if (context_ptr->md_staging_txt_level == 6) {
-            if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
-
-                tx_type_tot_group = 1;
-        }
-            else {
-                //TEST1
-                tx_type_tot_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
-                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
-                    ? 3
-                    : 2;
-            }
-    }
-#endif
-    }
+    int tx_type_tot_group = get_tx_type_group(context_ptr, candidate_buffer, only_dct_dct);
 
 #if DCT_VS_DST
     uint64_t best_cost_txt_group_array[MAX_TX_TYPE_GROUP] = { (uint64_t)~0 };
@@ -4887,7 +4880,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if DCT_VS_DST
             tx_type = (tx_type_tot_group > 2) ? tx_type_group_1[tx_type_group_idx][tx_type_idx]: tx_type_group_0[tx_type_group_idx][tx_type_idx];
 #else
-            tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
+            if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                tx_type = tx_type_group_sc[tx_type_group_idx][tx_type_idx];
+            else
+                tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];
 #endif
             if (tx_type == INVALID_TX_TYPE)
                 break;
@@ -4902,7 +4898,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
 #if !REMOVE_TXT_STATS 
         // Perform search selectively based on statistics (DCT_DCT always performed)
+#if TX_TYPE_GROUPING
+        if (context_ptr->txt_ctrls.use_stats && tx_type != DCT_DCT) {
+#else
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
+#endif
             // Determine if current tx_type should be skipped based on statistics
             if (bypass_txt_based_on_stats(pcs_ptr,
                 context_ptr,
@@ -6828,9 +6828,11 @@ static void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
     context_ptr->md_staging_skip_full_chroma      = EB_TRUE;
     context_ptr->md_staging_skip_rdoq             = EB_TRUE;
 
+#if !TX_TYPE_GROUPING
     if (scs_ptr->static_config.spatial_sse_full_loop_level != DEFAULT && context_ptr->pd_pass == PD_PASS_2)
         context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
     else
+#endif
         context_ptr->md_staging_spatial_sse_full_loop_level = EB_FALSE;
 
     for (uint32_t full_loop_candidate_index = 0;
@@ -6884,7 +6886,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 
         context_ptr->md_staging_tx_size_mode = 0;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = context_ptr->txt_ctrls.enabled;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
@@ -6896,9 +6898,11 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             (context_ptr->interpolation_search_level == IFS_MDS2) ? EB_FALSE : EB_TRUE;
         context_ptr->md_staging_skip_chroma_pred          = EB_TRUE;
 
+#if !TX_TYPE_GROUPING
         if (scs_ptr->static_config.spatial_sse_full_loop_level != DEFAULT && context_ptr->pd_pass == PD_PASS_2)
             context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
         else
+#endif
             context_ptr->md_staging_spatial_sse_full_loop_level = EB_FALSE;
 
         context_ptr->md_staging_perform_intra_chroma_pred = EB_FALSE;
@@ -7039,16 +7043,18 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
 #if TX_TYPE_GROUPING
-        context_ptr->md_staging_txt_level = context_ptr->md_txt_level;
+        context_ptr->md_staging_txt_level = context_ptr->txt_ctrls.enabled;
 #else
         context_ptr->md_staging_tx_search = 1;
 #endif
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
 
+#if !TX_TYPE_GROUPING
         if (scs_ptr->static_config.spatial_sse_full_loop_level != DEFAULT && context_ptr->pd_pass == PD_PASS_2)
             context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
         else
+#endif
             context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
 
         context_ptr->md_staging_perform_intra_chroma_pred = EB_TRUE;
