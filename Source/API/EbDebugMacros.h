@@ -50,9 +50,9 @@ extern "C" {
 #define TXT_TUNE 1
 #endif
 /************************************/
-//#define COST_BASED_PRED_ONLY 1
-//#define ADD_LEVELS 1
-//#define PARENT_COST 0
+#define COST_BASED_PRED_ONLY 1
+#define ADD_LEVELS 1
+#define PARENT_COST 0
 /************************************/
 #define RDOQ_CTRLS 1
 #if RDOQ_CTRLS
