@@ -1552,7 +1552,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
                                             eobs[context_ptr->txb_itr]);
 
+#if NEW_CDF
+        if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                 context_ptr->md_context->candidate_buffer_ptr_array;
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -1867,7 +1871,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              PICTURE_BUFFER_DESC_CHROMA_MASK,
                                              eobs[context_ptr->txb_itr]);
 
+#if NEW_CDF
+        if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                 context_ptr->md_context->candidate_buffer_ptr_array;
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -2305,7 +2313,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
         }
     }
 
+#if !NEW_CDF
     uint8_t  allow_update_cdf = pcs_ptr->update_cdf;
+#endif
     uint32_t final_blk_itr    = 0;
     // CU Loop
     uint32_t blk_it = 0;
@@ -2321,7 +2331,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
         const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
         sb_ptr->cu_partition_array[blk_it] = context_ptr->md_context->md_blk_arr_nsq[blk_it].part;
+#if NEW_CDF
+        if (pcs_ptr->cdf_ctrl.update_se) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             blk_ptr->av1xd->tile_ctx = &pcs_ptr->ec_ctx_array[sb_addr];
             // Update the partition stats
             update_part_stats(pcs_ptr,
@@ -2655,7 +2669,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                                                                  PICTURE_BUFFER_DESC_LUMA_MASK,
                                     eobs[context_ptr->txb_itr]);
 
+#if NEW_CDF
+                                if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                                 if (allow_update_cdf) {
+#endif
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3258,7 +3276,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                 y_full_distortion[DIST_CALC_PREDICTION] +=
                                     y_tu_full_distortion[DIST_CALC_PREDICTION];
 #endif
+#if NEW_CDF
+                                if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                                 if (allow_update_cdf) {
+#endif
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3477,8 +3499,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     : PICTURE_BUFFER_DESC_LUMA_MASK,
                                 eobs[context_ptr->txb_itr]);
 
-
+#if NEW_CDF
+                            if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                             if (allow_update_cdf) {
+#endif
                                 ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                     context_ptr->md_context->candidate_buffer_ptr_array;
                                 ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3781,7 +3806,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                   context_ptr->blk_origin_y,
                                   blk_geom,
                                   pcs_ptr);
+#if NEW_CDF
+                if (pcs_ptr->cdf_ctrl.update_se) {
+#else
                 if (pcs_ptr->update_cdf) {
+#endif
                     // Update the partition Neighbor Array
                     PartitionContext partition;
                     partition.above = partition_context_lookup[blk_geom->bsize].above;
