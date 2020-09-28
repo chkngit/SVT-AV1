@@ -533,6 +533,14 @@ static EbErrorType tpl_get_open_loop_me(
                         pcs_tpl_group_frame_ptr, pcs_tpl_base_ptr,
                         &ref_list0_count, &ref_list1_count,
                         &is_trailing_tpl_frame);
+
+#if TUNE_TPL_TRAILING_SPEED_OPT
+                pcs_tpl_group_frame_ptr->tpl_data.is_trailing_tpl_frame = is_trailing_tpl_frame;
+                if (is_trailing_tpl_frame)
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_trailing_hierarchical_level =
+                        pcs_tpl_base_ptr->hierarchical_levels;
+#endif
+
 #if FEATURE_IN_LOOP_TPL
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
 #endif

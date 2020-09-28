@@ -1665,8 +1665,15 @@ void *inloop_me_kernel(void *input_ptr) {
 
                 if (ppcs_ptr->tpl_me_seg_acc ==
                         ppcs_ptr->tpl_me_segments_total_count) {
-
+#if TUNE_TPL_TRAILING_SPEED_OPT
+                    for (uint8_t list_index = REF_LIST_0; list_index <= REF_LIST_1; list_index++) {
+                        for (uint8_t ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ref_idx++) {
+                            if (ppcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr)
+                                ppcs_ptr->tpl_data.tpl_ref_done[list_index][ref_idx] = EB_TRUE;
+                        }
+                    }
                     //printf("[%ld]: tpl_segment %d, tpl done\n", ppcs_ptr->picture_number, ppcs_ptr->tpl_me_seg_acc);
+#endif
                     eb_post_semaphore(ppcs_ptr->tpl_me_done_semaphore);
                 }
                 eb_release_mutex(ppcs_ptr->tpl_me_mutex);

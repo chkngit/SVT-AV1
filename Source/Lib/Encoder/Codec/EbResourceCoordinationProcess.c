@@ -478,6 +478,22 @@ void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #if TUNE_INL_TPL_ENHANCEMENT
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
 #endif
+#if TUNE_TPL_TRAILING_SPEED_OPT
+    pcs_ptr->tpl_data.tpl_temporal_layer_index = 0;
+    pcs_ptr->tpl_data.tpl_slice_type = 0;
+    pcs_ptr->tpl_data.tpl_ref0_count = 0;
+    pcs_ptr->tpl_data.tpl_ref1_count = 0;
+    pcs_ptr->tpl_data.tpl_decode_order = 0;
+    pcs_ptr->tpl_data.is_used_as_reference_flag = 0;
+    pcs_ptr->tpl_data.is_trailing_tpl_frame = 0;
+    pcs_ptr->tpl_data.tpl_trailing_hierarchical_level = pcs_ptr->scs_ptr->static_config.hierarchical_levels;
+    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+            pcs_ptr->tpl_data.tpl_ref_done[li][ri] = EB_FALSE;
+            pcs_ptr->tpl_data.ref_in_slide_window [li][ri] = EB_FALSE;
+        }
+    }
+#endif
 #endif
 }
 /***********************************************

@@ -1163,6 +1163,14 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->sb_flat_noise_array);
     EB_FREE_ARRAY(obj->sb_depth_mode_array);
 
+#if TUNE_TPL_TRAILING_SPEED_OPT
+    if (obj->tpl_data.tpl_best_hme_sad)
+        EB_FREE(obj->tpl_data.tpl_best_hme_sad);
+    if (obj->tpl_data.tpl_best_me_sad)
+        EB_FREE(obj->tpl_data.tpl_best_me_sad);
+#endif
+
+
     if (obj->av1_cm) {
         const int32_t num_planes = 3; // av1_num_planes(cm);
         for (int32_t p = 0; p < num_planes; ++p) {
@@ -1289,6 +1297,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         EB_MALLOC_ARRAY(object_ptr->tpl_beta, object_ptr->sb_total_count);
         EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors, picture_width_in_mb * picture_height_in_mb);
         EB_MALLOC_ARRAY(object_ptr->tpl_sb_rdmult_scaling_factors, picture_width_in_mb * picture_height_in_mb);
+#if TUNE_TPL_TRAILING_SPEED_OPT
+        EB_MALLOC(object_ptr->tpl_data.tpl_best_hme_sad, object_ptr->sb_total_count * 8 * sizeof(uint64_t));
+        EB_MALLOC(object_ptr->tpl_data.tpl_best_me_sad, object_ptr->sb_total_count * 8 * sizeof(uint64_t));
+#endif
     } else {
         object_ptr->r0 = 0;
         object_ptr->is_720p_or_larger = 0;
@@ -1297,6 +1309,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         object_ptr->tpl_beta = NULL;
         object_ptr->tpl_rdmult_scaling_factors = NULL;
         object_ptr->tpl_sb_rdmult_scaling_factors = NULL;
+#if TUNE_TPL_TRAILING_SPEED_OPT
+        object_ptr->tpl_data.tpl_best_hme_sad = NULL;
+        object_ptr->tpl_data.tpl_best_me_sad = NULL;
+#endif
     }
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);

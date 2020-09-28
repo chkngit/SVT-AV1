@@ -1869,6 +1869,13 @@ void integer_search_sb(
 
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            // If TPL for this ref is already done (eg: in previous trailing frame, just skip it)
+            if (context_ptr->me_type == ME_TPL &&
+                    pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                continue;
+#endif
+
 #if !FEATURE_INL_ME
             EbPaReferenceObject *reference_object = context_ptr->me_alt_ref == EB_TRUE
                 ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
@@ -2178,8 +2185,18 @@ void me_prune_ref(
                 idx = tab8x8[pu_index];
                 context_ptr->hme_results[list_index][ref_pic_index].hme_sad += context_ptr->p_best_sad_8x8[idx];
             }
+
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            uint32_t tmp_index =
+                (list_index * REF_LIST_MAX_DEPTH + ref_pic_index) * pcs_ptr->sb_total_count + sb_index;
+            if (!pcs_ptr->tpl_data.is_trailing_tpl_frame &&  pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index]) {
+                context_ptr->hme_results[list_index][ref_pic_index].hme_sad = pcs_ptr->tpl_data.tpl_best_me_sad[tmp_index];
+            }
+            pcs_ptr->tpl_data.tpl_best_me_sad[tmp_index] = context_ptr->hme_results[list_index][ref_pic_index].hme_sad;
+#endif
         }
     }
+
     eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
@@ -2272,6 +2289,13 @@ static void hme_level0_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
 
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            // If TPL for this ref is already done (eg: in previous trailing frame, just skip it)
+            if (context_ptr->me_type == ME_TPL &&
+                    pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                continue;
+#endif
+
 #if !FEATURE_INL_ME
             EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
                 ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
@@ -2446,6 +2470,13 @@ void hme_level1_sb(
 #endif
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;++ref_pic_index){
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            // If TPL for this ref is already done (eg: in previous trailing frame, just skip it)
+            if (context_ptr->me_type == ME_TPL &&
+                    pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                continue;
+#endif
+
 #if !FEATURE_INL_ME
             const EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
                 ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
@@ -2583,6 +2614,13 @@ static void hme_level2_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
 #endif
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            // If TPL for this ref is already done (eg: in previous trailing frame, just skip it)
+            if (context_ptr->me_type == ME_TPL &&
+                    pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                continue;
+#endif
+
 #if !FEATURE_INL_ME
             EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
                 ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
@@ -2783,6 +2821,13 @@ void set_final_seach_centre_sb(
 #endif
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index){
+#if TUNE_TPL_TRAILING_SPEED_OPT
+            // If TPL for this ref is already done (eg: in previous trailing frame, just skip it)
+            if (context_ptr->me_type == ME_TPL &&
+                    pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                continue;
+#endif
+
 #if !FEATURE_INL_ME
             if (context_ptr->me_alt_ref == EB_TRUE) {
             }
@@ -3026,9 +3071,29 @@ void hme_sb(
         pcs_ptr,
         context_ptr);
 }
+
+#if TUNE_TPL_TRAILING_SPEED_OPT
+static void hme_prune_ref_and_adjust_sr(
+    MeContext* context_ptr,
+    PictureParentControlSet *pcs_ptr,
+    uint32_t sb_index) {
+#else
 void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
+#endif
     HmeResults    sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t      num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
+#if TUNE_TPL_TRAILING_SPEED_OPT
+    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+            uint32_t tmp_index =
+                (li * REF_LIST_MAX_DEPTH + ri) * pcs_ptr->sb_total_count + sb_index;
+            if (!pcs_ptr->tpl_data.is_trailing_tpl_frame &&  pcs_ptr->tpl_data.tpl_ref_done[li][ri])
+                context_ptr->hme_results[li][ri].hme_sad =
+                    pcs_ptr->tpl_data.tpl_best_hme_sad[tmp_index];
+            pcs_ptr->tpl_data.tpl_best_hme_sad[tmp_index] = context_ptr->hme_results[li][ri].hme_sad;
+        }
+    }
+#endif
     eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
@@ -3203,6 +3268,31 @@ EbErrorType motion_estimate_sb(
 #endif
 #endif
 
+#if TUNE_TPL_TRAILING_SPEED_OPT
+    // If doing MCTF, the src will be changed, and all tpl related needs to be done
+    // Usually MCTF is done before TPL.
+    // But when EOS, some frames which has done TPL may go through MCTF again
+    // For example, TPL48 will do TPL_ME on 49/50/51/52/53/54 and get the corresponding ME results
+    // And we will do MCTF on POC52 again, which means previous ME results of 52=>48 will be inaccurate
+    if (context_ptr->me_type == ME_MCTF && sb_index == 0) {
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+            for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                pcs_ptr->tpl_data.tpl_ref_done[li][ri] = EB_FALSE;
+            }
+        }
+    }
+
+    if (context_ptr->me_type == ME_TPL && !pcs_ptr->tpl_data.is_trailing_tpl_frame && sb_index == 0) {
+        if(pcs_ptr->tpl_data.tpl_trailing_hierarchical_level != pcs_ptr->hierarchical_levels) {
+            for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+                for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+                    pcs_ptr->tpl_data.tpl_ref_done[li][ri] = EB_FALSE;
+                }
+            }
+        }
+    }
+#endif
+
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
@@ -3225,6 +3315,7 @@ EbErrorType motion_estimate_sb(
             // then it sends dirty p_sb_best_mv to MD, initializing it is necessary
             for (uint32_t pi = 0; pi < SQUARE_PU_COUNT; pi++)
                 context_ptr->p_sb_best_mv[li][ri][pi] = 0;
+
         }
     }
     // HME: Perform Hierachical Motion Estimation for all refrence frames.
@@ -3233,7 +3324,11 @@ EbErrorType motion_estimate_sb(
     if (prune_ref &&
         (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment ||
          context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning)) {
+#if TUNE_TPL_TRAILING_SPEED_OPT
+        hme_prune_ref_and_adjust_sr(context_ptr, pcs_ptr, sb_index);
+#else
         hme_prune_ref_and_adjust_sr(context_ptr);
+#endif
     }
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
     integer_search_sb(pcs_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
@@ -3303,6 +3398,11 @@ EbErrorType motion_estimate_sb(
                 // Ref Picture Loop
                 for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                      ++ref_pic_index) {
+#if TUNE_TPL_TRAILING_SPEED_OPT
+                    if (context_ptr->me_type == ME_TPL &&
+                            pcs_ptr->tpl_data.tpl_ref_done[list_index][ref_pic_index])
+                        continue;
+#endif
                     pcs_ptr->pa_me_data->me_results[sb_index]
                         ->me_mv_array[pu_index * MAX_PA_ME_MV + (list_index ? 4 : 0) +
                                       ref_pic_index]

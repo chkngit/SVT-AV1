@@ -488,6 +488,13 @@ typedef struct {
     EbBool      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbBool      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if TUNE_TPL_TRAILING_SPEED_OPT
+    EbBool      is_trailing_tpl_frame;
+    EbBool      tpl_ref_done[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint8_t     tpl_trailing_hierarchical_level;
+    uint64_t    *tpl_best_hme_sad;
+    uint64_t    *tpl_best_me_sad;
+#endif
 } TPLData;
 #endif
 
