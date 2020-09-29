@@ -40,7 +40,7 @@ extern "C" {
 #define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #if 1 // ALL_OFF
-#if 0 // ONLY_LOSSLESS
+#if 1 // ONLY_LOSSLESS
 /************************************/
 #if 0
 #define TUNE_PME 1
