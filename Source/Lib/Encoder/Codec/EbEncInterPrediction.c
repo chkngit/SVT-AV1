@@ -6698,9 +6698,13 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
 #if OPT_IFS
-    // IFS predicted samples could not be used if IFS not performed or performed but regular is not the last, 
+    // IFS predicted samples could not be used if IFS not performed or performed but regular is not the last
+#if FIX_IFS
+    if (!md_context_ptr->ifs_is_regular_last)
+#else
     // motion mode is always SIMPLE_TRANSLATION when IFS is performed, and is_interintra_used is always false when IFS is performed
     if(!md_context_ptr->ifs_is_regular_last || candidate_buffer_ptr->candidate_ptr->motion_mode != SIMPLE_TRANSLATION || candidate_ptr->is_interintra_used)
+#endif
 #endif
     av1_inter_prediction(
             picture_control_set_ptr,
