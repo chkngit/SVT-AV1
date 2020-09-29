@@ -9354,11 +9354,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
                 uint64_t average_cost_per_child = current_depth_cost / context_ptr->blk_geom->quadi;
                 uint64_t remaining_child_cost = average_cost_per_child * (4 - context_ptr->blk_geom->quadi);
-
+#if 0
                 uint32_t full_lambda = context_ptr->hbd_mode_decision ?
                     context_ptr->full_lambda_md[EB_10_BIT_MD] :
                     context_ptr->full_lambda_md[EB_8_BIT_MD];
-#if 0
+
                 uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight); 
                 uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); 
                 uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); 
