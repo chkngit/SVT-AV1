@@ -3052,6 +3052,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->nic_scaling_level = 9;
     }
+#if PD0_H_OPT
+    if (pd_pass == PD_PASS_0)
+        context_ptr->nic_1_last_stage = 1;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->nic_1_last_stage = 1;
+    else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+            context_ptr->nic_1_last_stage = 0;
+        }
+        else {
+            context_ptr->nic_1_last_stage = 1;
+        }
+#endif
     uint8_t txs_cycles_reduction_level = 0;
     set_txs_cycle_reduction_controls(context_ptr, txs_cycles_reduction_level);
     // Set md_filter_intra_mode @ MD

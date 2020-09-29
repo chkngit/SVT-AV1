@@ -116,7 +116,8 @@ extern "C" {
 #define PD0_D_OPT 1
 #define PD0_E_OPT 1
 #define PD0_F_OPT 1 // skip_coeff_context
-#define PD0_G_OPT 1 // bypass useless src to dst copy
+#define PD0_G_OPT 1 // useless memset @ mvp generation 
+#define PD0_H_OPT 1 // memset cost restricted
 #endif
 /***********LOSSLESS II **************/
 #define INIT_BLOCK_OPT        1 // 5

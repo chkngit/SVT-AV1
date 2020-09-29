@@ -614,6 +614,9 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_end_y;
     uint8_t txs_in_inter_classes;
     uint8_t nic_scaling_level;
+#if PD0_H_OPT
+    uint8_t nic_1_last_stage;
+#endif
     uint8_t inter_compound_mode;
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;

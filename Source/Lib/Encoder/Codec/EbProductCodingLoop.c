@@ -958,14 +958,16 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
                                    leaf_depth_neighbor_array,
 #endif
                                    leaf_partition_neighbor_array);
-
+#if PD0_H_OPT
+    EB_MEMSET(context_ptr->fast_cost_array, 0xFF, sizeof(uint64_t) * MAX_NFL_BUFF);
+#else
 #if INIT_FAST_LOOP_OPT
     EB_MEMSET(context_ptr->fast_cost_array, MAX_CU_COST, sizeof(uint64_t) * MAX_NFL_BUFF);
 #else
     for (uint32_t index = 0; index < MAX_NFL_BUFF; ++index)
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
 #endif
-
+#endif
     return;
 }
 
@@ -1426,7 +1428,9 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
     }
-
+#if PD0_H_OPT
+    if (context_ptr->nic_1_last_stage) {
+#else
     uint8_t use_nic_1_last_stage;
     if (pcs_ptr->enc_mode <= ENC_M5) {
         use_nic_1_last_stage = 0;
@@ -1436,6 +1440,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     }
 
     if (use_nic_1_last_stage) {
+#endif
         for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
             if (context_ptr->bypass_md_stage_2[cidx]) {
                 context_ptr->md_stage_2_count[cidx] = 1;
