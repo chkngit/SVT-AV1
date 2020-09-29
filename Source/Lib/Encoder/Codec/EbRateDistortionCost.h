@@ -35,7 +35,10 @@ extern uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *
 
 extern void coding_loop_context_generation(
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint32_t sb_sz, NeighborArrayUnit *skip_coeff_neighbor_array,
+    uint32_t blk_origin_y, uint32_t sb_sz, 
+#if !PD0_F_OPT
+    NeighborArrayUnit *skip_coeff_neighbor_array,
+#endif
     NeighborArrayUnit *inter_pred_dir_neighbor_array,
     NeighborArrayUnit *ref_frame_type_neighbor_array,
     NeighborArrayUnit *intra_luma_mode_neighbor_array, NeighborArrayUnit *skip_flag_neighbor_array,

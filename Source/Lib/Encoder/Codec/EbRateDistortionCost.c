@@ -1865,7 +1865,21 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     // Coeff rate
 
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
+
+#if PD0_F_OPT
+        // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         uint64_t non_skip_cost =
+            RDCOST(lambda,
+            (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + tx_size_bits +
+                (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                ->skip_fac_bits[0][0]),
+                (y_distortion[0] + cb_distortion[0] + cr_distortion[0]));
+        uint64_t skip_cost =
+            RDCOST(lambda,
+            ((uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                ->skip_fac_bits[0][1]),
+                (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
+#else
             RDCOST(lambda,
                    (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + tx_size_bits +
                     (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
@@ -1876,6 +1890,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                    ((uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
                         ->skip_fac_bits[blk_ptr->skip_coeff_context][1]),
                    (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
+#endif
         if ((candidate_buffer_ptr->candidate_ptr->block_has_coeff == 0) ||
             (skip_cost < non_skip_cost)) {
             y_distortion[0]                                      = y_distortion[1];
@@ -1883,6 +1898,25 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             cr_distortion[0]                                     = cr_distortion[1];
             candidate_buffer_ptr->candidate_ptr->block_has_coeff = 0;
         }
+
+#if PD0_F_OPT
+        // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
+        if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
+            coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+            (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                ->skip_fac_bits[0][0]);
+        else
+            coeff_rate = MIN((uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                ->skip_fac_bits[0][1],
+                (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+                (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                    ->skip_fac_bits[0][0]));
+    }
+    else
+        coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+        (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+            ->skip_fac_bits[0][0]);
+#else
         if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
             coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
                           (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
@@ -1893,11 +1927,12 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                              (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
                               (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
                                   ->skip_fac_bits[blk_ptr->skip_coeff_context][0]));
+
     } else
         coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
                       (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
                           ->skip_fac_bits[blk_ptr->skip_coeff_context][0]);
-
+#endif
     luma_sse         = y_distortion[0];
     chroma_sse       = cb_distortion[0] + cr_distortion[0];
     total_distortion = luma_sse + chroma_sse;
@@ -2185,7 +2220,9 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 ************************************************************/
 void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     uint32_t blk_origin_x, uint32_t blk_origin_y, uint32_t sb_sz,
+#if !PD0_F_OPT
                                     NeighborArrayUnit *skip_coeff_neighbor_array,
+#endif
                                     NeighborArrayUnit *inter_pred_dir_neighbor_array,
                                     NeighborArrayUnit *ref_frame_type_neighbor_array,
                                     NeighborArrayUnit *intra_luma_mode_neighbor_array,
@@ -2307,6 +2344,7 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
             : ((PartitionContext *)
                    leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index]
                   .left;
+#if !PD0_F_OPT
     // Skip Coeff AV1 Context
     uint32_t skip_coeff_left_neighbor_index =
         get_neighbor_array_unit_left_index(skip_coeff_neighbor_array, blk_origin_y);
@@ -2324,6 +2362,7 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
          (uint8_t)INVALID_NEIGHBOR_DATA)
             ? 0
             : (skip_coeff_neighbor_array->top_array[skip_coeff_top_neighbor_index]) ? 1 : 0;
+#endif
     // Generate reference mode context
 
     blk_ptr->reference_mode_context = (uint8_t)eb_av1_get_reference_mode_context(

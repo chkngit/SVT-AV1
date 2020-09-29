@@ -5327,7 +5327,9 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     NeighborArrayUnit *intra_luma_mode_neighbor_array =
         pcs_ptr->intra_luma_mode_neighbor_array[tile_idx];
     NeighborArrayUnit *skip_flag_neighbor_array  = pcs_ptr->skip_flag_neighbor_array[tile_idx];
+
     NeighborArrayUnit *skip_coeff_neighbor_array = pcs_ptr->skip_coeff_neighbor_array[tile_idx];
+
     NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array =
         pcs_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx];
     NeighborArrayUnit *cr_dc_sign_level_coeff_neighbor_array =

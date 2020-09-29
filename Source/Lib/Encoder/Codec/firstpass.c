@@ -923,7 +923,9 @@ extern EbErrorType first_pass_signal_derivation_block(
 }
 
 void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
+#if !PD0_F_OPT
                                         NeighborArrayUnit *  skip_coeff_neighbor_array,
+#endif
                                         NeighborArrayUnit *  inter_pred_dir_neighbor_array,
                                         NeighborArrayUnit *  ref_frame_type_neighbor_array,
                                         NeighborArrayUnit *  intra_luma_mode_neighbor_array,
@@ -1338,7 +1340,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     blk_ptr->av1xd->tile.mi_row_end   = context_ptr->sb_ptr->tile_info.mi_row_end;
 
     product_coding_loop_init_fast_loop(context_ptr,
+#if !PD0_F_OPT
                                        context_ptr->skip_coeff_neighbor_array,
+#endif
                                        context_ptr->inter_pred_dir_neighbor_array,
                                        context_ptr->ref_frame_type_neighbor_array,
                                        context_ptr->intra_luma_mode_neighbor_array,
