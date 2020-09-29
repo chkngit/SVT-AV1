@@ -114,9 +114,9 @@ extern "C" {
 #define PD0_B_OPT 1
 #define PD0_C_OPT 1 // 4
 #define PD0_D_OPT 1
-#define PD0_E_OPT 1
-#define PD0_F_OPT 1 // skip_coeff_context
-#define PD0_G_OPT 1 // bypass useless src to dst copy
+#define PD0_E_OPT 0
+#define PD0_F_OPT 0 // skip_coeff_context
+#define PD0_G_OPT 0 // bypass useless src to dst copy
 #endif
 /***********LOSSLESS II **************/
 #define INIT_BLOCK_OPT        1 // 5
