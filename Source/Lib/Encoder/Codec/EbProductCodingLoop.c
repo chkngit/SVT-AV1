@@ -1515,7 +1515,7 @@ void sort_fast_cost_based_candidates(
         }
     }
 }
-#if! PD0_A_OPT
+#if! UNIFY_SORTING_ARRAY
 static INLINE void heap_sort_stage_max_node_fast_cost_ptr(ModeDecisionCandidateBuffer **buffer_ptr,
                                                           uint32_t *sort_index, uint32_t i,
                                                           uint32_t num) {
@@ -1691,7 +1691,7 @@ void sort_full_cost_based_candidates(struct ModeDecisionContext *context_ptr,
         }
     }
 }
-#if PD0_A_OPT
+#if UNIFY_SORTING_ARRAY
 #if !PD0_B_OPT 
 void construct_best_sorted_arrays_md_stage_1(struct ModeDecisionContext *  context_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
@@ -8447,7 +8447,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     assert(context_ptr->md_stage_3_total_count <= MAX_NFL);
     assert(context_ptr->md_stage_3_total_count > 0);
 
-#if PD0_A_OPT
+#if UNIFY_SORTING_ARRAY
     construct_best_sorted_arrays_md_stage_3(context_ptr,
         candidate_buffer_ptr_array,
         context_ptr->best_candidate_index_array);
@@ -9341,7 +9341,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
                 uint64_t average_cost_per_child = current_depth_cost / context_ptr->blk_geom->quadi;
                 uint64_t remaining_child_cost = average_cost_per_child * (4 - context_ptr->blk_geom->quadi);
-                uint64_t weighted_cost = (context_ptr->md_exit_th * remaining_child_cost) / 100;
+
+                uint64_t md_exit_th = context_ptr->md_exit_th + md_exit_th;
+
+                uint64_t weighted_cost = (md_exit_th * remaining_child_cost) / 100;
                 uint64_t pred_current_depth_cost = current_depth_cost + weighted_cost;
 
 

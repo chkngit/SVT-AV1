@@ -40,7 +40,7 @@ extern "C" {
 #define PR1485       0 //Fix mismatch C/AVX2 kernel svt_av1_apply_temporal_filter_planewise()
 
 #if 1 // ALL_OFF
-#if 1 // ONLY_LOSSLESS
+#if 0 // ONLY_LOSSLESS
 /************************************/
 #if 0
 #define TUNE_PME 1
@@ -96,6 +96,18 @@ extern "C" {
 #define SHUT_TXT_STATS 1 // Set0: REF = DCT - DCT + H - DCT + V - DCT(what you have added)
 #define TX_TYPE_GROUPING 1
 
+#define UNIFY_SORTING_ARRAY 1 // semi-lossless
+#if 1 // just double check
+#define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
+#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
+#define FASTER_GM 0
+#define ERROR_GM 0
+#define GM_LIST_0 0
+#define GM_AFFINE 1
+#define CDEF_OPT                1 // Added new fast search for CDEF
+#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
+#define NEW_CDF 1 // Updating CDF levels and controls
+#endif
 
 #endif
 #define ALL_LOSSLES_OPT 1
@@ -110,7 +122,7 @@ extern "C" {
 
 #define PD0_OPT 1
 #if PD0_OPT
-#define PD0_A_OPT 1 // 3
+
 #define PD0_B_OPT 1
 #define USE_MDS_CNT_INIT 1 // 4
 #define SKIP_MV_RATE_UPDATE_IF_I_SLICE_NOT_SC 1
@@ -197,17 +209,6 @@ extern "C" {
 #define ON_THE_FLY_MDS1_BYPASS 0
 #endif
 
-#if 1 // just double check
-#define ADD_GM_TO_M8 1 // Add GM to M7; change CFL and TF settings to offset speed loss
-#define FEATURE_SKIP_GM_UNIPRED 1 // Add ability to skip GM unipred injection, and use bipred only
-#define FASTER_GM 0
-#define ERROR_GM 0
-#define GM_LIST_0 0
-#define GM_AFFINE 1
-#define CDEF_OPT                1 // Added new fast search for CDEF
-#define DC_ONLY_AT_NON_REF 1 // use only intra dc at no reference frame
-#define NEW_CDF 1 // Updating CDF levels and controls
-#endif
 #ifdef __cplusplus
 }
 #endif // __cplusplus

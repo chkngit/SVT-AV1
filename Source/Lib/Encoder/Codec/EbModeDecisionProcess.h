@@ -345,7 +345,7 @@ typedef struct ModeDecisionContext {
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
     uint32_t         best_candidate_index_array[MAX_NFL_BUFF];
-#if !PD0_A_OPT
+#if !UNIFY_SORTING_ARRAY
     uint32_t         sorted_candidate_index_array[MAX_NFL];
 #endif
     uint16_t         blk_origin_x;
