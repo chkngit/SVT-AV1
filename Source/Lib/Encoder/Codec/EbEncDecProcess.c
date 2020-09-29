@@ -2512,9 +2512,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pd_pass == PD_PASS_0)
         context_ptr->md_exit_th = 25;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_exit_th = 30;
+        context_ptr->md_exit_th = 25;
     else
-        context_ptr->md_exit_th = 35;
+        context_ptr->md_exit_th = 25;
 #endif
     if (pd_pass == PD_PASS_0)
         context_ptr->interpolation_search_level = IFS_OFF;
