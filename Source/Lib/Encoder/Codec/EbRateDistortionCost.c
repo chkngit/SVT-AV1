@@ -1880,6 +1880,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 ->skip_fac_bits[0][1]),
                 (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
 #else
+        uint64_t non_skip_cost =
             RDCOST(lambda,
                    (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + tx_size_bits +
                     (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
