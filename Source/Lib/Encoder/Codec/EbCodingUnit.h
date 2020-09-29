@@ -385,7 +385,7 @@ typedef struct BlkStruct {
                        // final_ref_mv_stack and ref_mv_count for EC
     PredictionMode pred_mode; // ec
 #if !CLEAN_UP_SB_DATA_4
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     uint8_t        skip_coeff_context;
 #endif
     uint8_t        reference_mode_context;

@@ -1162,7 +1162,7 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
     xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
     xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
-#if !PD0_G_OPT
+#if !REMOVE_MVP_MEMSET
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
     memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
            0,

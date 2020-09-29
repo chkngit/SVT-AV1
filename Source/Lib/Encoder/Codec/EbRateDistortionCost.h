@@ -36,7 +36,7 @@ extern uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *
 extern void coding_loop_context_generation(
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
     uint32_t blk_origin_y, uint32_t sb_sz, 
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     NeighborArrayUnit *skip_coeff_neighbor_array,
 #endif
     NeighborArrayUnit *inter_pred_dir_neighbor_array,

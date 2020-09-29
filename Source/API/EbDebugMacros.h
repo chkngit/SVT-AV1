@@ -112,12 +112,12 @@ extern "C" {
 #if PD0_OPT
 #define PD0_A_OPT 1 // 3
 #define PD0_B_OPT 1
-#define PD0_C_OPT 1 // 4
-#define PD0_D_OPT 1
-#define PD0_E_OPT 1
-#define PD0_F_OPT 1 // skip_coeff_context
-#define PD0_G_OPT 1 // useless memset @ mvp generation 
-#define PD0_H_OPT 1 // memset cost restricted
+#define USE_MDS_CNT_INIT 1 // 4
+#define SKIP_MV_RATE_UPDATE_IF_I_SLICE_NOT_SC 1
+#define MOVE_PME_RES_INIT_UNDER_PME 1
+#define REMOVE_MD_SKIP_COEFF_CIRCUITERY 1 // skip_coeff_context
+#define REMOVE_MVP_MEMSET 1 // useless memset @ mvp generation 
+#define OPT_FAST_COST_INIT 1 // memset cost restricted
 #endif
 /***********LOSSLESS II **************/
 #define INIT_BLOCK_OPT        1 // 5

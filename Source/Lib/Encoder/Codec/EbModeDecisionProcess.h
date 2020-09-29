@@ -299,7 +299,7 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *cb_recon_neighbor_array16bit;
     NeighborArrayUnit *cr_recon_neighbor_array16bit;
     NeighborArrayUnit *tx_search_luma_recon_neighbor_array16bit;
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     NeighborArrayUnit *skip_coeff_neighbor_array;
 #endif
     NeighborArrayUnit *
@@ -614,7 +614,7 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_end_y;
     uint8_t txs_in_inter_classes;
     uint8_t nic_scaling_level;
-#if PD0_H_OPT
+#if OPT_FAST_COST_INIT
     uint8_t nic_1_last_stage;
 #endif
     uint8_t inter_compound_mode;

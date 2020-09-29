@@ -5050,6 +5050,11 @@ EbErrorType generate_md_stage_0_cand(
             &cand_total_cnt);
     }
     *candidate_total_count_ptr = cand_total_cnt;
+#if OPT_FAST_COST_INIT
+    for (uint32_t index = 0; index < MIN((*candidate_total_count_ptr + CAND_CLASS_TOTAL), MAX_NFL_BUFF_Y); ++index)
+        context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
+
     CandClass  cand_class_it;
     memset(context_ptr->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
 

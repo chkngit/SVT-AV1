@@ -1866,7 +1866,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
 
-#if PD0_F_OPT
+#if REMOVE_MD_SKIP_COEFF_CIRCUITERY
         // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         uint64_t non_skip_cost =
             RDCOST(lambda,
@@ -1900,7 +1900,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             candidate_buffer_ptr->candidate_ptr->block_has_coeff = 0;
         }
 
-#if PD0_F_OPT
+#if REMOVE_MD_SKIP_COEFF_CIRCUITERY
         // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
             coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
@@ -2221,7 +2221,7 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 ************************************************************/
 void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     uint32_t blk_origin_x, uint32_t blk_origin_y, uint32_t sb_sz,
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                     NeighborArrayUnit *skip_coeff_neighbor_array,
 #endif
                                     NeighborArrayUnit *inter_pred_dir_neighbor_array,
@@ -2345,7 +2345,7 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
             : ((PartitionContext *)
                    leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index]
                   .left;
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     // Skip Coeff AV1 Context
     uint32_t skip_coeff_left_neighbor_index =
         get_neighbor_array_unit_left_index(skip_coeff_neighbor_array, blk_origin_y);

@@ -545,7 +545,7 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
                            NEIGHBOR_ARRAY_UNIT_FULL_MASK);
         }
     }
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     //neighbor_array_unit_reset(pcs_ptr->md_skip_coeff_neighbor_array[depth]);
     copy_neigh_arr(pcs_ptr->md_skip_coeff_neighbor_array[src_idx][tile_idx],
                    pcs_ptr->md_skip_coeff_neighbor_array[dst_idx][tile_idx],
@@ -927,7 +927,7 @@ void av1_perform_inverse_transform_recon(ModeDecisionContext *        context_pt
 * Coding Loop - Fast Loop Initialization
 *******************************************/
 void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                         NeighborArrayUnit *  skip_coeff_neighbor_array,
 #endif
                                         NeighborArrayUnit *  inter_pred_dir_neighbor_array,
@@ -946,7 +946,7 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
                                    context_ptr->blk_origin_x,
                                    context_ptr->blk_origin_y,
                                    BLOCK_SIZE_64,
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                    skip_coeff_neighbor_array,
 #endif
                                    inter_pred_dir_neighbor_array,
@@ -958,9 +958,7 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
                                    leaf_depth_neighbor_array,
 #endif
                                    leaf_partition_neighbor_array);
-#if PD0_H_OPT
-    EB_MEMSET(context_ptr->fast_cost_array, 0xFF, sizeof(uint64_t) * MAX_NFL_BUFF);
-#else
+#if !OPT_FAST_COST_INIT
 #if INIT_FAST_LOOP_OPT
     EB_MEMSET(context_ptr->fast_cost_array, MAX_CU_COST, sizeof(uint64_t) * MAX_NFL_BUFF);
 #else
@@ -1428,7 +1426,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
     }
-#if PD0_H_OPT
+#if OPT_FAST_COST_INIT
     if (context_ptr->nic_1_last_stage) {
 #else
     uint8_t use_nic_1_last_stage;
@@ -1488,7 +1486,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                                                       ? context_ptr->md_stage_2_count[CAND_CLASS_3]
                                                       : context_ptr->md_stage_3_count[CAND_CLASS_3];
 
-#if PD0_C_OPT
+#if USE_MDS_CNT_INIT
     for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) 
         context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cidx];
 #endif
@@ -7153,7 +7151,7 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     //CHKN uint8_t                         reference_mode_context;
     //CHKN uint8_t                         compoud_reference_type_context;
     //CHKN uint32_t                        partitionContext;
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     dst_cu->skip_coeff_context             = src_cu->skip_coeff_context;
 #endif
     dst_cu->reference_mode_context         = src_cu->reference_mode_context;
@@ -7239,7 +7237,7 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     //CHKN uint8_t                         reference_mode_context;
     //CHKN uint8_t                         compoud_reference_type_context;
     //CHKN uint32_t                        partitionContext;
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     dst_cu->skip_coeff_context             = src_cu->skip_coeff_context;
 #endif
     dst_cu->reference_mode_context         = src_cu->reference_mode_context;
@@ -7881,7 +7879,7 @@ static void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionC
 
 static void interintra_class_pruning_3(ModeDecisionContext *context_ptr,
                                        uint64_t             best_md_stage_cost) {
-#if PD0_C_OPT
+#if USE_MDS_CNT_INIT
     context_ptr->md_stage_3_total_count = 0;
 #endif
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
@@ -8160,7 +8158,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     blk_ptr->av1xd->tile.mi_row_end   = context_ptr->sb_ptr->tile_info.mi_row_end;
 
     product_coding_loop_init_fast_loop(context_ptr,
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                        context_ptr->skip_coeff_neighbor_array,
 #endif
                                        context_ptr->inter_pred_dir_neighbor_array,
@@ -8229,7 +8227,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
         read_refine_me_mvs(
             pcs_ptr, context_ptr, input_picture_ptr);
-#if !PD0_E_OPT
+#if !MOVE_PME_RES_INIT_UNDER_PME
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
             context_ptr->pme_res[li][ri].dist = 0xFFFFFFFF;
@@ -8243,7 +8241,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     perform_md_reference_pruning(
         pcs_ptr, context_ptr, input_picture_ptr);
     // Perform ME search around the best MVP
-#if PD0_E_OPT
+#if MOVE_PME_RES_INIT_UNDER_PME
     if (context_ptr->md_pme_ctrls.enabled) {
         for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
             for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
@@ -8270,7 +8268,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
     generate_md_stage_0_cand(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
-#if !PD0_C_OPT
+#if !USE_MDS_CNT_INIT
     //MD Stages
     //The first stage(old fast loop) and the last stage(old full loop) should remain at their locations, new stages could be created between those two.
     //a bypass mechanism should be added to skip one or all of the intermediate stages, in a way to to be able to fall back to org design (FastLoop->FullLoop)
@@ -8284,7 +8282,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->md_stage_2_total_count = 0;
     context_ptr->md_stage_3_total_count = 0;
 
-#if PD0_C_OPT
+#if USE_MDS_CNT_INIT
     // Derive NIC(s)
     set_md_stage_counts(pcs_ptr, context_ptr, fast_candidate_total_count);
 #endif
@@ -8334,7 +8332,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
             //Sort:  md_stage_1_count[cand_class_it]
             memset(context_ptr->cand_buff_indices[cand_class_it],
                    0xFF,
-#if PD0_C_OPT // to use md_stage_3 count signal
+#if USE_MDS_CNT_INIT // to use md_stage_3 count signal
                    context_ptr->md_stage_3_total_count * sizeof(uint32_t));
 #else
                    MAX_NFL_BUFF * sizeof(uint32_t));
@@ -9009,7 +9007,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         context_ptr->cr_recon_neighbor_array16bit =
             pcs_ptr->md_cr_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     }
-#if !PD0_F_OPT
+#if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     context_ptr->skip_coeff_neighbor_array =
         pcs_ptr->md_skip_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
 #endif

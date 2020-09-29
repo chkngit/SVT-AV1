@@ -3052,7 +3052,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->nic_scaling_level = 9;
     }
-#if PD0_H_OPT
+#if OPT_FAST_COST_INIT
     if (pd_pass == PD_PASS_0)
         context_ptr->nic_1_last_stage = 1;
     else if (pd_pass == PD_PASS_1)
@@ -4860,7 +4860,7 @@ void *mode_decision_kernel(void *input_ptr) {
                             pcs_ptr->slice_type == I_SLICE,
                             &pcs_ptr->ec_ctx_array[sb_index]);
                         // Initial Rate Estimation of the Motion vectors
-#if PD0_D_OPT
+#if SKIP_MV_RATE_UPDATE_IF_I_SLICE_NOT_SC
                         if(pcs_ptr->parent_pcs_ptr->sc_content_detected || pcs_ptr->slice_type == B_SLICE)
 #endif
 #if NEW_CDF
