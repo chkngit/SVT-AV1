@@ -3173,7 +3173,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 };
 
 void interpolation_filter_search(PictureControlSet *          picture_control_set_ptr,
+#if !FIX_IFS
                                  EbPictureBufferDesc *        prediction_ptr,
+#endif
                                  ModeDecisionContext *        md_context_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer_ptr, MvUnit mv_unit,
                                  EbPictureBufferDesc *ref_pic_list0,
@@ -3275,7 +3277,39 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                                                            (InterpFilter)filter_sets[i][1]);
 
                     const int32_t tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
-
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        md_context_ptr->luma_recon_neighbor_array,
+                        md_context_ptr->cb_recon_neighbor_array,
+                        md_context_ptr->cr_recon_neighbor_array,
+                        candidate_buffer_ptr->candidate_ptr->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3307,8 +3341,13 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
@@ -3340,7 +3379,39 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     const int32_t tmp_rs = eb_av1_get_switchable_rate(
                         candidate_buffer_ptr, cm, md_context_ptr);
-
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        md_context_ptr->luma_recon_neighbor_array,
+                        md_context_ptr->cb_recon_neighbor_array,
+                        md_context_ptr->cr_recon_neighbor_array,
+                        candidate_buffer_ptr->candidate_ptr->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3372,8 +3443,13 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
@@ -3411,7 +3487,39 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     const int32_t tmp_rs = eb_av1_get_switchable_rate(
                         candidate_buffer_ptr, cm, md_context_ptr);
-                    
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        md_context_ptr->luma_recon_neighbor_array,
+                        md_context_ptr->cb_recon_neighbor_array,
+                        md_context_ptr->cr_recon_neighbor_array,
+                        candidate_buffer_ptr->candidate_ptr->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        (i == 0) ? md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE : use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3447,9 +3555,13 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             use_uv,
 #endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
-
+#endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
@@ -6538,10 +6650,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                 ->reference_picture;
                 }
                 interpolation_filter_search(picture_control_set_ptr,
+#if !FIX_IFS
 #if OPT_IFS
                                            candidate_buffer_ptr->prediction_ptr,
 #else
                                             md_context_ptr->prediction_ptr_temp,
+#endif
 #endif
                                             md_context_ptr,
                                             candidate_buffer_ptr,

@@ -49,6 +49,7 @@ extern "C" {
 #define TUNE_REF 0
 #define TXT_TUNE 1
 #endif
+#define FIX_IFS 1
 /************************************/
 #define COST_BASED_PRED_ONLY 1
 #define ADD_LEVELS 1
