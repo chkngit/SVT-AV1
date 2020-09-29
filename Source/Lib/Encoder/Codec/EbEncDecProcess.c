@@ -2107,6 +2107,9 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_quant_luma = 1;
         rdoq_ctrls->fp_quant_chroma = 1;
         rdoq_ctrls->satd_factor = (uint8_t) ~0;
+#if RDOQ_OPT2
+        rdoq_ctrls->early_exit = 0;
+#endif
         break;
     case 2:
         rdoq_ctrls->enabled = 1;
@@ -2117,6 +2120,9 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_quant_luma = 1;
         rdoq_ctrls->fp_quant_chroma = 0;
         rdoq_ctrls->satd_factor = 128;
+#if RDOQ_OPT2
+        rdoq_ctrls->early_exit = 1;
+#endif
         break;
     case 3:
         rdoq_ctrls->enabled = 1;
@@ -2127,6 +2133,9 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_quant_luma = 1;
         rdoq_ctrls->fp_quant_chroma = 0;
         rdoq_ctrls->satd_factor = 64;
+#if RDOQ_OPT2
+        rdoq_ctrls->early_exit = 1;
+#endif
         break;
     default: assert(0); break;
     }
@@ -3385,6 +3394,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->mds3_intra_prune_th = 30;
 
+#if RDOQ_OPT5
+    if (pd_pass == PD_PASS_0)
+        context_ptr->skip_search_tools_at_last_stage = EB_FALSE;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->skip_search_tools_at_last_stage = EB_FALSE;
+    else
+        context_ptr->skip_search_tools_at_last_stage =  (enc_mode <= ENC_M7) ? EB_FALSE : EB_TRUE;
+#endif
     return return_error;
 }
 /******************************************************
@@ -3570,8 +3587,8 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
 #if INIT_BLOCK_OPT
                 uint32_t d1_blk_idx = blk_index + d1_block_idx;
-                context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag          = EB_FALSE;
-                context_ptr->md_blk_arr_nsq[d1_blk_idx].split_flag         = EB_TRUE;
+                context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag = EB_FALSE;
+                context_ptr->md_blk_arr_nsq[d1_blk_idx].split_flag = EB_TRUE;
                 context_ptr->md_local_blk_unit[d1_blk_idx].tested_blk_flag = EB_FALSE;
                 if (results_ptr->leaf_data_array[d1_blk_idx].consider_block) {
                     context_ptr->md_local_blk_unit[d1_blk_idx].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
@@ -3580,7 +3597,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
                             context_ptr->md_local_blk_unit[d1_blk_idx].sse_gradian_band[shape_idx] = 1;
                     if (d1_blk_idx == 0)
-                        context_ptr->md_blk_arr_nsq[d1_blk_idx].part               = PARTITION_SPLIT;
+                        context_ptr->md_blk_arr_nsq[d1_blk_idx].part = PARTITION_SPLIT;
                     context_ptr->md_blk_arr_nsq[d1_blk_idx].do_not_process_block = 0;
 
                     AMdCycleRControls*adaptive_md_cycles_red_ctrls = &context_ptr->admd_cycles_red_ctrls;
@@ -4559,7 +4576,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
 
 #if INIT_BLOCK_OPT
-                    context_ptr->md_local_blk_unit[blk_index].avail_blk_flag          = EB_FALSE;
+                    context_ptr->md_local_blk_unit[blk_index].avail_blk_flag = EB_FALSE;
                     context_ptr->md_local_blk_unit[blk_index].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
                     context_ptr->md_local_blk_unit[blk_index].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
                     if (!context_ptr->md_disallow_nsq)

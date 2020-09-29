@@ -1328,11 +1328,11 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #if PER_REFERENCE_RDOQ
     PictureControlSet *pcs_ptr,
 #endif
-                       int16_t txb_skip_context,
-                       int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
-                       intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
-                       TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
-                       const QuantParam *qparam, TxSize tx_size, TxType tx_type, EbBool is_inter,
+    int16_t txb_skip_context,
+    int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
+    intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
+    TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
+    const QuantParam *qparam, TxSize tx_size, TxType tx_type, EbBool is_inter,
                        uint32_t lambda,int plane)
 
 {
@@ -1340,10 +1340,10 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     (void)n_coeffs;
     (void)sc;
     (void)qparam;
-    int                    sharpness       = 0; // No Sharpness
+    int                    sharpness = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
 #if !FAST_RDOQ_MODE
-    int                    fast_mode       = (is_inter && plane);
+    int                    fast_mode = (is_inter && plane);
 #endif
 #if PER_REFERENCE_RDOQ
     fast_mode = (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag);
@@ -1355,16 +1355,25 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #elif FAST_RDOQ_INTER
     fast_mode = is_inter;
 #endif
-    const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
-    const int16_t *        scan            = scan_order->scan;
-    const int              shift           = av1_get_tx_scale(tx_size);
-    const PlaneType        plane_type      = get_plane_type(plane);
-    const TxSize           txs_ctx         = get_txsize_entropy_ctx(tx_size);
-    const TxClass          tx_class        = tx_type_to_class[tx_type];
-    const int              bwl             = get_txb_bwl(tx_size);
-    const int              width           = get_txb_wide(tx_size);
-    const int              height          = get_txb_high(tx_size);
-
+    const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type];
+    const int16_t *        scan = scan_order->scan;
+#if RDOQ_OPT
+    const int              shift = av1_get_tx_scale_tab[tx_size];
+    const PlaneType        plane_type = plane;
+    const TxSize           txs_ctx = get_txsize_entropy_ctx_tab[tx_size];
+    const TxClass          tx_class = tx_type_to_class[tx_type];
+    const int              bwl = get_txb_bwl_tab[tx_size];
+    const int              width = get_txb_wide_tab[tx_size];
+    const int              height = get_txb_high_tab[tx_size];
+#else
+    const int              shift = av1_get_tx_scale(tx_size);
+    const PlaneType        plane_type = get_plane_type(plane);
+    const TxSize           txs_ctx = get_txsize_entropy_ctx(tx_size);
+    const TxClass          tx_class = tx_type_to_class[tx_type];
+    const int              bwl = get_txb_bwl(tx_size);
+    const int              width = get_txb_wide(tx_size);
+    const int              height = get_txb_high(tx_size);
+#endif
 #if RDOQ_ONLY_NOT_N2
     if (*eob <= n_coeffs / 4)
         return;
@@ -1379,6 +1388,19 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     const int           eob_multi_size = txsize_log2_minus4[tx_size];
     const LvMapEobCost *txb_eob_costs =
         &md_context->md_rate_estimation_ptr->eob_frac_bits[eob_multi_size][plane_type];
+#if RDOQ_OPT2
+    const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
+    const int skip_cost = txb_costs->txb_skip_cost[txb_skip_context][1];
+    const int eob_cost = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
+    if (md_context->rdoq_ctrls.early_exit) {
+        int sq_size_idx = 7 - (int)log2f_32(md_context->blk_geom->sq_size);
+        if (eob_cost < (int)(width * height * sq_size_idx * 5)) {
+            if (skip_cost < non_skip_cost) {
+                return;
+            }
+        }
+    }
+#endif
     if (fast_mode) {
         update_coeff_eob_fast(eob, shift, p->dequant_qtx, scan, coeff_ptr, qcoeff_ptr, dqcoeff_ptr);
         if (*eob == 0) return;
@@ -1390,12 +1412,14 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
     uint8_t *const levels = set_levels(levels_buf, width);
 
     if (*eob > 1) eb_av1_txb_init_levels(qcoeff_ptr, width, height, levels);
+#if !RDOQ_OPT2
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
 #if RATE_BLIND
     const int eob_cost = 0;
 #else
     const int eob_cost = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
+#endif
 #endif
     int       accu_rate     = eob_cost;
 
@@ -1796,8 +1820,11 @@ int32_t av1_quantize_inv_quantize(
     const int32_t n_coeffs = av1_get_max_eob(txsize);
 
     QuantParam qparam;
-
+#if RDOQ_OPT
+     qparam.log_scale = av1_get_tx_scale_tab[txsize];
+#else
     qparam.log_scale = av1_get_tx_scale(txsize);
+#endif
     qparam.tx_size   = txsize;
     qparam.qmatrix   = q_matrix;
     qparam.iqmatrix  = iq_matrix;
@@ -1827,7 +1854,11 @@ int32_t av1_quantize_inv_quantize(
      if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
          // Hsan
          int satd = svt_aom_satd(coeff, n_coeffs);
+#if RDOQ_OPT
+         const int shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[txsize]);
+#else
          const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
+#endif
          satd = RIGHT_SIGNED_SHIFT(satd, shift);
          satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
 #if TUNE_SATD
@@ -2167,7 +2198,11 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         txb_full_distortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
         txb_full_distortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
         TxSize  tx_size = context_ptr->blk_geom->txsize[tx_depth][txb_itr];
+#if RDOQ_OPT
+         int32_t shift   = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
+#else
         int32_t shift   = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
+#endif
         txb_full_distortion[0][DIST_CALC_RESIDUAL] =
             RIGHT_SIGNED_SHIFT(txb_full_distortion[0][DIST_CALC_RESIDUAL], shift);
         txb_full_distortion[0][DIST_CALC_PREDICTION] =
@@ -2650,7 +2685,11 @@ void cu_full_distortion_fast_txb_mode_r(
                     count_nonzero_coeffs_all[2],
                     component_type);
                 TxSize tx_size = context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr];
+#if RDOQ_OPT
+                const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
+#else
                 const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
+#endif
                 txb_full_distortion[1][DIST_CALC_RESIDUAL] =
                     RIGHT_SIGNED_SHIFT(txb_full_distortion[1][DIST_CALC_RESIDUAL], chroma_shift);
                 txb_full_distortion[1][DIST_CALC_PREDICTION] =
@@ -2930,6 +2969,9 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
             } else {
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost = current_depth_cost;
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].part    = PARTITION_SPLIT;
+#if INIT_BLOCK_OPT
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_TRUE;
+#endif
             }
 
             //setup next parent inter depth

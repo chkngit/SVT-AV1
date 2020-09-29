@@ -210,6 +210,9 @@ extern "C" {
 #define ON_THE_FLY_MDS1_BYPASS 0
 #endif
 
+#define RDOQ_OPT 1 // lossless
+#define RDOQ_OPT2 1 // early exit rdo
+#define RDOQ_OPT5 1 // disable last md search tools (rdoq, txtype seach, interpolation search)
 #ifdef __cplusplus
 }
 #endif // __cplusplus

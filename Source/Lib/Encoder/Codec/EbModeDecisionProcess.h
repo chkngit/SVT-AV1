@@ -262,6 +262,9 @@ typedef struct RdoqCtrls {
     uint8_t fp_quant_chroma;
 
     uint8_t satd_factor;
+#if RDOQ_OPT2
+    uint8_t early_exit;
+#endif
 }RdoqCtrls;
 #endif
 typedef struct ModeDecisionContext {
@@ -639,6 +642,9 @@ typedef struct ModeDecisionContext {
 #endif
 #if PD0_CUT_BYPASS
     uint8_t sb_me_cplx_lev;
+#endif
+#if RDOQ_OPT5
+    uint8_t skip_search_tools_at_last_stage;
 #endif
 } ModeDecisionContext;
 

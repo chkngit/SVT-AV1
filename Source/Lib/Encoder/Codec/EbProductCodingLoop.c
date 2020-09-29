@@ -701,12 +701,12 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         if (!context_ptr->md_disallow_nsq)
         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
             context_ptr->md_local_blk_unit[blk_idx].sse_gradian_band[shape_idx] = 1;
-        if (blk_geom->shape == PART_N) {
+       if (blk_geom->shape == PART_N) {
             context_ptr->md_blk_arr_nsq[blk_idx].split_flag         = EB_TRUE;
             context_ptr->md_blk_arr_nsq[blk_idx].part               = PARTITION_SPLIT;
             context_ptr->md_local_blk_unit[blk_idx].tested_blk_flag = EB_FALSE;
         }
-        context_ptr->md_blk_arr_nsq[blk_idx].do_not_process_block = 0;
+         context_ptr->md_blk_arr_nsq[blk_idx].do_not_process_block = 0;
         ++blk_idx;
     } while (blk_idx < scs_ptr->max_block_cnt);
 }
@@ -5127,7 +5127,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
+#if RDOQ_OPT
+            const int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr]]) * 2;
+#else
             const int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr])) * 2;
+#endif
             txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] =
                 RIGHT_SIGNED_SHIFT(txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL], shift);
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] =
@@ -5142,26 +5146,26 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;
         else
-        av1_txb_estimate_coeff_bits(
-            context_ptr,
-            0, //allow_update_cdf,
-            NULL, //FRAME_CONTEXT *ec_ctx,
-            pcs_ptr,
-            candidate_buffer,
-            context_ptr->txb_1d_offset,
-            0,
-            context_ptr->residual_quant_coeff_ptr,
-            y_count_non_zero_coeffs_txt[tx_type],
-            0,
-            0,
-            &(y_txb_coeff_bits_txt[tx_type]),
-            &(y_txb_coeff_bits_txt[tx_type]),
-            &(y_txb_coeff_bits_txt[tx_type]),
-            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
-            context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
-            tx_type,
-            candidate_buffer->candidate_ptr->transform_type_uv,
-            COMPONENT_LUMA);
+            av1_txb_estimate_coeff_bits(
+                    context_ptr,
+                    0, //allow_update_cdf,
+                    NULL, //FRAME_CONTEXT *ec_ctx,
+                    pcs_ptr,
+                    candidate_buffer,
+                    context_ptr->txb_1d_offset,
+                    0,
+                    context_ptr->residual_quant_coeff_ptr,
+                    y_count_non_zero_coeffs_txt[tx_type],
+                    0,
+                    0,
+                    &(y_txb_coeff_bits_txt[tx_type]),
+                    &(y_txb_coeff_bits_txt[tx_type]),
+                    &(y_txb_coeff_bits_txt[tx_type]),
+                    context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->txsize_uv[context_ptr->tx_depth][context_ptr->txb_itr],
+                    tx_type,
+                    candidate_buffer->candidate_ptr->transform_type_uv,
+                    COMPONENT_LUMA);
         uint64_t            y_full_cost;
         //TODO: fix cbf decision
         av1_txb_calc_cost_luma(context_ptr->luma_txb_skip_context,
@@ -7069,6 +7073,15 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         context_ptr->md_staging_perform_intra_chroma_pred = EB_TRUE;
         if (context_ptr->chroma_at_last_md_stage)
             update_intra_chroma_mode(context_ptr, candidate_ptr, pcs_ptr);
+#if RDOQ_OPT5
+        if (context_ptr->skip_search_tools_at_last_stage) {
+            if (!candidate_buffer->candidate_ptr->block_has_coeff && !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                context_ptr->md_staging_skip_rdoq = EB_TRUE;
+                context_ptr->md_staging_txt_level = 0;
+                context_ptr->md_staging_skip_interpolation_search = 0;
+            }
+        }
+#endif
         full_loop_core(pcs_ptr,
                        sb_ptr,
                        blk_ptr,
