@@ -2510,11 +2510,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PD0_MD_EXIT
     // Derive MD Exit TH
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_exit_th = 0;
+        context_ptr->md_exit_th = 25;
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_exit_th = 0;
     else
-        context_ptr->md_exit_th = 35;
+        context_ptr->md_exit_th = 0;
 
 
 #endif
