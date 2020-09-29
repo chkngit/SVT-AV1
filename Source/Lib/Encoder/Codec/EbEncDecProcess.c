@@ -2453,12 +2453,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_level = 5;
 
     set_txt_controls(context_ptr, txt_level);
-#else
 #if TXT_TUNE
-            context_ptr->md_txt_level = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 5 : 6;
+    context_ptr->md_txt_level = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 5 : 6;
 #else
-            context_ptr->md_txt_level = 5;
+    context_ptr->md_txt_level = 5;
 #endif
+#else
+
     //}
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
