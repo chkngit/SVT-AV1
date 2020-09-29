@@ -3441,7 +3441,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             prediction_ptr,
                             md_context_ptr->blk_geom->origin_x,
                             md_context_ptr->blk_geom->origin_y,
-#if OPT_IFS // to add mdsand chroma signals
+#if OPT_IFS
                             (i == 0) ? md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE : use_uv,
 #else
                             use_uv,
@@ -6584,7 +6584,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
 #if OPT_IFS
-    if(!md_context_ptr->ifs_is_regular_last || candidate_buffer_ptr->candidate_ptr->motion_mode != SIMPLE_TRANSLATION)
+    // IFS predicted samples could not be used if IFS not performed or performed but regular is not the last, 
+    // motion mode is always SIMPLE_TRANSLATION when IFS is performed, and is_interintra_used is always false when IFS is performed
+    if(!md_context_ptr->ifs_is_regular_last || candidate_buffer_ptr->candidate_ptr->motion_mode != SIMPLE_TRANSLATION || candidate_ptr->is_interintra_used)
 #endif
     av1_inter_prediction(
             picture_control_set_ptr,
