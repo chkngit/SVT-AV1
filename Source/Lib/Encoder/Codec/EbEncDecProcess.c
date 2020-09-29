@@ -2510,11 +2510,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PD0_MD_EXIT
     // Derive MD Exit TH
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_exit_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 35 : 50;
+        context_ptr->md_exit_th = 35;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_exit_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 35 : 50;
+        context_ptr->md_exit_th = 35;
     else
-        context_ptr->md_exit_th = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 35 : 50;
+        context_ptr->md_exit_th = 35;
 
 
 #endif
