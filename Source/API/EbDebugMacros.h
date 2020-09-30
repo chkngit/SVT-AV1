@@ -81,6 +81,7 @@ extern "C" {
 #define ENABLE_TPL_TRAILING 1 //enable trailing pictures for TPL
 #endif
 #define TUNE_SC_QPS_IMP   1 // Improve QP assignment for SC
+#define TUNE_QPS_QPM       1 // Improve the QPS settings for Keyframe. Improve QPM for nonI base frames 
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

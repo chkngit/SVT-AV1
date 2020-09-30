@@ -876,10 +876,10 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
-                //if (pcs_ptr->picture_number == 0)
+                //if (pcs_ptr->picture_number == 16)
                 //SVT_LOG(
                 //        "generate_r0beta ---> poc%ld sb_x=%d sb_y=%d r0=%f rk=%f\t intraC=%lld "
-                //        "mc_dep=%lld\tbeta=%f\n",
+                //        "mc_dep=%lld\tbeta=%f\toldbeta=%f\tmesad=%lld\n",
                 //        pcs_ptr->picture_number,
                 //        sb_x,
                 //        sb_y,
@@ -887,7 +887,9 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 //        rk,
                 //        intra_cost,
                 //        mc_dep_cost,
-                //        beta);
+                //        beta,
+                //    old_beta,
+                //    pcs_ptr->rc_me_distortion[sb_y * picture_sb_width + sb_x]);
                 assert(beta > 0.0);
             }
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
@@ -5452,8 +5454,13 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
     factor = AOMMAX(factor, 4.0);
 #endif
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
-    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0)
-                                         : (int)rint(2 * (75.0 + 14.0 * factor) / r0);
+#if TUNE_QPS_QPM
+    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17 * factor) / 2 / r0)
+                                         : (int)rint(2 * (75.0 + 17 * factor) / r0);
+#else
+    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 14 * factor) / 2 / r0)
+        : (int)rint(2 * (75.0 + 14 * factor) / r0);
+#endif
     return boost;
 }
 
@@ -5484,11 +5491,23 @@ int combine_prior_with_tpl_boost(int prior_boost, int tpl_boost,
     int boost = (int)((factor * prior_boost + (8.0 - factor) * tpl_boost) / 8.0);
     return boost;
 }
-
+#if TUNE_QPS_QPM
+int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, EB_SLICE slice_type) {
+#else
 int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
+#endif
     assert(beta > 0.0);
     int q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
+#if TUNE_QPS_QPM
+    int newq;
+    // use a less aggressive action when lowering the q for non I_slice
+    if (slice_type != I_SLICE && beta > 1)
+        newq = (int)rint(q / sqrt(sqrt(beta)));
+    else
+        newq = (int)rint(q / sqrt(beta));
+#else
     int newq = (int)rint(q / sqrt(beta));
+#endif
     int orig_qindex = qindex;
     if (newq < q) {
         do {
@@ -5791,7 +5810,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
         // Allow somewhat lower kf minq with small image formats.
         if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE)
+#if TUNE_QPS_QPM
+            q_adj_factor -= 0.2;
+#else
             q_adj_factor -= 0.15;
+#endif
         // Make a further adjustment based on the kf zero motion measure.
 #if !TUNE_TPL
         q_adj_factor +=
@@ -5873,16 +5896,8 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 int8_t tmp_layer_delta = (int8_t)pcs_ptr->parent_pcs_ptr->temporal_layer_index - (int8_t)ref_tmp_layer;
                 // active_best_quality is updated with the q index of the reference
                 if (rf_level == GF_ARF_LOW) {
-#if 0
-                    int c1, c2;
-                    c1 = 3;
-                        c2 = 1;
-                    while (tmp_layer_delta--)
-                        active_best_quality = (c1*active_best_quality + c2*cq_level + (c1+c2)/2) / (c1+c2);
-#else
                     while (tmp_layer_delta--)
                         active_best_quality = (active_best_quality + cq_level + 1) / 2;
-#endif
                 }
             }
             // For alt_ref and GF frames (including internal arf frames) adjust the
@@ -6067,7 +6082,12 @@ static void sb_qp_derivation_tpl_la(
             sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
 
             double beta = ppcs_ptr->tpl_beta[sb_addr];
+#if TUNE_QPS_QPM
+            int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                beta, pcs_ptr->parent_pcs_ptr->slice_type);
+#else
             int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
+#endif
             offset = AOMMIN(offset, pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
             offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
             sb_ptr->qindex = CLIP3(
@@ -6364,7 +6384,11 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
 #endif
         // Allow somewhat lower kf minq with small image formats.
         if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE)
+#if TUNE_QPS_QPM
+            q_adj_factor -= 0.2;
+#else
             q_adj_factor -= 0.15;
+#endif
         // Make a further adjustment based on the kf zero motion measure.
 #if !TUNE_TPL
         q_adj_factor +=
