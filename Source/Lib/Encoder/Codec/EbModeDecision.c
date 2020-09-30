@@ -3006,7 +3006,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     continue;
             }
             else
-#endif       
+#endif
             { // if (pcs_ptr->slice_type == P_SLICE) {
                 if (inter_direction != 0 || list0_ref_index)
                     continue;

@@ -209,7 +209,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
 #if PD0_SHUT_SKIP_DC_SIGN_UPDATE
-    if (!context_ptr->shut_skip_ctx_dc_sign_update) 
+    if (!context_ptr->shut_skip_ctx_dc_sign_update)
 #endif
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         //  Update chroma CB cbf and Dc context
@@ -1108,7 +1108,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
             *(candidate_buffer->fast_cost_ptr) = RDCOST(full_lambda, 0, luma_fast_distortion);
         }
         else
-#endif 
+#endif
         *(candidate_buffer->fast_cost_ptr) = luma_fast_distortion + chroma_fast_distortion;
         candidate_ptr->fast_luma_rate = 0;
         candidate_ptr->fast_chroma_rate = 0;
@@ -1135,7 +1135,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         context_ptr->intra_luma_left_mode,
         context_ptr->intra_luma_top_mode);
     }
-#if FASTER_PD0 
+#if FASTER_PD0
     // Init full cost
     *(candidate_buffer->full_cost_ptr) = *(candidate_buffer->fast_cost_ptr);
 #else
@@ -1487,7 +1487,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                                                       : context_ptr->md_stage_3_count[CAND_CLASS_3];
 
 #if USE_MDS_CNT_INIT
-    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) 
+    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx)
         context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cidx];
 #endif
 }
@@ -1692,11 +1692,11 @@ void sort_full_cost_based_candidates(struct ModeDecisionContext *context_ptr,
     }
 }
 #if UNIFY_SORTING_ARRAY
-#if !PD0_B_OPT 
+#if !PD0_B_OPT
 void construct_best_sorted_arrays_md_stage_1(struct ModeDecisionContext *  context_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t *best_candidate_index_array) {//best = union from all classes
-    
+
     uint32_t best_candi = 0;
     for (CandClass class_i = CAND_CLASS_0; class_i < CAND_CLASS_TOTAL; class_i++)
         for (uint32_t candi = 0; candi < context_ptr->md_stage_1_count[class_i]; candi++)
@@ -2046,32 +2046,6 @@ uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
 // Derive me_sb_addr and me_block_offset used to access ME_MV
-#if ME_IDX_LUPT
-const uint32_t me_idx[] = { 0,
- 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 1, 3, 0, 0, 2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 5, 6, 1, 1, 9, 10, 5, 9, 1, 1, 6, 10, 1, 1, 1, 1, 1, 1, 1, 1, 5,
- 5, 5, 5, 5, 21, 22, 5, 5, 29, 30, 21, 29, 5, 5, 22, 30, 5, 5, 5, 5, 5, 5, 5, 5, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 29, 29, 29, 29, 29, 29, 29, 29,
- 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 6, 6, 6, 6, 6, 23, 24, 6, 6, 31, 32, 23, 31, 6, 6, 24, 32, 6, 6, 6, 6, 6, 6, 6, 6, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24,
- 24, 24, 24, 31, 31, 31, 31, 31, 31, 31, 31, 31, 32, 32, 32, 32, 32, 32, 32, 32, 32, 9, 9, 9, 9, 9, 37, 38, 9, 9, 45, 46, 37, 45, 9, 9, 38, 46, 9, 9, 9, 9, 9, 9, 9, 9, 37, 37, 37, 37,
- 37, 37, 37, 37, 37, 38, 38, 38, 38, 38, 38, 38, 38, 38, 45, 45, 45, 45, 45, 45, 45, 45, 45, 46, 46, 46, 46, 46, 46, 46, 46, 46, 10, 10, 10, 10, 10, 39, 40, 10, 10, 47, 48, 39, 47, 10, 10, 40, 48, 10,
- 10, 10, 10, 10, 10, 10, 10, 39, 39, 39, 39, 39, 39, 39, 39, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 47, 47, 47, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 2, 2, 2, 2, 2, 7, 8,
- 2, 2, 11, 12, 7, 11, 2, 2, 8, 12, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 7, 7, 25, 26, 7, 7, 33, 34, 25, 33, 7, 7, 26, 34, 7, 7, 7, 7, 7, 7, 7, 7, 25, 25, 25, 25, 25, 25, 25,
- 25, 25, 26, 26, 26, 26, 26, 26, 26, 26, 26, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 34, 34, 34, 8, 8, 8, 8, 8, 27, 28, 8, 8, 35, 36, 27, 35, 8, 8, 28, 36, 8, 8, 8, 8,
- 8, 8, 8, 8, 27, 27, 27, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 35, 35, 35, 35, 35, 35, 35, 35, 35, 36, 36, 36, 36, 36, 36, 36, 36, 36, 11, 11, 11, 11, 11, 41, 42, 11, 11, 49,
- 50, 41, 49, 11, 11, 42, 50, 11, 11, 11, 11, 11, 11, 11, 11, 41, 41, 41, 41, 41, 41, 41, 41, 41, 42, 42, 42, 42, 42, 42, 42, 42, 42, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50,
- 50, 12, 12, 12, 12, 12, 43, 44, 12, 12, 51, 52, 43, 51, 12, 12, 44, 52, 12, 12, 12, 12, 12, 12, 12, 12, 43, 43, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 44, 44, 51, 51, 51, 51, 51, 51,
- 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 3, 3, 3, 3, 3, 13, 14, 3, 3, 17, 18, 13, 17, 3, 3, 14, 18, 3, 3, 3, 3, 3, 3, 3, 3, 13, 13, 13, 13, 13, 53, 54, 13, 13, 61, 62, 53, 61,
- 13, 13, 54, 62, 13, 13, 13, 13, 13, 13, 13, 13, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 61, 61, 61, 61, 61, 61, 61, 61, 61, 62, 62, 62, 62, 62, 62, 62, 62, 62, 14, 14,
- 14, 14, 14, 55, 56, 14, 14, 63, 64, 55, 63, 14, 14, 56, 64, 14, 14, 14, 14, 14, 14, 14, 14, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 63, 63, 63, 63, 63, 63, 63, 63, 63,
- 64, 64, 64, 64, 64, 64, 64, 64, 64, 17, 17, 17, 17, 17, 69, 70, 17, 17, 77, 78, 69, 77, 17, 17, 70, 78, 17, 17, 17, 17, 17, 17, 17, 17, 69, 69, 69, 69, 69, 69, 69, 69, 69, 70, 70, 70, 70, 70, 70, 70,
- 70, 70, 77, 77, 77, 77, 77, 77, 77, 77, 77, 78, 78, 78, 78, 78, 78, 78, 78, 78, 18, 18, 18, 18, 18, 71, 72, 18, 18, 79, 80, 71, 79, 18, 18, 72, 80, 18, 18, 18, 18, 18, 18, 18, 18, 71, 71, 71, 71, 71,
- 71, 71, 71, 71, 72, 72, 72, 72, 72, 72, 72, 72, 72, 79, 79, 79, 79, 79, 79, 79, 79, 79, 80, 80, 80, 80, 80, 80, 80, 80, 80, 4, 4, 4, 4, 4, 15, 16, 4, 4, 19, 20, 15, 19, 4, 4, 16, 20, 4, 4,
- 4, 4, 4, 4, 4, 4, 15, 15, 15, 15, 15, 57, 58, 15, 15, 65, 66, 57, 65, 15, 15, 58, 66, 15, 15, 15, 15, 15, 15, 15, 15, 57, 57, 57, 57, 57, 57, 57, 57, 57, 58, 58, 58, 58, 58, 58, 58, 58, 58, 65,
- 65, 65, 65, 65, 65, 65, 65, 65, 66, 66, 66, 66, 66, 66, 66, 66, 66, 16, 16, 16, 16, 16, 59, 60, 16, 16, 67, 68, 59, 67, 16, 16, 60, 68, 16, 16, 16, 16, 16, 16, 16, 16, 59, 59, 59, 59, 59, 59, 59, 59,
- 59, 60, 60, 60, 60, 60, 60, 60, 60, 60, 67, 67, 67, 67, 67, 67, 67, 67, 67, 68, 68, 68, 68, 68, 68, 68, 68, 68, 19, 19, 19, 19, 19, 73, 74, 19, 19, 81, 82, 73, 81, 19, 19, 74, 82, 19, 19, 19, 19, 19,
- 19, 19, 19, 73, 73, 73, 73, 73, 73, 73, 73, 73, 74, 74, 74, 74, 74, 74, 74, 74, 74, 81, 81, 81, 81, 81, 81, 81, 81, 81, 82, 82, 82, 82, 82, 82, 82, 82, 82, 20, 20, 20, 20, 20, 75, 76, 20, 20, 83, 84,
- 75, 83, 20, 20, 76, 84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 84, 84, 84,
-};
-#endif
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr) {
 
@@ -2105,31 +2079,31 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
         context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
         context_ptr->geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         context_ptr->geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
+#if ME_IDX_LUPT
+        context_ptr->me_block_offset = (uint32_t) me_idx_128x128[((context_ptr->geom_offset_y / me_sb_size) * 2) + (context_ptr->geom_offset_x / me_sb_size)][context_ptr->blk_geom->blkidx_mds];
+    }
+    else {
+        context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
+        context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];
+    }
+#else
     }
     else
         context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
-
+#endif
     if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
         context_ptr->me_block_offset = 0;
     }
+#if !ME_IDX_LUPT
     else {
-#if ME_IDX_LUPT
-        if(scs_ptr->seq_header.sb_size == BLOCK_64X64)
-            context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];
-        else
-            context_ptr->me_block_offset =
-            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
-                sq_blk_geom,
-                context_ptr->geom_offset_x,
-                context_ptr->geom_offset_y);
-#else
         context_ptr->me_block_offset =
             get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
                 sq_blk_geom,
                 context_ptr->geom_offset_x,
                 context_ptr->geom_offset_y);
-#endif
+
     }
+#endif
     context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
 }
 #define MAX_MD_NSQ_SARCH_MVC_CNT 5
@@ -4770,7 +4744,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
         uint32_t q_index = context_ptr->qp_index;
 
-        //if (component_type == COMPONENT_LUMA) 
+        //if (component_type == COMPONENT_LUMA)
         {
             candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant[q_index];
             candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_fp[q_index];
@@ -4905,7 +4879,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
                 continue;
 #endif
-#if !REMOVE_TXT_STATS 
+#if !REMOVE_TXT_STATS
         // Perform search selectively based on statistics (DCT_DCT always performed)
 #if TX_TYPE_GROUPING
         if (context_ptr->txt_ctrls.use_stats && tx_type != DCT_DCT) {
@@ -5203,18 +5177,18 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
         if (cur_to_pre_group_dev > 5)
             tx_type_group_idx = 2;
-        
+
     }
 #endif
 #if COST_BASED_TXT
 
 #if 0 // cost
     uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
-    uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
-    uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); // 
+    uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); //
+    uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]); //
     if (!is_inter)
         if (tx_type != DCT_DCT && best_cost_tx_search < cost_th_0)
-            break; 
+            break;
 #endif
 
 #if TXT_OFF // dist
@@ -5223,8 +5197,8 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     //if (is_inter)
     //TXT_OFF_IF_INTRA_TX_BELOW_16
     //if (!is_inter)
-    if (tx_type != DCT_DCT && 
-        (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 || 
+    if (tx_type != DCT_DCT &&
+        (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
         context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] <  16))
         break;
 #endif
@@ -6626,10 +6600,10 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
 #if ENHANCED_FASTER_PD0
 
     // Check if pa_me distortion is above the per-pixel threshold.  Rate is set to 16.
-    if (context_ptr->src_to_pred_decision && 
-        
+    if (context_ptr->src_to_pred_decision &&
+
         RDCOST(full_lambda, 0, candidate_buffer->candidate_ptr->luma_fast_distortion) < RDCOST(full_lambda, 64,context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight)
-        
+
        ) {
 
         y_full_distortion[DIST_CALC_RESIDUAL] = y_full_distortion[DIST_CALC_PREDICTION] = candidate_buffer->candidate_ptr->luma_fast_distortion;
@@ -8365,7 +8339,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     }
     interintra_class_pruning_1(context_ptr, best_md_stage_cost);
 
-#if !PD0_B_OPT 
+#if !PD0_B_OPT
     memset(context_ptr->best_candidate_index_array, 0xFF, MAX_NFL_BUFF * sizeof(uint32_t));
     memset(context_ptr->sorted_candidate_index_array, 0xFF, MAX_NFL * sizeof(uint32_t));
     construct_best_sorted_arrays_md_stage_1(context_ptr,
@@ -8375,7 +8349,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
 
 #if FASTER_PD0  && !ENHANCED_FASTER_PD0
-    if (!context_ptr->src_to_pred_decision) 
+    if (!context_ptr->src_to_pred_decision)
     {
 #endif
 

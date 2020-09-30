@@ -129,7 +129,7 @@ extern "C" {
 #define SKIP_MV_RATE_UPDATE_IF_I_SLICE_NOT_SC 1
 #define MOVE_PME_RES_INIT_UNDER_PME 1
 #define REMOVE_MD_SKIP_COEFF_CIRCUITERY 1 // skip_coeff_context
-#define REMOVE_MVP_MEMSET 1 // useless memset @ mvp generation 
+#define REMOVE_MVP_MEMSET 1 // useless memset @ mvp generation
 #define OPT_FAST_COST_INIT 1 // memset cost restricted
 #endif
 /***********LOSSLESS II **************/

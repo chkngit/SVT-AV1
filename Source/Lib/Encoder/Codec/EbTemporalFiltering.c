@@ -302,7 +302,7 @@ static void derive_tf_32x32_block_split_flag(MeContext *context_ptr) {
     int subblock_errors[4];
 
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
         if (!context_ptr->tf_16x16_search_do[idx_32x32]) {
             context_ptr->tf_32x32_block_split_flag[idx_32x32] = 0;
             continue;
@@ -958,7 +958,7 @@ static void apply_filtering_block(
         svt_av1_apply_filtering(
 #if TF_3X3
             context_ptr,
-#endif     
+#endif
             src_ptr[C_Y],
             stride[C_Y],
             pred_ptr[C_Y],
@@ -1000,7 +1000,7 @@ static void apply_filtering_block(
         svt_av1_apply_filtering_highbd(
 #if TF_3X3
             context_ptr,
-#endif          
+#endif
             src_ptr_16bit[C_Y],
             stride[C_Y],
             pred_ptr_16bit[C_Y],
@@ -1732,7 +1732,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
     uint32_t bsize = 16;
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
         context_ptr->tf_16x16_search_do[idx_32x32] = (context_ptr->tf_32x32_block_error[idx_32x32] < context_ptr->tf_block_32x32_16x16_th) ? 0 : 1;
 #if TF_32x32_ONLY
         context_ptr->tf_16x16_search_do[idx_32x32] = 0;
@@ -2989,7 +2989,7 @@ static EbErrorType produce_temporally_filtered_pic(
 #if TF_3X3
                             else
                                 apply_filtering_block(
-                                    context_ptr, 
+                                    context_ptr,
                                     block_row,
                                     block_col,
                                     src_center_ptr,
@@ -3015,7 +3015,7 @@ static EbErrorType produce_temporally_filtered_pic(
 
             // Normalize filter output to produce temporally filtered frame
 #if TF_CHROMA_BLIND
-            
+
             get_final_filtered_pixels(context_ptr,
                                       src_center_ptr_start,
 #else
@@ -3321,7 +3321,7 @@ EbErrorType svt_av1_init_temporal_filtering(
 #if TF_CHROMA_BLIND
     me_context_ptr->me_context_ptr->tf_hp = picture_control_set_ptr_central->tf_ctrls.hp;
     me_context_ptr->me_context_ptr->tf_chroma = picture_control_set_ptr_central->tf_ctrls.chroma;
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
     me_context_ptr->me_context_ptr->tf_block_32x32_16x16_th = picture_control_set_ptr_central->tf_ctrls.block_32x32_16x16_th;
 #endif
 #endif

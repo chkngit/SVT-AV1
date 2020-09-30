@@ -1015,7 +1015,7 @@ void svt_av1_apply_temporal_filter_sse4_1(
         y_dist_ptr += DIST_STRIDE;
     }
 #if TF_3X3
-    if(context_ptr->tf_chroma) 
+    if(context_ptr->tf_chroma)
 #endif
     for (row = 0; row < chroma_height; row++) {
         for (blk_col = 0; blk_col < chroma_width; blk_col += 8) {

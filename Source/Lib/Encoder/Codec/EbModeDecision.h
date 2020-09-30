@@ -160,7 +160,7 @@ typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_
 typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
-                                   uint64_t lambda, 
+                                   uint64_t lambda,
 #if !REMOVE_USELESS_0
                                    EbBool use_ssd,
 #endif

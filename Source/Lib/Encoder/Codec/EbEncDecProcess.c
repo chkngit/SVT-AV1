@@ -2580,7 +2580,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if PD0_CUT_4x4
 #if 0
-    if (pd_pass == PD_PASS_0)       
+    if (pd_pass == PD_PASS_0)
         context_ptr->disallow_4x4 = EB_TRUE;
     else if (pd_pass == PD_PASS_1)
         context_ptr->disallow_4x4 = EB_TRUE;
@@ -4163,7 +4163,7 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
 #endif
     }
-#if PD0_CUT_DEPTH 
+#if PD0_CUT_DEPTH
     else {
         return EB_FALSE;
     }
@@ -4217,7 +4217,7 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)(((int64_t)MAX(child_cost, 1) - (int64_t)MAX(mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost, 1)) * 100) /
             (int64_t)(MAX(mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost, 1));
     }
-#if PD0_CUT_DEPTH 
+#if PD0_CUT_DEPTH
     else {
         return EB_FALSE;
     }
@@ -4300,7 +4300,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if PRED_ONLY
                                     s_depth = 0;
                                     e_depth = 0;
-#else                                  
+#else
                                     s_depth = -1;
                                     e_depth = 1;
 #endif
@@ -4377,10 +4377,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             context_ptr->full_lambda_md[EB_8_BIT_MD];
 
                         uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight); // 50: safe, 100: safe, 200: excelent, 500: slope=0.1326
-                        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); // 
-                        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); // 
+                        uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight); //
+                        uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight); //
 #if RDOQ_PER_LAYER
-                        uint64_t cost_th_6 = RDCOST(full_lambda, 16, 1200 * blk_geom->bwidth * blk_geom->bheight); // 
+                        uint64_t cost_th_6 = RDCOST(full_lambda, 16, 1200 * blk_geom->bwidth * blk_geom->bheight); //
 
                         if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_6) {
                             s_depth = 0;
@@ -4503,7 +4503,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         uint64_t cost_th_0 = (4 * 64 * 64) / 4;// th RDCOST(fast_lambda, 8, 64 * 64);
 #endif
 #endif
-        min_sq_size = 
+        min_sq_size =
             (context_ptr->sb_me_cplx_lev == 2) ?
             64 :
             (context_ptr->sb_me_cplx_lev == 1 && disallow_block_below_8x8) ?
@@ -4913,8 +4913,8 @@ void *mode_decision_kernel(void *input_ptr) {
 
                     //if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[0] && pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && cost < cost_th_0)
                     //    context_ptr->md_context->sb_me_cplx_lev = 2;
-                    //else 
-                        
+                    //else
+
                      if (cost < cost_th_1)
                         context_ptr->md_context->sb_me_cplx_lev = 1;
 

@@ -138,7 +138,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
                 ref_picture_ptr = (EbPictureBufferDesc *)reference_object->input_padded_picture_ptr;
             }
 #if GM_AFFINE
-            compute_global_motion(context_ptr, input_picture_ptr, 
+            compute_global_motion(context_ptr, input_picture_ptr,
 #else
             compute_global_motion(input_picture_ptr,
 #endif
@@ -188,12 +188,12 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
     else
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
-#if GM_AFFINE 
+#if GM_AFFINE
 void compute_global_motion(MeContext *context_ptr, EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
 #else
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
 #endif
-                           EbWarpedMotionParams *bestWarpedMotion, 
+                           EbWarpedMotionParams *bestWarpedMotion,
 #if GM_LIST_0
                            TransformationType ref_wmtype, uint32_t list_index, uint32_t ref_pic_index,
 #endif

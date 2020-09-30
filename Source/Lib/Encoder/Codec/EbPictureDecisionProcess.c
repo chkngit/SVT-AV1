@@ -759,7 +759,7 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
 #endif
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
         tf_ctrls->block_32x32_16x16_th = 0;
 #endif
         break;
@@ -771,7 +771,7 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 1;
 #endif
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
         tf_ctrls->block_32x32_16x16_th = 0;
 #endif
         break;
@@ -782,7 +782,7 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->noise_based_window_adjust = 1;
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 0;
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
         tf_ctrls->block_32x32_16x16_th = 20 * 32 * 32;
 #endif
 #else
@@ -1113,7 +1113,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         }
         else {
 #if TF_NOISE
-            if (pcs_ptr->slice_type == I_SLICE) 
+            if (pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tf_level = 3;
             else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 4;

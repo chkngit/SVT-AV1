@@ -1477,7 +1477,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context,
 #if FAST_RDOQ_ONLY_EOB
     fast_mode = 1;
 #endif
-#if FAST_RDOQ_ONLY_COEFF 
+#if FAST_RDOQ_ONLY_COEFF
     fast_mode = 0;
 #endif
 #if RDOQ_TEST1
@@ -1659,7 +1659,7 @@ static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
         *cul_level += 2 << COEFF_CONTEXT_BITS;
 }
 int32_t av1_quantize_inv_quantize(
-    PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, 
+    PictureControlSet *pcs_ptr, ModeDecisionContext *md_context,
     int32_t *coeff,
     const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
     int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
@@ -1833,7 +1833,7 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_rdoq;
 
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
-    
+
 #if !TX_TYPE_GROUPING
     if (scs_ptr->static_config.rdoq_level != DEFAULT && md_context->pd_pass == PD_PASS_2)
         perform_rdoq = scs_ptr->static_config.rdoq_level;
@@ -1924,7 +1924,7 @@ int32_t av1_quantize_inv_quantize(
 #if SHUT_RDOQ
     perform_rdoq = 0;
 #endif
-#if SHUT_FP_QUANT_CHROMA    
+#if SHUT_FP_QUANT_CHROMA
     if (perform_rdoq && ((!component_type && md_context->rdoq_ctrls.fp_quant_luma) || (component_type && md_context->rdoq_ctrls.fp_quant_chroma))) {
 #else
     if (perform_rdoq) {

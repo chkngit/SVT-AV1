@@ -479,7 +479,7 @@ typedef struct  TfControls {
     uint8_t noise_based_window_adjust;
     uint8_t hp;
     uint8_t chroma;
-#if TF_32x32_16x16_ADAPT   
+#if TF_32x32_16x16_ADAPT
     uint64_t block_32x32_16x16_th;
 #endif
 }TfControls;

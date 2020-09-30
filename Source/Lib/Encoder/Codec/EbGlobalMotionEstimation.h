@@ -18,12 +18,12 @@
 
 void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
                               EbPictureBufferDesc *input_picture_ptr);
-#if GM_AFFINE 
+#if GM_AFFINE
 void compute_global_motion(MeContext *context_ptr, EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
 #else
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
 #endif
-                           EbWarpedMotionParams *bestWarpedMotion, 
+                           EbWarpedMotionParams *bestWarpedMotion,
 #if GM_LIST_0
     TransformationType ref_wmtype, uint32_t list_index, uint32_t ref_pic_index,
 #endif

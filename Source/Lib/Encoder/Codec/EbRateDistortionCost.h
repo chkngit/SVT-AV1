@@ -35,7 +35,7 @@ extern uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *
 
 extern void coding_loop_context_generation(
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint32_t sb_sz, 
+    uint32_t blk_origin_y, uint32_t sb_sz,
 #if !REMOVE_MD_SKIP_COEFF_CIRCUITERY
     NeighborArrayUnit *skip_coeff_neighbor_array,
 #endif
@@ -130,7 +130,7 @@ extern EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr,
 
 extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda, 
+                                    uint64_t chroma_distortion, uint64_t lambda,
 #if !REMOVE_USELESS_0
                                     EbBool use_ssd,
 #endif
@@ -142,7 +142,7 @@ extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
 
 extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda, 
+                                    uint64_t chroma_distortion, uint64_t lambda,
 #if !REMOVE_USELESS_0
                                     EbBool use_ssd,
 #endif

@@ -133,7 +133,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t end_gi;
 #if CDEF_OPT
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 6 ? CDEF_FAST_SEARCH_LVL1
-                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 7 ?  CDEF_FAST_SEARCH_LVL2 
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 7 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 8 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 #endif
 
