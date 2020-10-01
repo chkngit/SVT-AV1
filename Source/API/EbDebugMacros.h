@@ -133,10 +133,14 @@ extern "C" {
 #define FIX_TPL_TRAILING_FRAME_BUG               1 // fix bug related to ENABLE_TPL_TRAILING
 #define TUNE_TPL_OIS                             1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
 #define TUNE_TPL_RATE                            1 // remove  uncessary rate calculation
-// END  svt-03 /////////////////////////////////////////////////////////
+
+
+#define FEATURE_DCT_DCT_DEDICATED_BUFFER         1
+/////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
+
 
 #ifdef __cplusplus
 }

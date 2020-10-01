@@ -642,7 +642,11 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
     // Reuse the recon_ptr memory in MD context
     buffer_ptr->recon_ptr = temp_recon_ptr;
-
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+    EB_NEW(buffer_ptr->dct_dct_coef_ptr,
+        eb_picture_buffer_desc_ctor,
+        (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+#endif
     // Costs
     buffer_ptr->fast_cost_ptr       = fast_cost_ptr;
     buffer_ptr->full_cost_ptr       = full_cost_ptr;

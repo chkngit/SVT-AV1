@@ -5066,13 +5066,24 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             candidate_buffer->candidate_ptr->transform_type_uv = (context_ptr->txb_itr == 0)
             ? candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr]
             : candidate_buffer->candidate_ptr->transform_type_uv;
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+        EbPictureBufferDesc *coef_ptr = (context_ptr->pd_pass == PD_PASS_2 && !is_inter && tx_type == DCT_DCT && context_ptr->tx_depth == 0) ?
+            candidate_buffer->dct_dct_coef_ptr :
+            context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
 
+        uint8_t do_dct_dct_trans = !(context_ptr->pd_pass == PD_PASS_2 && !is_inter && tx_type == DCT_DCT && context_ptr->tx_depth == 0 && candidate_buffer->is_dct_dct_done);
+        if( do_dct_dct_trans)
+#endif
         // Y: T Q i_q
         av1_estimate_transform(
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
             candidate_buffer->residual_ptr->stride_y,
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+            &(((int32_t *)coef_ptr->buffer_y)[context_ptr->txb_1d_offset]),
+#else
             &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                 ->buffer_y)[context_ptr->txb_1d_offset]),
+#endif
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
@@ -5084,12 +5095,19 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #else
             DEFAULT_SHAPE);
 #endif
-
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+        if(tx_type == DCT_DCT && context_ptr->tx_depth == 0)
+        candidate_buffer->is_dct_dct_done = 1;
+#endif
         quantized_dc_txt[tx_type] = av1_quantize_inv_quantize(
             pcs_ptr,
             context_ptr,
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+            &(((int32_t *)coef_ptr->buffer_y)[context_ptr->txb_1d_offset]),
+#else
             &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                 ->buffer_y)[context_ptr->txb_1d_offset]),
+#endif
             NOT_USED_VALUE,
             &(((int32_t *)context_ptr->residual_quant_coeff_ptr->buffer_y)[context_ptr->txb_1d_offset]),
             &(((int32_t *)recon_coeff_ptr->buffer_y)[context_ptr->txb_1d_offset]),
@@ -5176,7 +5194,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         else {
             // LUMA DISTORTION
             picture_full_distortion32_bits(
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+                coef_ptr,
+#else
                 context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr,
+#endif
                 context_ptr->txb_1d_offset,
                 0,
                 recon_coeff_ptr,
@@ -6820,6 +6842,9 @@ static void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         context_ptr->md_staging_skip_chroma_pred          = EB_TRUE;
         candidate_buffer->candidate_ptr->interp_filters   = 0;
         context_ptr->md_staging_perform_intra_chroma_pred = EB_FALSE;
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+        candidate_buffer->is_dct_dct_done = 0;
+#endif
         full_loop_core(pcs_ptr,
                        sb_ptr,
                        blk_ptr,

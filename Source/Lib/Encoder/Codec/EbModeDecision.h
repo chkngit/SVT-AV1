@@ -209,7 +209,10 @@ typedef struct ModeDecisionCandidateBuffer {
     EbPictureBufferDesc *prediction_ptr;
     EbPictureBufferDesc *recon_coeff_ptr;
     EbPictureBufferDesc *residual_ptr;
-
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+    EbPictureBufferDesc *dct_dct_coef_ptr; // Holds tx_depth=0 luma transformed coeff 
+    uint8_t is_dct_dct_done; // true when dct_dct for the current candidate previously performed (e.g @ a previous md_stage)
+#endif
     // *Note - We should be able to combine the recon_coeff_ptr & recon_ptr pictures (they aren't needed at the same time)
     EbPictureBufferDesc *recon_ptr;
 
