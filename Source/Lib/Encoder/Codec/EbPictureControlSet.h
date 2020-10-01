@@ -316,9 +316,12 @@ typedef struct PictureControlSet {
 
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if !OPT_8  
     NeighborArrayUnit **md_intra_chroma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_mv_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+
     NeighborArrayUnit **md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     NeighborArrayUnit **md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -344,7 +347,9 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_cb_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cr_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_txfm_context_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if !OPT_6
     NeighborArrayUnit **md_inter_pred_dir_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
     NeighborArrayUnit **md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
     NeighborArrayUnit32 **md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -384,7 +389,9 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **
                           cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit **  txfm_context_array;
+#if !OPT_6
     NeighborArrayUnit **  inter_pred_dir_neighbor_array;
+#endif
     NeighborArrayUnit **  ref_frame_type_neighbor_array;
     NeighborArrayUnit32 **interpolation_type_neighbor_array;
 
@@ -432,6 +439,7 @@ typedef struct PictureControlSet {
     uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -939,6 +947,9 @@ typedef struct PictureParentControlSet {
 #endif
 #if FIX_LAD_DEADLOCK
     uint8_t is_next_frame_intra;
+#endif
+#if OPT_10
+    uint8_t is_superres_none;
 #endif
 #endif
 #if FEATURE_OPT_TF

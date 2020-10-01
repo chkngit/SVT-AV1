@@ -132,7 +132,7 @@ void get_txb_ctx(PictureControlSet *pcs_ptr, const int32_t plane,
                  NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_origin_x,
                  uint32_t blk_origin_y, const BlockSize plane_bsize, const TxSize tx_size,
                  int16_t *const txb_skip_ctx, int16_t *const dc_sign_ctx);
-
+#if !OPT_6
 extern int32_t eb_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t blk_origin_y,
                                                  NeighborArrayUnit *mode_type_neighbor_array,
                                                  NeighborArrayUnit *inter_pred_dir_neighbor_array);
@@ -140,7 +140,7 @@ extern int32_t eb_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t
 extern int32_t eb_av1_get_comp_reference_type_context(
     uint32_t blk_origin_x, uint32_t blk_origin_y, NeighborArrayUnit *mode_type_neighbor_array,
     NeighborArrayUnit *inter_pred_dir_neighbor_array);
-
+#endif
 extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
 // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
 // ALTREF.

@@ -1986,7 +1986,7 @@ static void write_inter_compound_mode(FRAME_CONTEXT *frame_context, AomWriter *e
                      frame_context->inter_compound_mode_cdf[mode_ctx],
                      INTER_COMPOUND_MODES);
 }
-
+#if !OPT_6
 int32_t eb_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t blk_origin_y,
                                           NeighborArrayUnit *mode_type_neighbor_array,
                                           NeighborArrayUnit *inter_pred_dir_neighbor_array) {
@@ -2071,6 +2071,7 @@ int32_t eb_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t blk_or
     assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
     return ctx;
 }
+#endif
 int         eb_av1_get_intra_inter_context(const MacroBlockD *xd);
 int         av1_get_reference_mode_context_new(const MacroBlockD *xd);
 AomCdfProb *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
@@ -2332,7 +2333,7 @@ INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
         if (has_second_ref(left_mbmi)) ref_counts[left_mbmi->block_mi.ref_frame[1]]++;
     }
 }
-
+#if !OPT_6
 int32_t eb_av1_get_comp_reference_type_context(uint32_t blk_origin_x, uint32_t blk_origin_y,
                                                NeighborArrayUnit *mode_type_neighbor_array,
                                                NeighborArrayUnit *inter_pred_dir_neighbor_array) {
@@ -2424,7 +2425,7 @@ int32_t eb_av1_get_comp_reference_type_context(uint32_t blk_origin_x, uint32_t b
     //assert(pred_context >= 0 && pred_context < COMP_REF_TYPE_CONTEXTS);
     return pred_context;
 }
-
+#endif
 #define WRITE_REF_BIT(bname, pname) aom_write_symbol(w, bname, av1_get_pred_cdf_##pname(xd), 2)
 /***************************************************************************************/
 
@@ -4523,8 +4524,10 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx];
     NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array =
         pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx];
+#if !OPT_6
     NeighborArrayUnit *inter_pred_dir_neighbor_array =
         pcs_ptr->inter_pred_dir_neighbor_array[tile_idx];
+#endif
     NeighborArrayUnit *ref_frame_type_neighbor_array =
         pcs_ptr->ref_frame_type_neighbor_array[tile_idx];
     NeighborArrayUnit32 *interpolation_type_neighbor_array =
@@ -4612,7 +4615,7 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         }
         context_ptr->coded_area_sb += blk_geom->bwidth * blk_geom->bheight;
     }
-
+#if !OPT_6
     // Update the Inter Pred Type Neighbor Array
     {
         uint8_t inter_pred_direction_index =
@@ -4625,7 +4628,7 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
                                        blk_geom->bheight,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
-
+#endif
     // Update the refFrame Type Neighbor Array
     {
         uint8_t ref_frame_type = (uint8_t)blk_ptr->prediction_unit_array[0].ref_frame_type;

@@ -1,4 +1,4 @@
-/*
+﻿/*
 * Copyright(c) 2019 Intel Corporation
 *
 * This source code is subject to the terms of the BSD 2 Clause License and
@@ -73,8 +73,10 @@ typedef struct MdBlkStruct {
 #endif
     unsigned             top_neighbor_depth : 8;
     unsigned             left_neighbor_depth : 8;
+#if !OPT_8
     unsigned             top_neighbor_mode : 2;
     unsigned             left_neighbor_mode : 2;
+#endif
     unsigned             full_distortion : 32;
 #if !FIX_REMOVE_UNUSED_CODE
     unsigned             chroma_distortion : 32;
@@ -309,6 +311,56 @@ typedef struct NicCtrls {
     uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
 }NicCtrls;
 #endif
+#if FEATURE_NIC_CTRL_0
+typedef struct NicPruningCtrls {
+
+    // class pruning signal(s)
+    // mdsx_class_th (for class removal); reduce cand if deviation to the best_cand is higher than mdsx_cand_th
+   
+    // All bands (except the last) are derived as follows:  
+    // For band_index=0 to band_index=(mdsx_band_cnt-2), 
+    //     band=[band_index*band_width, (band_index+1)*band_width]; band_width = mdsx_class_th/(band_cnt-1)
+    //     multiplier= 1 / (band_index+1) 
+    // Last band is [mds1_class_th, +∞] = kill (nic=0)
+
+    // e.g. mds1_class_th=20 and mds1_band_cnt=3
+    // band_index  |0         |1        | 2       |
+    // band        |0 to 10   |10 to 20 | 20 to +∞|
+    // action      |nic * 1   |nic * 1/2| nic *  0|
+
+   // Post mds0
+    uint64_t mds1_class_th;
+    uint8_t  mds1_band_cnt; // >=2
+    uint8_t  mds1_scaling_factor; // set the action @ 1st band
+    // Post mds1
+    uint64_t mds2_class_th;
+    uint8_t  mds2_band_cnt; // >=2
+    uint8_t  mds2_scaling_factor; // set the action @ 1st band
+    // Post mds2
+    uint64_t mds3_class_th;
+    uint8_t  mds3_band_cnt; // >=2
+    uint8_t  mds3_scaling_factor; // set the action @ 1st band
+    // cand pruning signal(s)
+    // mdsx_cand_th (for single cand removal per class); remove cand if deviation to the best_cand for @ the target class is higher than mdsx_cand_th
+    // mdsx_cand_th = base_th + sq_offset_th + intra_class_offset_th
+
+    // Post mds0
+    uint64_t mds1_cand_base_th;               // base_th
+    uint64_t mds1_cand_sq_offset_th;          // sq_offset: a positive offset towards a less aggressive action for SQ   
+    uint64_t mds1_cand_intra_class_offset_th; // intra_class_offset: a positive offset towards a less aggressive action for INTRA classes   
+                                              
+    // Post mds1
+    uint64_t mds2_cand_base_th;               
+    uint64_t mds2_cand_sq_offset_th;          
+    uint64_t mds2_cand_intra_class_offset_th;
+    
+    // Post mds2
+    uint64_t mds3_cand_base_th;               
+    uint64_t mds3_cand_sq_offset_th;          
+    uint64_t mds3_cand_intra_class_offset_th; 
+
+} NicPruningCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -327,11 +379,14 @@ typedef struct ModeDecisionContext {
     MdBlkStruct *                md_local_blk_unit;
     BlkStruct *                  md_blk_arr_nsq;
     MdcSbData *mdc_sb_array;
-
+  
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
-    NeighborArrayUnit *intra_chroma_mode_neighbor_array;
+#if !OPT_8  
+    NeighborArrayUnit *intra_chroma_mode_neighbor_array;   
     NeighborArrayUnit *mv_neighbor_array;
-    NeighborArrayUnit *skip_flag_neighbor_array;
+#endif
+    NeighborArrayUnit *skip_flag_neighbor_array; // Hsan: used
+
     NeighborArrayUnit *mode_type_neighbor_array;
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     NeighborArrayUnit *leaf_depth_neighbor_array;
@@ -358,8 +413,11 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *
                          cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *  txfm_context_array;
+#if !OPT_6
     NeighborArrayUnit *  inter_pred_dir_neighbor_array;
+#endif
     NeighborArrayUnit *  ref_frame_type_neighbor_array;
+
     NeighborArrayUnit *  leaf_partition_neighbor_array;
     NeighborArrayUnit32 *interpolation_type_neighbor_array;
 
@@ -417,10 +475,13 @@ typedef struct ModeDecisionContext {
     uint64_t         fast_chroma_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     // Needed for DC prediction
     int32_t is_inter_ctx;
+
     uint8_t intra_luma_left_mode;
     uint8_t intra_luma_top_mode;
+#if !OPT_8    
     uint8_t intra_chroma_left_mode;
     uint8_t intra_chroma_top_mode;
+#endif
     EB_ALIGN(64)
     int16_t pred_buf_q3
         [CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
@@ -550,6 +611,7 @@ typedef struct ModeDecisionContext {
         intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
     uint64_t *   ref_best_cost_sq_table;
     uint32_t *   ref_best_ref_sq_table;
+#if !FEATURE_NIC_CTRL_0
     uint64_t     md_stage_1_cand_prune_th;
     uint64_t     md_stage_1_class_prune_th;
 #if FEATURE_MDS2
@@ -560,6 +622,7 @@ typedef struct ModeDecisionContext {
 #else
     uint64_t     md_stage_2_3_cand_prune_th;
     uint64_t     md_stage_2_3_class_prune_th;
+#endif
 #endif
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
@@ -680,6 +743,9 @@ typedef struct ModeDecisionContext {
 #else
     uint8_t nic_scaling_level;
 #endif
+#if FEATURE_NIC_CTRL_0
+    NicPruningCtrls nic_pruning_ctrls;
+#endif
     uint8_t inter_compound_mode;
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
@@ -697,6 +763,12 @@ typedef struct ModeDecisionContext {
     uint8_t early_cand_elimination;
     uint64_t mds0_best_cost;
     uint8_t mds0_best_class;
+#endif
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+    uint32_t cand_index;
+#endif
+#if OPT_1
+    uint64_t estimate_ref_frames_num_bits[TOTAL_REFS_PER_FRAME + 1][2]; // [TOTAL_REFS_PER_FRAME + 1][is_compound]
 #endif
 } ModeDecisionContext;
 

@@ -1610,12 +1610,19 @@ static void apply_filtering_block_plane_wise(
     }
 }
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128);
-static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
+static void tf_16x16_sub_pel_search(
+    PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
     PictureParentControlSet *pcs_ref,
     EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
     uint16_t **pred_16bit, uint32_t *stride_pred, EbByte *src,
     uint16_t **src_16bit, uint32_t *stride_src,
     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x, int encoder_bit_depth) {
+
+#if OPT_10
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
@@ -1718,7 +1725,11 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
-                    av1_inter_prediction(NULL, //pcs_ptr,
+                    av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
+                        NULL, //pcs_ptr,
                         (uint32_t)interp_filters,
                         &blk_ptr,
                         0, //ref_frame_type,
@@ -1790,7 +1801,11 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
-                    av1_inter_prediction(NULL, //pcs_ptr,
+                    av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
+                        NULL, //pcs_ptr,
                         (uint32_t)interp_filters,
                         &blk_ptr,
                         0, //ref_frame_type,
@@ -1866,7 +1881,11 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
-                    av1_inter_prediction(NULL, //pcs_ptr,
+                    av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
+                        NULL, //pcs_ptr,
                         (uint32_t)interp_filters,
                         &blk_ptr,
                         0, //ref_frame_type,
@@ -1943,6 +1962,12 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     uint16_t **pred_16bit, uint32_t *stride_pred, EbByte *src,
     uint16_t **src_16bit, uint32_t *stride_src,
     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x, int encoder_bit_depth) {
+
+#if OPT_10
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
@@ -2036,7 +2061,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 mv_unit.mv->x = mv_x + i;
                 mv_unit.mv->y = mv_y + j;
 
-                av1_inter_prediction(NULL, //pcs_ptr,
+                av1_inter_prediction(
+#if OPT_10
+                    scs_ptr,
+#endif
+                    NULL, //pcs_ptr,
                     (uint32_t)interp_filters,
                     &blk_ptr,
                     0, //ref_frame_type,
@@ -2108,7 +2137,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 mv_unit.mv->x = mv_x + i;
                 mv_unit.mv->y = mv_y + j;
 
-                av1_inter_prediction(NULL, //pcs_ptr,
+                av1_inter_prediction(
+#if OPT_10
+                    scs_ptr,
+#endif
+                    NULL, //pcs_ptr,
                     (uint32_t)interp_filters,
                     &blk_ptr,
                     0, //ref_frame_type,
@@ -2182,7 +2215,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 mv_unit.mv->x = mv_x + i;
                 mv_unit.mv->y = mv_y + j;
 
-                av1_inter_prediction(NULL, //pcs_ptr,
+                av1_inter_prediction(
+#if OPT_10
+                    scs_ptr,
+#endif
+                    NULL, //pcs_ptr,
                     (uint32_t)interp_filters,
                     &blk_ptr,
                     0, //ref_frame_type,
@@ -2256,6 +2293,12 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
     EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
     uint16_t **pred_16bit, uint32_t sb_origin_x, uint32_t sb_origin_y,
     uint32_t ss_x, int encoder_bit_depth) {
+
+#if OPT_10
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+
     const InterpFilters interp_filters = av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
@@ -2331,6 +2374,9 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
                 mv_unit.mv->x = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + idx_16x16];
                 mv_unit.mv->y = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16];
                 av1_inter_prediction(
+#if OPT_10
+                    scs_ptr,
+#endif
                     NULL,  //pcs_ptr,
                     (uint32_t)interp_filters,
                     &blk_ptr,
@@ -2398,7 +2444,11 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
         mv_unit.mv->x = context_ptr->tf_32x32_mv_x[idx_32x32];
         mv_unit.mv->y = context_ptr->tf_32x32_mv_y[idx_32x32];
 
-        av1_inter_prediction(NULL, //pcs_ptr,
+        av1_inter_prediction(
+#if OPT_10
+            scs_ptr,
+#endif
+            NULL, //pcs_ptr,
             (uint32_t)interp_filters,
             &blk_ptr,
             0, //ref_frame_type,

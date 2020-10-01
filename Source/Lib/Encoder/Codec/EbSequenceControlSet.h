@@ -214,6 +214,9 @@ typedef struct SequenceControlSet {
     Quants quants_8bit;  // 8bit
     Dequants deq_8bit; // 8bit
 #endif
+#if OPT_10 
+    ScaleFactors sf_identity;
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

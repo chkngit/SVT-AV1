@@ -2672,6 +2672,7 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         nic_ctrls->stage1_scaling_num = 3;
         nic_ctrls->stage2_scaling_num = 0;
         nic_ctrls->stage3_scaling_num = 0;
+
         break;
     case 13:
         nic_ctrls->stage1_scaling_num = 2;
@@ -2699,6 +2700,207 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         assert(0);
         break;
     }
+}
+#endif
+#if FEATURE_NIC_CTRL_0
+void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_level) {
+
+    NicPruningCtrls* nic_pruning_ctrls = &mdctxt->nic_pruning_ctrls;
+
+    switch (nic_pruning_level)
+    {
+    case 0:
+         nic_pruning_ctrls->mds1_class_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_class_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_class_th = (uint64_t)~0;  
+
+         nic_pruning_ctrls->mds1_cand_base_th               = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_base_th               = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_base_th               = (uint64_t)~0;
+
+         break;
+        
+    case 1:
+         nic_pruning_ctrls->mds1_class_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds2_class_th = 25;
+         nic_pruning_ctrls->mds2_band_cnt = 3;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds3_class_th = 25;    
+         nic_pruning_ctrls->mds3_band_cnt = 3;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds1_cand_base_th               = (uint64_t)~0;       
+
+         nic_pruning_ctrls->mds2_cand_base_th               = 45;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds3_cand_base_th               = 45;
+         nic_pruning_ctrls->mds3_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+
+         break;
+
+     case 2:
+         nic_pruning_ctrls->mds1_class_th = 300;
+         nic_pruning_ctrls->mds1_band_cnt = 2;
+         nic_pruning_ctrls->mds1_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds2_class_th = 25;
+         nic_pruning_ctrls->mds2_band_cnt = 3;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+#if FEATURE_NIC_CTRL_1
+         nic_pruning_ctrls->mds3_class_th = 15;
+#else
+         nic_pruning_ctrls->mds3_class_th = 25;   
+#endif
+         nic_pruning_ctrls->mds3_band_cnt = 3;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds1_cand_base_th               = 300;  
+         nic_pruning_ctrls->mds1_cand_sq_offset_th          = 0;
+         nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+
+         nic_pruning_ctrls->mds2_cand_base_th               =  15;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds3_cand_base_th               =  15;
+#if FEATURE_NIC_CTRL_1
+         nic_pruning_ctrls->mds3_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+#else
+         nic_pruning_ctrls->mds3_cand_sq_offset_th          = 0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = 0;
+#endif
+         break;
+
+     case 3:
+         nic_pruning_ctrls->mds1_class_th = 200;
+         nic_pruning_ctrls->mds1_band_cnt = 2;
+         nic_pruning_ctrls->mds1_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds2_class_th = 25;
+         nic_pruning_ctrls->mds2_band_cnt = 3;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+#if FEATURE_NIC_CTRL_1
+         nic_pruning_ctrls->mds3_class_th = 15;
+#else
+         nic_pruning_ctrls->mds3_class_th = 25;    
+#endif
+         nic_pruning_ctrls->mds3_band_cnt = 3;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds1_cand_base_th               = 200;    
+         nic_pruning_ctrls->mds1_cand_sq_offset_th          = 0;
+         nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+
+         nic_pruning_ctrls->mds2_cand_base_th               =  15;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds3_cand_base_th               =  15;
+         nic_pruning_ctrls->mds3_cand_sq_offset_th          = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+
+         break;
+
+     case 4:
+         nic_pruning_ctrls->mds1_class_th = 100;
+         nic_pruning_ctrls->mds1_band_cnt = 2;
+         nic_pruning_ctrls->mds1_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds2_class_th = 25;
+         nic_pruning_ctrls->mds2_band_cnt = 3;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+#if FEATURE_NIC_CTRL_1
+         nic_pruning_ctrls->mds3_class_th = 15;
+#else
+         nic_pruning_ctrls->mds3_class_th = 25;
+#endif
+         nic_pruning_ctrls->mds3_band_cnt = 3;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds1_cand_base_th = 45;
+         nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+         nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+
+         nic_pruning_ctrls->mds2_cand_base_th = 15;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds3_cand_base_th = 15;
+         nic_pruning_ctrls->mds3_cand_sq_offset_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+
+         break;
+
+     case 5:
+
+         nic_pruning_ctrls->mds1_class_th = 100;
+         nic_pruning_ctrls->mds1_band_cnt = 2;
+         nic_pruning_ctrls->mds1_scaling_factor = 1;
+#if NIC_CTRL_M8_0
+         nic_pruning_ctrls->mds2_class_th = 10;
+         nic_pruning_ctrls->mds2_band_cnt = 2;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds3_class_th = 10;
+         nic_pruning_ctrls->mds3_band_cnt = 2;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+#else
+         nic_pruning_ctrls->mds2_class_th = 15;
+         nic_pruning_ctrls->mds2_band_cnt = 2;
+         nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+         nic_pruning_ctrls->mds3_class_th = 15;
+         nic_pruning_ctrls->mds3_band_cnt = 2;
+         nic_pruning_ctrls->mds3_scaling_factor = 1;
+#endif
+         nic_pruning_ctrls->mds1_cand_base_th = 45;
+         nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+         nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+#if NIC_CTRL_M8_1
+         nic_pruning_ctrls->mds2_cand_base_th = 5;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th = 0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = 0;
+
+         nic_pruning_ctrls->mds3_cand_base_th = 5;
+         nic_pruning_ctrls->mds3_cand_sq_offset_th = 0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = 0;
+#else
+         nic_pruning_ctrls->mds2_cand_base_th = 15;
+         nic_pruning_ctrls->mds2_cand_sq_offset_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+         nic_pruning_ctrls->mds3_cand_base_th = 15;
+         nic_pruning_ctrls->mds3_cand_sq_offset_th = (uint64_t)~0;
+         nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+#endif
+         break;
+
+    default:
+        assert(0);
+        break;
+    }
+#if NIC_UNDO_SQ
+    nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+    nic_pruning_ctrls->mds2_cand_sq_offset_th = 0;
+    nic_pruning_ctrls->mds3_cand_sq_offset_th = 0;
+#endif
+#if NIC_UNDO_INTRA
+    nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+    nic_pruning_ctrls->mds2_cand_intra_class_offset_th = 0;
+    nic_pruning_ctrls->mds3_cand_intra_class_offset_th = 0;
+#endif
+#if NIC_FACTOR
+    nic_pruning_ctrls->mds1_scaling_factor = 3;
+    nic_pruning_ctrls->mds2_scaling_factor = 3;
+    nic_pruning_ctrls->mds3_scaling_factor = 3;
+#endif
 }
 #endif
 #if FEATURE_INTER_INTRA_LEVELS
@@ -3239,6 +3441,33 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->redundant_blk =
             sequence_control_set_ptr->static_config.enable_redundant_blk;
 
+#if FEATURE_NIC_CTRL_0
+    uint8_t nic_pruning_level;
+    if (pd_pass == PD_PASS_0)
+        nic_pruning_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        nic_pruning_level = 0;
+    else
+        if (enc_mode <= ENC_MRS)
+            nic_pruning_level = 0;
+        else if (enc_mode <= ENC_MR)
+            nic_pruning_level = 1;
+        else if (enc_mode <= ENC_M1)
+            nic_pruning_level = 2;
+        else if (enc_mode <= ENC_M5)
+            nic_pruning_level = 3;
+#if FEATURE_NIC_CTRL_1
+        else if (enc_mode <= ENC_M6)
+            nic_pruning_level = 4;
+        else 
+            nic_pruning_level = 5;
+#else     
+        else
+        nic_pruning_level = 4;
+#endif
+    set_nic_pruning_controls(context_ptr, nic_pruning_level);
+#endif
+#if !FEATURE_NIC_CTRL_0
     // md_stage_1_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
     if (pd_pass == PD_PASS_0)
@@ -3384,6 +3613,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_2_3_class_prune_th = 25;
     else
         context_ptr->md_stage_2_3_class_prune_th = 25;
+#endif
 #endif
 #if !FEATURE_REMOVE_CIRCULAR
     // If using a mode offset, do not modify the NSQ-targeting features
@@ -3628,7 +3858,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if FIX_NIC_1_CLEAN_UP
 #if TUNE_NEW_PRESETS
+#if INCREASE_NIC
+        else if (enc_mode <= ENC_M7)
+#else
         else if (enc_mode <= ENC_M6)
+#endif
 #else
         else if (enc_mode <= ENC_M5)
 #endif
@@ -3754,7 +3988,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PARTIAL_FREQUENCY
     if (pcs_ptr->slice_type != I_SLICE) {
         if (pd_pass == PD_PASS_0)
+#if PD0_PF_N2
+            context_ptr->pf_level = (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < ((4 * 64 * 64) / 4))
+                ? 3 
+                : (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < ((4 * 64 * 64) / 4)) 
+                   ? 2 
+                   : 1;
+#else 
             context_ptr->pf_level = 1;
+#endif
         else if (pd_pass == PD_PASS_1)
             context_ptr->pf_level = 1;
         else
@@ -5357,13 +5599,14 @@ void *mode_decision_kernel(void *input_ptr) {
 #endif
                         av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
                             &pcs_ptr->ec_ctx_array[sb_index]);
-
+#if !OPT_0_BIS
                         //let the candidate point to the new rate table.
                         uint32_t cand_index;
                         for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT;
                             ++cand_index)
                             context_ptr->md_context->fast_candidate_ptr_array[cand_index]
                             ->md_rate_estimation_ptr = &context_ptr->md_context->rate_est_table;
+#endif
                         context_ptr->md_context->md_rate_estimation_ptr =
                             &context_ptr->md_context->rate_est_table;
                     }

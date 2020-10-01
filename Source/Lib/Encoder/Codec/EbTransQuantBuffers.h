@@ -20,11 +20,16 @@ extern "C" {
 #endif
 typedef struct EbTransQuantBuffers {
     EbDctor              dctor;
+#if FEATURE_DCT_DCT_DEDICATED_BUFFER
+    EbPictureBufferDesc *txb_trans_dct_dct_tx_depth_0[128];
+    EbPictureBufferDesc *txb_trans_coeff2_nx2_n_ptr;
+#else
     EbPictureBufferDesc *txb_trans_coeff2_nx2_n_ptr;
     EbPictureBufferDesc *txb_trans_coeff_nxn_ptr;
     EbPictureBufferDesc *txb_trans_coeff_n2x_n2_ptr;
     EbPictureBufferDesc *txb_quant_coeff_nxn_ptr;
     EbPictureBufferDesc *txb_quant_coeff_n2x_n2_ptr;
+#endif
 } EbTransQuantBuffers;
 
 extern EbErrorType eb_trans_quant_buffers_ctor(EbTransQuantBuffers *trans_quant_buffers_ptr, uint8_t sb_size);

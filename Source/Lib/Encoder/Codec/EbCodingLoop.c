@@ -2534,6 +2534,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         (uint8_t)scs_ptr->static_config.encoder_bit_depth);
                                 } else {
                                     av1_inter_prediction(
+#if OPT_10
+                                        scs_ptr,
+#endif
                                         pcs_ptr,
                                         blk_ptr->interp_filters,
                                         blk_ptr,
@@ -2999,6 +3002,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     (uint8_t)scs_ptr->static_config.encoder_bit_depth);
                             } else {
                                 av1_inter_prediction(
+#if OPT_10
+                                    scs_ptr,
+#endif
                                     pcs_ptr,
                                     blk_ptr->interp_filters,
                                     blk_ptr,

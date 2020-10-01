@@ -96,21 +96,32 @@ static INLINE int is_inter_mode(PredictionMode mode) {
 }
 EbBool warped_motion_mode_allowed(PictureControlSet* pcs, ModeDecisionContext* ctx) {
     FrameHeader *frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
+#if OPT_2
+    return ctx->warped_motion_injection && frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
+        ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8; 
+        
+#else
     return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
         ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 &&
         ctx->warped_motion_injection;
+#endif
 }
 MotionMode obmc_motion_mode_allowed(const PictureControlSet *   pcs_ptr,
                                     struct ModeDecisionContext *context_ptr, const BlockSize bsize,
                                     MvReferenceFrame rf0, MvReferenceFrame rf1,
                                     PredictionMode mode) {
+#if OPT_2
+    if (!context_ptr->obmc_ctrls.enabled) return SIMPLE_TRANSLATION;
+#endif
 #if FEATURE_NEW_OBMC_LEVELS
     // check if should cap the max block size for obmc
     if (context_ptr->obmc_ctrls.max_blk_size_16x16)
         if (block_size_wide[bsize] > 16 || block_size_high[bsize] > 16)
             return SIMPLE_TRANSLATION;
 #endif
+#if !OPT_2
     if (!context_ptr->obmc_ctrls.enabled) return SIMPLE_TRANSLATION;
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     if (!frm_hdr->is_motion_mode_switchable) return SIMPLE_TRANSLATION;
@@ -263,6 +274,12 @@ void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int we
                         const uint8_t *intrapred, int intrastride);
 void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                         ModeDecisionCandidate *candidate_ptr) {
+
+#if OPT_10
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+
     DECLARE_ALIGNED(16, uint8_t, tmp_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     //get inter pred for ref0
@@ -352,6 +369,9 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 
     //we call the regular inter prediction path here(no compound)
     av1_inter_prediction(
+#if OPT_10
+        scs_ptr,
+#endif
         pcs_ptr,
         0, //ASSUMPTION: fixed interpolation filter.
         context_ptr->blk_ptr,
@@ -398,8 +418,13 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         InterIntraMode interintra_mode = (InterIntraMode)j;
         //rmode = interintra_mode_cost[mbmi->interintra_mode];
         const int bsize_group = size_group_lookup[context_ptr->blk_geom->bsize];
+#if OPT_0_BIS
+        const int rmode = context_ptr->md_rate_estimation_ptr
+            ->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
+#else
         const int rmode       = candidate_ptr->md_rate_estimation_ptr
                               ->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
+#endif
         //av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
         if (context_ptr->hbd_mode_decision)
             combine_interintra_highbd(interintra_mode, //mode,
@@ -923,7 +948,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                         cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
                         choose_best_av1_mv_pred(context_ptr,
+#if OPT_0_BIS
+                                                context_ptr->md_rate_estimation_ptr,
+#else
                                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                                 context_ptr->blk_ptr,
                                                 cand_array[cand_total_cnt].ref_frame_type,
                                                 cand_array[cand_total_cnt].is_compound,
@@ -1078,7 +1107,11 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                             cand_array[cand_total_cnt].transform_type_uv  = DCT_DCT;
                             choose_best_av1_mv_pred(
                                 context_ptr,
+#if OPT_0_BIS
+                                context_ptr->md_rate_estimation_ptr,
+#else
                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                 context_ptr->blk_ptr,
                                 cand_array[cand_total_cnt].ref_frame_type,
                                 cand_array[cand_total_cnt].is_compound,
@@ -1336,7 +1369,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             cand_array[cand_total_cnt].transform_type_uv  = DCT_DCT;
                             choose_best_av1_mv_pred(
                                 context_ptr,
+#if OPT_0_BIS
+                                context_ptr->md_rate_estimation_ptr,
+#else
                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                 context_ptr->blk_ptr,
                                 cand_array[cand_total_cnt].ref_frame_type,
                                 cand_array[cand_total_cnt].is_compound,
@@ -1510,7 +1547,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             cand_array[cand_total_cnt].transform_type_uv  = DCT_DCT;
                             choose_best_av1_mv_pred(
                                 context_ptr,
+#if OPT_0_BIS
+                                context_ptr->md_rate_estimation_ptr,
+#else
                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                 context_ptr->blk_ptr,
                                 cand_array[cand_total_cnt].ref_frame_type,
                                 cand_array[cand_total_cnt].is_compound,
@@ -2951,7 +2992,11 @@ void inject_warped_motion_candidates(
 
                     choose_best_av1_mv_pred(
                         context_ptr,
+#if OPT_0_BIS
+                        context_ptr->md_rate_estimation_ptr,
+#else
                         cand_array[can_idx].md_rate_estimation_ptr,
+#endif
                         context_ptr->blk_ptr,
                         cand_array[can_idx].ref_frame_type,
                         cand_array[can_idx].is_compound,
@@ -3036,7 +3081,11 @@ void inject_warped_motion_candidates(
 
                     choose_best_av1_mv_pred(
                         context_ptr,
+#if OPT_0_BIS
+                        context_ptr->md_rate_estimation_ptr,
+#else
                         cand_array[can_idx].md_rate_estimation_ptr,
+#endif
                         context_ptr->blk_ptr,
                         cand_array[can_idx].ref_frame_type,
                         cand_array[can_idx].is_compound,
@@ -3291,7 +3340,11 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
 
     choose_best_av1_mv_pred(
         context_ptr,
+#if OPT_0_BIS
+        context_ptr->md_rate_estimation_ptr,
+#else
         candidate->md_rate_estimation_ptr,
+#endif
         context_ptr->blk_ptr,
         candidate->ref_frame_type,
         candidate->is_compound,
@@ -3423,7 +3476,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
                     choose_best_av1_mv_pred(context_ptr,
+#if OPT_0_BIS
+                                            context_ptr->md_rate_estimation_ptr,
+#else                                       
                                             cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                             context_ptr->blk_ptr,
                                             cand_array[cand_total_cnt].ref_frame_type,
                                             cand_array[cand_total_cnt].is_compound,
@@ -3563,7 +3620,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
                         choose_best_av1_mv_pred(context_ptr,
+#if OPT_0_BIS
+                                                context_ptr->md_rate_estimation_ptr,
+#else                                                           
                                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                                 context_ptr->blk_ptr,
                                                 cand_array[cand_total_cnt].ref_frame_type,
                                                 cand_array[cand_total_cnt].is_compound,
@@ -3728,7 +3789,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                             cand_array[cand_total_cnt].transform_type_uv  = DCT_DCT;
                             choose_best_av1_mv_pred(
                                 context_ptr,
+#if OPT_0_BIS
+                                context_ptr->md_rate_estimation_ptr,
+#else                                                           
                                 cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                                 context_ptr->blk_ptr,
                                 cand_array[cand_total_cnt].ref_frame_type,
                                 cand_array[cand_total_cnt].is_compound,
@@ -4249,7 +4314,11 @@ void inject_pme_candidates(
 
                         choose_best_av1_mv_pred(
                             context_ptr,
+#if OPT_0_BIS
+                            context_ptr->md_rate_estimation_ptr,
+#else                                                           
                             cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                             context_ptr->blk_ptr,
                             cand_array[cand_total_cnt].ref_frame_type,
                             cand_array[cand_total_cnt].is_compound,
@@ -4411,7 +4480,11 @@ void inject_pme_candidates(
                         cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
                         choose_best_av1_mv_pred(context_ptr,
+#if OPT_0_BIS
+                            context_ptr->md_rate_estimation_ptr,
+#else                                                           
                             cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
                             context_ptr->blk_ptr,
                             cand_array[cand_total_cnt].ref_frame_type,
                             cand_array[cand_total_cnt].is_compound,
@@ -4486,8 +4559,10 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         ? EB_FALSE : EB_TRUE;
     uint32_t mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t mi_col = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
+#if !OPT_2
     eb_av1_count_overlappable_neighbors(
         pcs_ptr, context_ptr->blk_ptr, context_ptr->blk_geom->bsize, mi_row, mi_col);
+#endif
     const uint8_t is_obmc_allowed = obmc_motion_mode_allowed(pcs_ptr,
                                                              context_ptr,
                                                              context_ptr->blk_geom->bsize,
@@ -4496,6 +4571,13 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                              NEWMV) == OBMC_CAUSAL;
     if (is_obmc_allowed)
         precompute_obmc_data(pcs_ptr, context_ptr);
+
+#if OPT_2
+    if (is_obmc_allowed || context_ptr->warped_motion_injection)
+    eb_av1_count_overlappable_neighbors(
+        pcs_ptr, context_ptr->blk_ptr, context_ptr->blk_geom->bsize, mi_row, mi_col);
+#endif
+
     /**************
          MVP
     ************* */
@@ -5308,7 +5390,11 @@ void inject_zz_backup_candidate(
     cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
     choose_best_av1_mv_pred(context_ptr,
+#if OPT_0_BIS
+        context_ptr->md_rate_estimation_ptr,
+#else                                                           
         cand_array[cand_total_cnt].md_rate_estimation_ptr,
+#endif
         context_ptr->blk_ptr,
         cand_array[cand_total_cnt].ref_frame_type,
         cand_array[cand_total_cnt].is_compound,

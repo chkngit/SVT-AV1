@@ -927,10 +927,15 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
 #if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                         NeighborArrayUnit *  skip_coeff_neighbor_array,
 #endif
+#if !OPT_6
                                         NeighborArrayUnit *  inter_pred_dir_neighbor_array,
                                         NeighborArrayUnit *  ref_frame_type_neighbor_array,
+#endif
+#if !OPT_8
                                         NeighborArrayUnit *  intra_luma_mode_neighbor_array,
+#endif                                       
                                         NeighborArrayUnit *  skip_flag_neighbor_array,
+
                                         NeighborArrayUnit *  mode_type_neighbor_array,
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
                                         NeighborArrayUnit *  leaf_depth_neighbor_array,
@@ -1352,10 +1357,15 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
 #if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                        context_ptr->skip_coeff_neighbor_array,
 #endif
+#if !OPT_6
                                        context_ptr->inter_pred_dir_neighbor_array,
                                        context_ptr->ref_frame_type_neighbor_array,
+#endif
+#if !OPT_8    
                                        context_ptr->intra_luma_mode_neighbor_array,
+#endif                                      
                                        context_ptr->skip_flag_neighbor_array,
+
                                        context_ptr->mode_type_neighbor_array,
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
                                        context_ptr->leaf_depth_neighbor_array,
@@ -1849,6 +1859,10 @@ void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_c
 #if FEATURE_NIC_SCALING_PER_STAGE
 void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level);
 #endif
+#if FEATURE_NIC_CTRL_0
+void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_level);
+#endif
+
 #if FEATURE_INTER_INTRA_LEVELS
 void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level);
 #endif
@@ -1992,7 +2006,17 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     // Derive redundant block
     context_ptr->redundant_blk = EB_FALSE;
-
+#if FEATURE_NIC_CTRL_0
+    uint8_t nic_pruning_level;
+    if (pd_pass == PD_PASS_0)
+        nic_pruning_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        nic_pruning_level = 0;
+    else
+        nic_pruning_level = 0;
+    set_nic_pruning_controls(context_ptr, nic_pruning_level);
+#endif
+#if !FEATURE_NIC_CTRL_0
     // md_stage_1_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
     context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
@@ -2034,6 +2058,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // md_stage_2_3_class_prune_th
 
     context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
+#endif
 #endif
     context_ptr->coeff_area_based_bypass_nsq_th = 0;
 
