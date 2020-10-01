@@ -213,6 +213,7 @@ extern "C" {
 #define RDOQ_OPT 1 // lossless
 #define RDOQ_OPT2 1 // early exit rdo
 #define RDOQ_OPT5 1 // disable last md search tools (rdoq, txtype seach, interpolation search)
+#define FIX_ME_IDX_LUPT 1
 #ifdef __cplusplus
 }
 #endif // __cplusplus
