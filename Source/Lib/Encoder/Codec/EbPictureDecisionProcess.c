@@ -988,7 +988,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if TUNE_M4_ADOPTS
+            if (pcs_ptr->enc_mode <= ENC_M3)
+#else
             if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
                     pcs_ptr->cdef_level = 1;
                 else
 #if TUNE_CDEF_FILTER

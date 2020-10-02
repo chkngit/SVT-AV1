@@ -146,7 +146,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
     }
+#if TUNE_M3_ADOPT_M4_ME
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }

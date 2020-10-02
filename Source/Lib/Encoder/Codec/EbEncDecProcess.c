@@ -3575,8 +3575,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_scaling_level = 5;
         else if (enc_mode <= ENC_M3)
             nic_scaling_level = 7;
+#if !TUNE_M4_ADOPTS
         else if (enc_mode <= ENC_M4)
             nic_scaling_level = 9;
+#endif
 #if FIX_NIC_1_CLEAN_UP
         else if (enc_mode <= ENC_M5)
             nic_scaling_level = 11;
@@ -3754,11 +3756,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 
     if (pd_pass == PD_PASS_0)
+#if TUNE_M4_ADOPTS
+        context_ptr->md_subpel_me_level = enc_mode <= ENC_M3 ? 3 : 0;
+#else
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M4 ? 3 : 0;
+#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_me_level = 3;
     else
+#if TUNE_M4_ADOPTS
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             context_ptr->md_subpel_me_level = 1;
         else
             context_ptr->md_subpel_me_level = 2;
@@ -3766,11 +3776,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     if (pd_pass == PD_PASS_0)
+#if TUNE_M4_ADOPTS
+        context_ptr->md_subpel_pme_level = enc_mode <= ENC_M3 ? 3 : 0;
+#else
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M4 ? 3 : 0;
+#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_pme_level = 3;
     else
+#if TUNE_M4_ADOPTS
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             context_ptr->md_subpel_pme_level = 1;
         else
             context_ptr->md_subpel_pme_level = 2;
@@ -3837,7 +3855,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pcs_ptr->slice_type == I_SLICE)
         context_ptr->skip_intra = 0;
     else if (pd_pass == PD_PASS_0)
+#if TUNE_M4_ADOPTS
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             context_ptr->skip_intra = 0;
         else
             context_ptr->skip_intra = 1;

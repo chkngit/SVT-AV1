@@ -781,7 +781,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
 #if TUNE_CDF
     uint8_t update_cdf_level = 0;
+#if TUNE_M4_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
