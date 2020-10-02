@@ -178,8 +178,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
         }
     }
-
+#if TUNE_M2_ADOPTS
+        if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
         }
@@ -256,7 +259,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->hme_level2_search_area_in_height_array[1] = 16/2;
         }
     if (input_resolution <= INPUT_SIZE_720p_RANGE)
+#if TUNE_M0_ADOPTS
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MR ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
     else
         me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
 
@@ -386,7 +393,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         //TODO: enclose all gm signals into a control
         context_ptr->me_context_ptr->gm_identiy_exit = EB_TRUE;
 #if FEATURE_GM_OPT
+#if TUNE_M2_ADOPTS
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M7)
+#endif
             context_ptr->me_context_ptr->gm_rotzoom_model_only = EB_FALSE;
         else
             context_ptr->me_context_ptr->gm_rotzoom_model_only = EB_TRUE;
@@ -397,7 +408,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     // Set hme/me based reference pruning level (0-4)
     if (enc_mode <= ENC_MR)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#if TUNE_M3_ADOPTS
+    else if (enc_mode <= ENC_M2)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
     else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);

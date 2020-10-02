@@ -92,7 +92,7 @@ extern "C" {
 #define TUNE_TX_TYPE_LEVELS                      1 // Add Tx Type Grouping Levels
 #define TUNE_INIT_FAST_LOOP_OPT                  0 // Fast loop optimizations
 #define TUNE_REMOVE_UNUSED_NEIG_ARRAY            1 // Removes unused neighbor array
-#define INIT_BLOCK_OPT                           1 // optimize block initialization
+#define INIT_BLOCK_OPT                           0 // optimize block initialization
 #define BYPASS_SIGNAL_SET                        1 // bypass block based signal derivation for fastest preset when superfluous
 #define ME_IDX_LUPT                              1 // get index using lookuptable
 #define REFACTOR_MD_BLOCK_LOOP                   1 // Refactor the loop that iterates over all blocks at MD
@@ -136,6 +136,11 @@ extern "C" {
 
 #define FIX_NIC_1_CLEAN_UP                           1 // Code clean-up/unification; Use scale to signal all PD NIC(s) and 1 NIC @ mds3
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
+
+#define TUNE_M0_ADOPTS 1
+#define TUNE_M1_ADOPTS 1
+#define TUNE_M2_ADOPTS 1
+#define TUNE_M3_ADOPTS 1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove
