@@ -155,7 +155,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }
 #if TUNE_HME_ME_TUNING
+#if TUNE_SHIFT_M8_TO_M7
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
@@ -212,7 +216,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level0_search_area_in_height_array[1] =
         me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
 #if TUNE_HME_ME_TUNING
+#if TUNE_M6_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         me_context_ptr->hme_level1_search_area_in_width_array[0] =
             me_context_ptr->hme_level1_search_area_in_width_array[1] =
             me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -231,7 +239,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
 #endif
 #if TUNE_HME_ME_TUNING
+#if TUNE_M6_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         me_context_ptr->hme_level2_search_area_in_width_array[0] =
             me_context_ptr->hme_level2_search_area_in_width_array[1] =
             me_context_ptr->hme_level2_search_area_in_height_array[0] =

@@ -787,10 +787,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
         update_cdf_level = 1;
+#if TUNE_M6_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
         update_cdf_level = 2;
+#if !TUNE_SHIFT_M8_TO_M7
     else if (pcs_ptr->enc_mode <= ENC_M7)
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
+#endif
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 
@@ -812,7 +818,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
+#if TUNE_M6_ADOPTS
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#else
             if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;

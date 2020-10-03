@@ -143,6 +143,12 @@ extern "C" {
 #define TUNE_M3_ADOPTS 1
 #define TUNE_M3_ADOPT_M4_ME 1
 #define TUNE_M4_ADOPTS 1
+#define TUNE_M3_IFS_ADOPTS 1
+#define TUNE_M3_II_ADOPTS 1
+#define TUNE_M4_SUBPEL_ADOPTS 1
+#define TUNE_M5_ADOPTS 1
+#define TUNE_M6_ADOPTS 1
+#define TUNE_SHIFT_M8_TO_M7 1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

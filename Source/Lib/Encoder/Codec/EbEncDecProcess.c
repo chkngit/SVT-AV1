@@ -2785,10 +2785,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (enc_mode <= ENC_M4)
             txt_level = 1;
+#if !TUNE_M5_ADOPTS
         else if (enc_mode <= ENC_M5)
             txt_level = 3;
         else if (enc_mode <= ENC_M6)
             txt_level = 4;
+#endif
         else
             txt_level = 5;
 
@@ -2832,7 +2834,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->interpolation_search_level = IFS_OFF;
     else
+#if TUNE_M3_IFS_ADOPTS
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M6)
+#endif
             context_ptr->interpolation_search_level = IFS_MDS1;
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
@@ -2886,7 +2892,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    Allow cfl
     // 1                    Disable cfl
 #if TUNE_CFL_REF_ONLY
+#if TUNE_SHIFT_M8_TO_M7
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         context_ptr->md_disable_cfl = EB_FALSE;
     else
         context_ptr->md_disable_cfl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
@@ -3032,7 +3042,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M2)
 #endif
             context_ptr->bipred3x3_injection = 1;
+#if TUNE_M6_ADOPTS
+        else if (enc_mode <= ENC_M5)
+#else
         else if (enc_mode <= ENC_M6)
+#endif
             context_ptr->bipred3x3_injection = 2;
         else
             context_ptr->bipred3x3_injection = 0;
@@ -3159,7 +3173,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->rdoq_level = 0;
     else
+#if TUNE_SHIFT_M8_TO_M7
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M7)
+#endif
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) ? 2 : 3;
@@ -3580,7 +3598,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_scaling_level = 9;
 #endif
 #if FIX_NIC_1_CLEAN_UP
+#if TUNE_M6_ADOPTS
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M5)
+#endif
             nic_scaling_level = 11;
         else
             nic_scaling_level = 12;
@@ -3663,11 +3685,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->block_based_depth_refinement_level = 1;
     context_ptr->block_based_depth_refinement_level = 2;
 #endif
+#if TUNE_M6_ADOPTS
+    if (enc_mode <= ENC_M5)
+        context_ptr->block_based_depth_refinement_level = 0;
+    else if (enc_mode <= ENC_M6)
+        context_ptr->block_based_depth_refinement_level = 2;
+#else
     if (enc_mode <= ENC_M6)
         context_ptr->block_based_depth_refinement_level = 0;
+#endif
+#if !TUNE_SHIFT_M8_TO_M7
     else if (enc_mode <= ENC_M7) {
         context_ptr->block_based_depth_refinement_level = 3;
     }
+#endif
     else {
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 4;
@@ -3719,8 +3750,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_sq_mv_search_level = 1;
         else if (enc_mode <= ENC_M4)
             context_ptr->md_sq_mv_search_level = 2;
+#if !TUNE_M5_ADOPTS
         else if (enc_mode <= ENC_M5)
             context_ptr->md_sq_mv_search_level = 3;
+#endif
         else
             context_ptr->md_sq_mv_search_level = 4;
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
@@ -3756,7 +3789,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 
     if (pd_pass == PD_PASS_0)
-#if TUNE_M4_ADOPTS
+#if TUNE_M4_ADOPTS && !TUNE_M4_SUBPEL_ADOPTS
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M3 ? 3 : 0;
 #else
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M4 ? 3 : 0;
@@ -3764,7 +3797,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_me_level = 3;
     else
-#if TUNE_M4_ADOPTS
+#if TUNE_M4_ADOPTS && !TUNE_M4_SUBPEL_ADOPTS
         if (enc_mode <= ENC_M3)
 #else
         if (enc_mode <= ENC_M4)
@@ -3776,7 +3809,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     if (pd_pass == PD_PASS_0)
-#if TUNE_M4_ADOPTS
+#if TUNE_M4_ADOPTS && !TUNE_M4_SUBPEL_ADOPTS
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M3 ? 3 : 0;
 #else
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M4 ? 3 : 0;
@@ -3784,7 +3817,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_pme_level = 3;
     else
-#if TUNE_M4_ADOPTS
+#if TUNE_M4_ADOPTS && !TUNE_M4_SUBPEL_ADOPTS
         if (enc_mode <= ENC_M3)
 #else
         if (enc_mode <= ENC_M4)
@@ -3839,7 +3872,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
     // Shut skip_context and dc_sign update for rate estimation
     if (pd_pass == PD_PASS_0)
+#if TUNE_M6_ADOPTS
+        context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M7 ? EB_FALSE : EB_TRUE;
+#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
     else
@@ -3885,7 +3922,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->skip_search_tools_at_last_stage = EB_FALSE;
     else
+#if TUNE_M6_ADOPTS
+        context_ptr->skip_search_tools_at_last_stage = (enc_mode <= ENC_M5) ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->skip_search_tools_at_last_stage = (enc_mode <= ENC_M7) ? EB_FALSE : EB_TRUE;
+#endif
 #endif
 #if FEATURE_MDS0_ELIMINATE_CAND
     if (pd_pass == PD_PASS_0)
@@ -3896,7 +3937,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (pcs_ptr->slice_type == I_SLICE)
             context_ptr->early_cand_elimination = 0;
         else
+#if TUNE_SHIFT_M8_TO_M7
+            context_ptr->early_cand_elimination = (enc_mode <= ENC_M6) ? 0 : 1;
+#else
             context_ptr->early_cand_elimination = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
 #endif
     return return_error;
 }
@@ -4764,7 +4809,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             }
                         }
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
+#if TUNE_M5_ADOPTS
+                            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
