@@ -7075,7 +7075,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         ModeDecisionCandidate *      candidate_ptr    = candidate_buffer->candidate_ptr;
 #if FEATURE_RDOQ_OPT
         uint32_t  reduce_prec =   context_ptr->use_prev_mds_res &&
-                        (!context_ptr->bypass_md_stage_1 || !context_ptr->bypass_md_stage_2) &&
+                        (!context_ptr->bypass_md_stage_1[candidate_ptr->cand_class] || !context_ptr->bypass_md_stage_2[candidate_ptr->cand_class]) &&
                         (!candidate_buffer->candidate_ptr->block_has_coeff);
 #endif
 

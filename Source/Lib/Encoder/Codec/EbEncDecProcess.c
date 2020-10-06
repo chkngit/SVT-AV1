@@ -3763,7 +3763,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->use_prev_mds_res = EB_FALSE;
     else
-        context_ptr->use_prev_mds_res = (enc_mode <= ENC_M7 && pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? EB_FALSE: EB_TRUE;
+        context_ptr->use_prev_mds_res = (enc_mode <= ENC_M7 || pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? EB_FALSE: EB_TRUE;
 #endif
 #if FEATURE_MDS0_ELIMINATE_CAND
     if (pd_pass == PD_PASS_0)
