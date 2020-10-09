@@ -3461,7 +3461,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
         else
             if (enc_mode <= ENC_MRS)
-                context_ptr->sq_weight = 105;
+                context_ptr->sq_weight = (uint32_t)~0;
             else
 #if !TUNE_PRESETS_CLEANUP
                 if (enc_mode <= ENC_MR)
@@ -4835,18 +4835,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     if (context_ptr->pd_pass == PD_PASS_0) {
                         // Shut thresholds in MR_MODE
                         if (pcs_ptr->enc_mode <= ENC_MRS) {
-                            if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
-                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
-                                e_depth = 2;
-                            }
-                            else if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) {
-                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
-                                e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
-                            }
-                            else {
-                                s_depth = -2;
-                                e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
-                            }
+                            s_depth = -2;
+                            e_depth = 2;
                         }
                         else if (pcs_ptr->enc_mode <= ENC_MR) {
                             if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
