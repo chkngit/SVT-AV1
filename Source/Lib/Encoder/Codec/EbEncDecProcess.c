@@ -3314,9 +3314,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_2_cand_prune_th = 5;
     else
+#if !TUNE_PRESETS_CLEANUP
         if (enc_mode <= ENC_MRS)
             context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
         else
+#endif
             if (enc_mode <= ENC_MR)
                 context_ptr->md_stage_2_cand_prune_th = 45;
             else if (enc_mode <= ENC_M9)
@@ -3459,7 +3461,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
         else
             if (enc_mode <= ENC_MRS)
-                context_ptr->sq_weight = (uint32_t)~0;
+                context_ptr->sq_weight = 105;
             else
 #if !TUNE_PRESETS_CLEANUP
                 if (enc_mode <= ENC_MR)
@@ -4833,8 +4835,18 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     if (context_ptr->pd_pass == PD_PASS_0) {
                         // Shut thresholds in MR_MODE
                         if (pcs_ptr->enc_mode <= ENC_MRS) {
-                            s_depth = -2;
-                            e_depth = 2;
+                            if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                e_depth = 2;
+                            }
+                            else if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) {
+                                s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                            }
+                            else {
+                                s_depth = -2;
+                                e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                            }
                         }
                         else if (pcs_ptr->enc_mode <= ENC_MR) {
                             if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
