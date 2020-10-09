@@ -4836,11 +4836,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             s_depth = -2;
                             e_depth = 2;
                         }
-#if TUNE_PRESETS_CLEANUP
-                        else if (pcs_ptr->enc_mode <= ENC_MRS) {
-#else
                         else if (pcs_ptr->enc_mode <= ENC_MR) {
-#endif
                             if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = 2;
