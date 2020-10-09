@@ -137,6 +137,8 @@ extern "C" {
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
 // END  svt-03 /////////////////////////////////////////////////////////
 
+#define TUNE_PRESETS_CLEANUP                    1 // Tune and clean up presets
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define TUNE_CHROMA_SSIM  0 // Enable better Chroma/SSIM

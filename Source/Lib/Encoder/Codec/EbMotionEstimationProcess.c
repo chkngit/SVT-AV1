@@ -276,7 +276,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
     if (input_resolution <= INPUT_SIZE_720p_RANGE)
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MRS ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MR ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #endif
@@ -492,7 +496,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 #endif
     // Set hme/me based reference pruning level (0-4)
+#if TUNE_PRESETS_CLEANUP
+    if (enc_mode <= ENC_MRS)
+#else
     if (enc_mode <= ENC_MR)
+#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
 #if TUNE_NEW_PRESETS
     else if (enc_mode <= ENC_M2)

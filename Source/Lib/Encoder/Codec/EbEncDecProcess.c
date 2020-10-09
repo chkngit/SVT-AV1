@@ -2890,7 +2890,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // Level                Settings
     // 0                    post first md_stage
     // 1                    post last md_stage
+#if TUNE_PRESETS_CLEANUP
+    if (enc_mode <= ENC_MRS) {
+#else
     if (enc_mode <= ENC_MR) {
+#endif
         context_ptr->chroma_at_last_md_stage = 0;
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
@@ -3341,7 +3345,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_MRS)
             context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
         else
+#if TUNE_PRESETS_CLEANUP
+            if (enc_mode <= ENC_MRS)
+#else
             if (enc_mode <= ENC_MR)
+#endif
                 context_ptr->md_stage_3_cand_prune_th = 45;
             else if (enc_mode <= ENC_M9)
                 context_ptr->md_stage_3_cand_prune_th = 15;
@@ -3453,9 +3461,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_MRS)
                 context_ptr->sq_weight = (uint32_t)~0;
             else
+#if !TUNE_PRESETS_CLEANUP
                 if (enc_mode <= ENC_MR)
                     context_ptr->sq_weight = 115;
                 else
+#endif
                     if (enc_mode <= ENC_M0)
                         context_ptr->sq_weight = 105;
 #if !TUNE_NEW_PRESETS
@@ -3475,7 +3485,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->switch_md_mode_based_on_sq_coeff = 0;
         else if (pcs_ptr->slice_type == I_SLICE)
             context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+#if TUNE_PRESETS_CLEANUP
+        else if (enc_mode <= ENC_MRS)
+#else
         else if (enc_mode <= ENC_MR)
+#endif
             context_ptr->switch_md_mode_based_on_sq_coeff = 0;
 #if FEATURE_REMOVE_CIRCULAR
 #if TUNE_NEW_PRESETS
@@ -4822,7 +4836,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             s_depth = -2;
                             e_depth = 2;
                         }
+#if TUNE_PRESETS_CLEANUP
+                        else if (pcs_ptr->enc_mode <= ENC_MRS) {
+#else
                         else if (pcs_ptr->enc_mode <= ENC_MR) {
+#endif
                             if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = 2;
