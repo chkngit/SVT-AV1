@@ -947,6 +947,15 @@ typedef struct PictureParentControlSet {
 #if FEATURE_GM_OPT
     GmControls gm_ctrls;
 #endif
+#if FIRST_PASS_RESTRUCTURE
+    int16_t     first_pass_seg_total_count;
+    uint8_t     first_pass_seg_column_count;
+    uint8_t     first_pass_seg_row_count;
+    uint16_t    first_pass_seg_acc;
+    EbHandle    first_pass_done_semaphore;
+    EbHandle    first_pass_mutex;
+
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
