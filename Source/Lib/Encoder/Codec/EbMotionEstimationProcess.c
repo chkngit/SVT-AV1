@@ -511,7 +511,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
     // Set hme-based me sr adjustment level
+#if TUNE_PRESETS_CLEANUP
+    if (enc_mode <= ENC_M0)
+#else
     if (enc_mode <= ENC_MRS)
+#endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);

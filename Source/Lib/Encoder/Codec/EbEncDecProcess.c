@@ -3283,7 +3283,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if TUNE_NICS
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_MRS)
+            context_ptr->md_stage_1_class_prune_th = 300;
+        else if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_MR)
+#endif
 #else
         if (enc_mode <= ENC_M0)
 #endif
@@ -3319,7 +3325,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
         else
 #endif
+#if TUNE_PRESETS_CLEANUP
+            if (enc_mode <= ENC_M0)
+#else
             if (enc_mode <= ENC_MR)
+#endif
                 context_ptr->md_stage_2_cand_prune_th = 45;
             else if (enc_mode <= ENC_M9)
                 context_ptr->md_stage_2_cand_prune_th = 15;
@@ -3469,7 +3479,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 else
 #endif
                     if (enc_mode <= ENC_M0)
+#if TUNE_PRESETS_CLEANUP
+                        context_ptr->sq_weight = 100;
+#else
                         context_ptr->sq_weight = 105;
+#endif
 #if !TUNE_NEW_PRESETS
                     else if (enc_mode <= ENC_M1)
                         context_ptr->sq_weight = 100;
@@ -3495,7 +3509,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->switch_md_mode_based_on_sq_coeff = 0;
 #if FEATURE_REMOVE_CIRCULAR
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        else if (enc_mode <= ENC_MR)
+#else
         else if (enc_mode <= ENC_M0)
+#endif
             context_ptr->switch_md_mode_based_on_sq_coeff = 1;
         else if (enc_mode <= ENC_M1)
             context_ptr->switch_md_mode_based_on_sq_coeff = 2;
