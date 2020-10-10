@@ -135,6 +135,7 @@ extern "C" {
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
 #define TUNE_NEW_PRESETS                             1 // Preset tuning for M0-M7
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
+#define TUNE_ADD_NEW_LEVELS                          1 // Add new levels to be used by zero-coeff feature
 // END  svt-03 /////////////////////////////////////////////////////////
 
 #define TUNE_PRESETS_CLEANUP                    1 // Tune and clean up presets

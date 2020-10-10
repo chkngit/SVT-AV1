@@ -9037,6 +9037,52 @@ uint8_t update_skip_nsq_shapes(
 
     return skip_nsq;
 }
+#if TUNE_ADD_NEW_LEVELS
+void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
+void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level);
+void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
+
+// Set the levels used by features which apply aggressive settings for certain blocks (e.g. NSQ stats)
+// Return 1 to skip, else 0
+//
+// Level 0 - skip
+// Level 1 - no adjustment
+// Level 2-5 - more aggressive settings
+EbBool udpate_md_settings(ModeDecisionContext *context_ptr, uint8_t level) {
+
+    // Level 0 is skip
+    if (level == 0) return 1;
+
+    if (level >= 1) {
+        // Don't make NICs more conservative
+        context_ptr->nic_ctrls.stage1_scaling_num = MIN(context_ptr->nic_ctrls.stage1_scaling_num, 5);
+        context_ptr->nic_ctrls.stage2_scaling_num = MIN(context_ptr->nic_ctrls.stage2_scaling_num, 3);
+        context_ptr->nic_ctrls.stage3_scaling_num = MIN(context_ptr->nic_ctrls.stage3_scaling_num, 3);
+        context_ptr->md_tx_size_search_mode = 0;
+    }
+    if (level >= 2) {
+        set_compound_to_inject(context_ptr, context_ptr->inter_comp_ctrls.allowed_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        context_ptr->md_inter_intra_level = 0;
+        set_inter_intra_ctrls(context_ptr, context_ptr->md_inter_intra_level);
+        context_ptr->md_pme_level = 3;
+        md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
+    }
+    if (level >= 3) {
+        context_ptr->dist_based_ref_pruning = 5;
+        set_dist_based_ref_pruning_controls(context_ptr, context_ptr->dist_based_ref_pruning);
+        context_ptr->nic_ctrls.stage1_scaling_num = MIN(context_ptr->nic_ctrls.stage1_scaling_num, 2);
+        context_ptr->nic_ctrls.stage2_scaling_num = MIN(context_ptr->nic_ctrls.stage2_scaling_num, 1);
+        context_ptr->nic_ctrls.stage3_scaling_num = MIN(context_ptr->nic_ctrls.stage3_scaling_num, 1);
+    }
+    if (level >= 4) {
+        set_txt_controls(context_ptr, 5);
+        context_ptr->chroma_level = CHROMA_MODE_1;
+    }
+
+    return 0;
+}
+#endif
 /***********************************
 get the number of total block in a
 branch
@@ -9109,7 +9155,7 @@ uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
     }
     return skip_nsq;
 }
-
+#if !TUNE_ADD_NEW_LEVELS
 #if FEATURE_REMOVE_CIRCULAR
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
 #if FEATURE_INTER_INTRA_LEVELS
@@ -9140,6 +9186,7 @@ void udpate_md_settings(ModeDecisionContext *context_ptr, uint8_t level) {
         md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
     }
 }
+#endif
 #endif
 #if FEATURE_REMOVE_CIRCULAR
 void update_md_settings_based_on_stats(ModeDecisionContext *context_ptr, int8_t pred_depth_refinement) {

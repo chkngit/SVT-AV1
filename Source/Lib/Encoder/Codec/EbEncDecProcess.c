@@ -2179,7 +2179,11 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     case 1:
         coeffb_sw_md_ctrls->enabled = 1;
 #if FEATURE_REMOVE_CIRCULAR
+#if TUNE_ADD_NEW_LEVELS
+        coeffb_sw_md_ctrls->non_skip_level = 1;
+#else
         coeffb_sw_md_ctrls->non_skip_level = 0;
+#endif
 #else
         coeffb_sw_md_ctrls->mode_offset = 3;
 #endif
@@ -2188,7 +2192,11 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     case 2:
         coeffb_sw_md_ctrls->enabled = 1;
 #if FEATURE_REMOVE_CIRCULAR
+#if TUNE_ADD_NEW_LEVELS
+        coeffb_sw_md_ctrls->non_skip_level = 2;
+#else
         coeffb_sw_md_ctrls->non_skip_level = 1;
+#endif
 #else
         coeffb_sw_md_ctrls->mode_offset = 4;
 #endif
@@ -2197,7 +2205,11 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     case 3:
         coeffb_sw_md_ctrls->enabled = 1;
 #if FEATURE_REMOVE_CIRCULAR
+#if TUNE_ADD_NEW_LEVELS
+        coeffb_sw_md_ctrls->non_skip_level = 2;
+#else
         coeffb_sw_md_ctrls->non_skip_level = 1;
+#endif
 #else
         coeffb_sw_md_ctrls->mode_offset = 4;
 #endif
@@ -2332,13 +2344,21 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
         adaptive_md_cycles_red_ctrls->switch_level_th = 600;
+#if TUNE_ADD_NEW_LEVELS
+        adaptive_md_cycles_red_ctrls->non_skip_level = 2;
+#else
         adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+#endif
         break;
     case 5:
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
         adaptive_md_cycles_red_ctrls->switch_level_th = 750;
+#if TUNE_ADD_NEW_LEVELS
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+#else
         adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+#endif
         break;
 #else
     case 2:
@@ -2370,13 +2390,21 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 500;
         adaptive_md_cycles_red_ctrls->switch_level_th = 1000;
+#if TUNE_ADD_NEW_LEVELS
+        adaptive_md_cycles_red_ctrls->non_skip_level = 2;
+#else
         adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+#endif
         break;
     case 7:
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 750;
         adaptive_md_cycles_red_ctrls->switch_level_th = 1500;
+#if TUNE_ADD_NEW_LEVELS
+        adaptive_md_cycles_red_ctrls->non_skip_level = 2;
+#else
         adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+#endif
         break;
     default:
         assert(0);
