@@ -3354,16 +3354,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_3_cand_prune_th = 5;
     else
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M9)
+#else
         if (enc_mode <= ENC_MRS)
             context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
         else
-#if TUNE_PRESETS_CLEANUP
             if (enc_mode <= ENC_MRS)
-#else
-            if (enc_mode <= ENC_MR)
-#endif
                 context_ptr->md_stage_3_cand_prune_th = 45;
             else if (enc_mode <= ENC_M9)
+#endif
                 context_ptr->md_stage_3_cand_prune_th = 15;
             else
                 context_ptr->md_stage_3_cand_prune_th = 5;
@@ -3823,12 +3823,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_nsq_mv_search_level = 0;
     else
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_MRS)
             context_ptr->md_nsq_mv_search_level = 1;
 #if TUNE_NEW_PRESETS
         else if (enc_mode <= ENC_M1)
 #else
         else if (enc_mode <= ENC_M3)
+#endif
 #endif
             context_ptr->md_nsq_mv_search_level = 2;
         else

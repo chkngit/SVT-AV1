@@ -443,13 +443,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
     // HME Search Method
+#if !TUNE_PRESETS_CLEANUP
     if (enc_mode <= ENC_MRS)
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
     else
+#endif
         context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#if !TUNE_PRESETS_CLEANUP
     if (enc_mode <= ENC_MRS)
         context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
     else
+#endif
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 
 #if FEATURE_GM_OPT // GmControls
