@@ -1104,6 +1104,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_0)
         *(candidate_buffer->full_cost_ptr) = *(candidate_buffer->fast_cost_ptr);
 }
+#if !FEATURE_NIC_SCALING_PER_STAGE
 uint32_t nics_scale_factor[11/*levels*/][2/*num/denum*/] =
 {
     {10,8},   // level0
@@ -1118,6 +1119,193 @@ uint32_t nics_scale_factor[11/*levels*/][2/*num/denum*/] =
     {1,8},    // level9
     {1,16}    // level10
 };
+#endif
+#if FEATURE_NEW_INTER_COMP_LEVELS
+void set_dist_based_ref_pruning_controls(
+    ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level) {
+    RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
+
+    switch (dist_based_ref_pruning_level) {
+    case 0: ref_pruning_ctrls->enabled = 0; break;
+    case 1:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 7;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 7;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 7;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 7;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 7;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    case 2:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 7;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 7;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 6;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 4;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 7;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    case 3:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 7;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 7;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 4;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 4;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 7;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    case 4:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 7;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 7;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 4;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 2;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 7;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    case 5:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 1;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 1;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 1;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 1;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 1;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 1;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    case 6:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->best_refs[PA_ME_GROUP]               = 0;
+        ref_pruning_ctrls->best_refs[UNI_3x3_GROUP]             = 0;
+        ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 0;
+        ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
+        ref_pruning_ctrls->best_refs[WARP_GROUP]                = 0;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 0;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 0;
+        ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 0;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        break;
+    default: assert(0); break;
+    }
+}
+
+void set_compound_to_inject(ModeDecisionContext *context_ptr, EbBool * comp_inj_table, EbBool avg, EbBool dist, EbBool diff, EbBool wdg);
+
+void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) {
+
+    InterCompCtrls* inter_comp_ctrls = &ctx->inter_comp_ctrls;
+
+    switch (inter_comp_mode)
+    {
+    case 0://OFF
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    case 1://FULL
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        break;
+    case 2:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    case 3:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    case 4:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    case 5:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    case 6:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_dist_based_ref_pruning_controls(
     ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level) {
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1249,10 +1437,45 @@ void set_dist_based_ref_pruning_controls(
     default: assert(0); break;
     }
 }
+#endif
 void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     // minimum nics allowed
+#if FIX_NIC_1_CLEAN_UP
+    uint32_t min_nics_stage1 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage1_scaling_num) ? 2 : 1;
+    uint32_t min_nics_stage2 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage2_scaling_num) ? 2 : 1;
+    uint32_t min_nics_stage3 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage3_scaling_num) ? 2 : 1;
+#else
     uint32_t min_nics = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 1;
+#endif
 
+#if FEATURE_NIC_SCALING_PER_STAGE
+    // Set the scaling numerators
+    uint32_t stage1_scale_num = context_ptr->nic_ctrls.stage1_scaling_num;
+    uint32_t stage2_scale_num = context_ptr->nic_ctrls.stage2_scaling_num;
+    uint32_t stage3_scale_num = context_ptr->nic_ctrls.stage3_scaling_num;
+
+    // The scaling denominator is 16 for all stages
+    uint32_t scale_denum = 16;
+
+    // no NIC setting should be done beyond this point
+    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+#if FIX_NIC_1_CLEAN_UP
+        context_ptr->md_stage_1_count[cidx] = MAX(min_nics_stage1,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * stage1_scale_num, scale_denum));
+        context_ptr->md_stage_2_count[cidx] = MAX(min_nics_stage2,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cidx] * stage2_scale_num, scale_denum));
+        context_ptr->md_stage_3_count[cidx] = MAX(min_nics_stage3,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * stage3_scale_num, scale_denum));
+#else
+        context_ptr->md_stage_1_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * stage1_scale_num, scale_denum));
+        context_ptr->md_stage_2_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cidx] * stage2_scale_num, scale_denum));
+        context_ptr->md_stage_3_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * stage3_scale_num, scale_denum));
+#endif
+    }
+#else
     uint8_t nics_scling_level = context_ptr->nic_scaling_level;
     uint32_t scale_num   = nics_scale_factor[nics_scling_level][0];
     uint32_t scale_denum = nics_scale_factor[nics_scling_level][1];
@@ -1268,6 +1491,7 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
             DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * scale_num, scale_denum));
 #endif
     }
+#endif
 }
 
 #if FIX_NIC_1_CLEAN_UP

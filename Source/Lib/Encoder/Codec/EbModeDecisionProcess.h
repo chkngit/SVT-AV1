@@ -223,6 +223,13 @@ typedef struct CoeffBSwMdCtrls {
     uint8_t mode_offset;            // Offset to the mode to switch to
     uint8_t skip_block;             // Allow skipping NSQ blocks
 }CoeffBSwMdCtrls;
+#if FEATURE_NIC_SCALING_PER_STAGE
+typedef struct NicCtrls {
+    uint8_t stage1_scaling_num; // Scaling numerator for post-stage 0 NICS: <x>/16
+    uint8_t stage2_scaling_num; // Scaling numerator for post-stage 1 NICS: <x>/16
+    uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
+}NicCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
