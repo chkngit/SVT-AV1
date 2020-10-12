@@ -1940,6 +1940,30 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
 
+
+#if FEATURE_MDS2
+    // md_stage_2_3_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than
+    // md_stage_2_3_cand_prune_th
+    context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+
+    // md_stage_2_3_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_3_class_prune_th
+
+    context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+
+    // md_stage_2_3_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than
+    // md_stage_2_3_cand_prune_th
+    context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
+
+    // md_stage_2_3_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_3_class_prune_th
+
+    context_ptr->md_stage_3_class_prune_th = (uint64_t)~0;
+#else
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
     // md_stage_2_3_cand_prune_th
@@ -1950,6 +1974,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // md_stage_2_3_class_prune_th
 
     context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
+#endif
 
     context_ptr->coeff_area_based_bypass_nsq_th = 0;
 
@@ -1985,9 +2010,21 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 0 OFF - Use TXS for intra candidates only
     // 1 ON  - Use TXS for all candidates
     // 2 ON  - INTER TXS restricted to max 1 depth
+#if FEATURE_MDS2
+    context_ptr->md_staging_tx_size_level = 0;
+#else
     context_ptr->txs_in_inter_classes = 0;
+#endif
 
 
+#if FEATURE_NIC_SCALING_PER_STAGE
+#if FIX_NIC_1_CLEAN_UP
+    uint8_t nic_scaling_level = 13;
+#else
+    uint8_t nic_scaling_level = 12;
+#endif
+    set_nic_controls(context_ptr, nic_scaling_level);
+#else
     // Each NIC scaling level corresponds to a scaling factor, given by the below {x,y}
     // combinations, where x is the numerator, and y is the denominator.  e.g. {1,8} corresponds
     // to 1/8x scaling of the base NICs, which are set in set_md_stage_counts().
@@ -2003,6 +2040,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     //{ 1,8 },    // level9
     //{ 1,16}     // level10
     context_ptr->nic_scaling_level = 9;
+#endif
 
     uint8_t txs_cycles_reduction_level = 0;
     set_txs_cycle_reduction_controls(context_ptr, txs_cycles_reduction_level);
