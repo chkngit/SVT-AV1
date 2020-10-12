@@ -64,6 +64,7 @@ extern "C" {
 #define FEATURE_NIC_SCALING_PER_STAGE            1 // Add ability to scale NICs per stage; improve current trade-offs
 #define TUNE_NICS                                1 // Tune settings for NIC scaling/pruning/# of stages to improve trade-offs with new scaling
 #define PARTIAL_FREQUENCY                        1 //Calculate partial frequency transforms N2 or N4
+#define TUNE_SC_QPS_IMP                          1 // Improve QP assignment for SC
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
