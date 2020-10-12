@@ -2213,6 +2213,137 @@ void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_c
         break;
     }
 }
+#if FEATURE_NIC_SCALING_PER_STAGE
+void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
+
+    NicCtrls* nic_ctrls = &mdctxt->nic_ctrls;
+
+    switch (nic_scaling_level)
+    {
+    case 0:
+        nic_ctrls->stage1_scaling_num = 20;
+        nic_ctrls->stage2_scaling_num = 20;
+        nic_ctrls->stage3_scaling_num = 20;
+        break;
+    case 1:
+        nic_ctrls->stage1_scaling_num = 16;
+        nic_ctrls->stage2_scaling_num = 16;
+        nic_ctrls->stage3_scaling_num = 16;
+        break;
+    case 2:
+        nic_ctrls->stage1_scaling_num = 14;
+        nic_ctrls->stage2_scaling_num = 14;
+        nic_ctrls->stage3_scaling_num = 14;
+        break;
+    case 3:
+        nic_ctrls->stage1_scaling_num = 12;
+        nic_ctrls->stage2_scaling_num = 12;
+        nic_ctrls->stage3_scaling_num = 12;
+        break;
+    case 4:
+        nic_ctrls->stage1_scaling_num = 10;
+        nic_ctrls->stage2_scaling_num = 10;
+        nic_ctrls->stage3_scaling_num = 10;
+        break;
+    case 5:
+        nic_ctrls->stage1_scaling_num = 8;
+        nic_ctrls->stage2_scaling_num = 8;
+        nic_ctrls->stage3_scaling_num = 8;
+        break;
+    case 6:
+        nic_ctrls->stage1_scaling_num = 6;
+        nic_ctrls->stage2_scaling_num = 6;
+        nic_ctrls->stage3_scaling_num = 6;
+        break;
+    case 7:
+        nic_ctrls->stage1_scaling_num = 5;
+        nic_ctrls->stage2_scaling_num = 5;
+        nic_ctrls->stage3_scaling_num = 5;
+        break;
+    case 8:
+        nic_ctrls->stage1_scaling_num = 4;
+        nic_ctrls->stage2_scaling_num = 4;
+        nic_ctrls->stage3_scaling_num = 4;
+        break;
+    case 9:
+        nic_ctrls->stage1_scaling_num = 5;
+        nic_ctrls->stage2_scaling_num = 3;
+        nic_ctrls->stage3_scaling_num = 3;
+        break;
+    case 10:
+        nic_ctrls->stage1_scaling_num = 3;
+        nic_ctrls->stage2_scaling_num = 3;
+        nic_ctrls->stage3_scaling_num = 3;
+        break;
+    case 11:
+        nic_ctrls->stage1_scaling_num = 3;
+        nic_ctrls->stage2_scaling_num = 2;
+        nic_ctrls->stage3_scaling_num = 2;
+        break;
+#if FIX_NIC_1_CLEAN_UP
+    case 12:
+        nic_ctrls->stage1_scaling_num = 3;
+        nic_ctrls->stage2_scaling_num = 0;
+        nic_ctrls->stage3_scaling_num = 0;
+        break;
+    case 13:
+        nic_ctrls->stage1_scaling_num = 2;
+        nic_ctrls->stage2_scaling_num = 2;
+        nic_ctrls->stage3_scaling_num = 2;
+        break;
+    case 14:
+        nic_ctrls->stage1_scaling_num = 0;
+        nic_ctrls->stage2_scaling_num = 0;
+        nic_ctrls->stage3_scaling_num = 0;
+        break;
+#else
+    case 12:
+        nic_ctrls->stage1_scaling_num = 2;
+        nic_ctrls->stage2_scaling_num = 2;
+        nic_ctrls->stage3_scaling_num = 2;
+        break;
+    case 13:
+        nic_ctrls->stage1_scaling_num = 1;
+        nic_ctrls->stage2_scaling_num = 1;
+        nic_ctrls->stage3_scaling_num = 1;
+        break;
+#endif
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+#if FEATURE_INTER_INTRA_LEVELS
+void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level) {
+
+    InterIntraCompCtrls* ii_ctrls = &mdctxt->inter_intra_comp_ctrls;
+
+    switch (inter_intra_level) {
+    case 0:
+        ii_ctrls->enabled = 0;
+        break;
+    case 1:
+        ii_ctrls->enabled = 1;
+        ii_ctrls->skip_pme_unipred = 0;
+        ii_ctrls->closest_ref_only = 0;
+        break;
+    case 2:
+        ii_ctrls->enabled = 1;
+        ii_ctrls->skip_pme_unipred = 1;
+        ii_ctrls->closest_ref_only = 0;
+        break;
+    case 3:
+        ii_ctrls->enabled = 1;
+        ii_ctrls->skip_pme_unipred = 1;
+        ii_ctrls->closest_ref_only = 1;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive EncDec Settings for OQ
 Input   : encoder mode and pd pass
