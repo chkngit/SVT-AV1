@@ -440,7 +440,11 @@ typedef struct ModeDecisionContext {
     // full_loop_core signals
     EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
+#if TUNE_TX_TYPE_LEVELS
+    EbBool md_staging_txt_level;
+#else
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
+#endif
     EbBool md_staging_skip_full_chroma;
     EbBool md_staging_skip_rdoq;
     EbBool md_staging_spatial_sse_full_loop_level;
@@ -452,8 +456,16 @@ typedef struct ModeDecisionContext {
     uint32_t *   ref_best_ref_sq_table;
     uint64_t     md_stage_1_cand_prune_th;
     uint64_t     md_stage_1_class_prune_th;
+
+#if FEATURE_MDS2
+    uint64_t     md_stage_2_cand_prune_th;
+    uint64_t     md_stage_2_class_prune_th;
+    uint64_t     md_stage_3_cand_prune_th;
+    uint64_t     md_stage_3_class_prune_th;
+#else
     uint64_t     md_stage_2_3_cand_prune_th;
     uint64_t     md_stage_2_3_class_prune_th;
+#endif
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
@@ -538,12 +550,35 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_end_x;
     int16_t sprs_lev0_start_y;
     int16_t sprs_lev0_end_y;
+
+#if FEATURE_MDS2
+    uint8_t md_staging_tx_size_level;
+#else
     uint8_t txs_in_inter_classes;
+#endif
+#if FEATURE_NIC_SCALING_PER_STAGE
+    NicCtrls nic_ctrls;
+#else
     uint8_t nic_scaling_level;
+#endif
     uint8_t inter_compound_mode;
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
     MV ref_mv;
+#if FEATURE_OPT_IFS
+    uint8_t ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
+#endif
+#if FEATURE_RDOQ_OPT
+    uint8_t use_prev_mds_res;
+#endif
+#if FEATURE_PD0_CUT_DEPTH
+    uint16_t sb_index;
+#endif
+#if FEATURE_MDS0_ELIMINATE_CAND
+    uint8_t early_cand_elimination;
+    uint64_t mds0_best_cost;
+    uint8_t mds0_best_class;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
