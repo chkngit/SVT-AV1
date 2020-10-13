@@ -922,13 +922,17 @@ extern EbErrorType first_pass_signal_derivation_block(
 }
 
 void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                         NeighborArrayUnit *  skip_coeff_neighbor_array,
+#endif
                                         NeighborArrayUnit *  inter_pred_dir_neighbor_array,
                                         NeighborArrayUnit *  ref_frame_type_neighbor_array,
                                         NeighborArrayUnit *  intra_luma_mode_neighbor_array,
                                         NeighborArrayUnit *  skip_flag_neighbor_array,
                                         NeighborArrayUnit *  mode_type_neighbor_array,
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
                                         NeighborArrayUnit *  leaf_depth_neighbor_array,
+#endif
                                         NeighborArrayUnit *  leaf_partition_neighbor_array);
 // inject intra candidates for first pass
 void  first_pass_inject_intra_candidates(
@@ -1327,13 +1331,17 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     blk_ptr->av1xd->tile.mi_row_end   = context_ptr->sb_ptr->tile_info.mi_row_end;
 
     product_coding_loop_init_fast_loop(context_ptr,
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                        context_ptr->skip_coeff_neighbor_array,
+#endif
                                        context_ptr->inter_pred_dir_neighbor_array,
                                        context_ptr->ref_frame_type_neighbor_array,
                                        context_ptr->intra_luma_mode_neighbor_array,
                                        context_ptr->skip_flag_neighbor_array,
                                        context_ptr->mode_type_neighbor_array,
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
                                        context_ptr->leaf_depth_neighbor_array,
+#endif
                                        context_ptr->leaf_partition_neighbor_array);
 
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1792,7 +1800,11 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 #endif
     return return_error;
 }
+#if TUNE_TX_TYPE_LEVELS
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
+#else
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode);
+#endif
 void set_nsq_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint16_t nsq_cycles_red_mode);
 void set_depth_cycle_redcution_controls(ModeDecisionContext *mdctxt, uint8_t depth_cycles_red_mode) ;
 void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode);
@@ -1831,6 +1843,11 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 4                    TH 50%
     // 5                    TH 40%
     context_ptr->enable_area_based_cycles_allocation = 0;
+
+#if TUNE_TX_TYPE_LEVELS
+    context_ptr->md_staging_txt_level = 0;
+    set_txt_controls(context_ptr, 0);
+#else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
     // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
@@ -1838,6 +1855,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
     uint8_t txt_cycles_reduction_level = 0;
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
+#endif
     context_ptr->interpolation_search_level = IFS_OFF;
     // Set Chroma Mode
     // Level                Settings
