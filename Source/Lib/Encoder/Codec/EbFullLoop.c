@@ -1416,6 +1416,70 @@ int32_t av1_quantize_inv_quantize(
                               255,
                               (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                                        segmentation_qp_offset);
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+    if (bit_depth == EB_8BIT) {
+        if (component_type == COMPONENT_LUMA) {
+            candidate_plane.quant_qtx = scs_ptr->quants_8bit.y_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_8bit.y_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_8bit.y_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_8bit.y_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_8bit.y_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_8bit.y_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_8bit.y_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CB) {
+            candidate_plane.quant_qtx = scs_ptr->quants_8bit.u_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_8bit.u_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_8bit.u_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_8bit.u_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_8bit.u_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_8bit.u_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_8bit.u_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CR) {
+            candidate_plane.quant_qtx = scs_ptr->quants_8bit.v_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_8bit.v_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_8bit.v_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_8bit.v_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_8bit.v_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_8bit.v_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_8bit.v_dequant_qtx[q_index];
+        }
+    }
+    else {
+        if (component_type == COMPONENT_LUMA) {
+            candidate_plane.quant_qtx = scs_ptr->quants_bd.y_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_bd.y_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_bd.y_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_bd.y_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_bd.y_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_bd.y_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_bd.y_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CB) {
+            candidate_plane.quant_qtx = scs_ptr->quants_bd.u_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_bd.u_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_bd.u_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_bd.u_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_bd.u_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_bd.u_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_bd.u_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CR) {
+            candidate_plane.quant_qtx = scs_ptr->quants_bd.v_quant[q_index];
+            candidate_plane.quant_fp_qtx = scs_ptr->quants_bd.v_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = scs_ptr->quants_bd.v_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = scs_ptr->quants_bd.v_quant_shift[q_index];
+            candidate_plane.zbin_qtx = scs_ptr->quants_bd.v_zbin[q_index];
+            candidate_plane.round_qtx = scs_ptr->quants_bd.v_round[q_index];
+            candidate_plane.dequant_qtx = scs_ptr->deq_bd.v_dequant_qtx[q_index];
+        }
+    }
+#else
     if (bit_depth == EB_8BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant[q_index];
@@ -1478,6 +1542,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_bd.v_dequant_qtx[q_index];
         }
     }
+#endif
     const ScanOrder *const scan_order =
         &av1_scan_orders[txsize][tx_type]; //get_scan(tx_size, tx_type);
 

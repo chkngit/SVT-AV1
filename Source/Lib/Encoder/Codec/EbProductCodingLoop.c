@@ -6495,9 +6495,10 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     memset(candidate_ptr->eob[0], 0, sizeof(uint16_t));
     memset(candidate_ptr->eob[1], 0, sizeof(uint16_t));
     memset(candidate_ptr->eob[2], 0, sizeof(uint16_t));
-
+#if !FIX_REMOVE_UNUSED_CODE
     candidate_ptr->chroma_distortion             = 0;
     candidate_ptr->chroma_distortion_inter_depth = 0;
+#endif
     // Set Skip Flag
     candidate_ptr->skip_flag = EB_FALSE;
 
@@ -6579,9 +6580,10 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                             &(*count_non_zero_coeffs[0]),
                             &y_coeff_bits,
                             &y_full_distortion[0]);
-
+#if !FIX_REMOVE_UNUSED_CODE
     candidate_ptr->chroma_distortion_inter_depth = 0;
     candidate_ptr->chroma_distortion             = 0;
+#endif
 
     //CHROMA
 
@@ -8201,7 +8203,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     ModeDecisionCandidate *       fast_candidate_array = context_ptr->fast_candidate_array;
     uint32_t                      candidate_index;
     uint32_t                      fast_candidate_total_count;
+#if !FIX_REMOVE_UNUSED_CODE
     uint32_t                      best_intra_mode = EB_INTRA_MODE_INVALID;
+#endif
     const uint32_t input_origin_index = (context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
             input_picture_ptr->stride_y +
         (context_ptr->blk_origin_x + input_picture_ptr->origin_x);
@@ -8546,12 +8550,20 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                context_ptr->md_stage_3_total_count);
 
     // Full Mode Decision (choose the best mode)
+#if FIX_REMOVE_UNUSED_CODE
+        candidate_index = product_full_mode_decision(context_ptr,
+            blk_ptr,
+            candidate_buffer_ptr_array,
+            context_ptr->md_stage_3_total_count,
+            context_ptr->best_candidate_index_array);
+#else
     candidate_index  = product_full_mode_decision(context_ptr,
                                                  blk_ptr,
                                                  candidate_buffer_ptr_array,
                                                  context_ptr->md_stage_3_total_count,
                                                  context_ptr->best_candidate_index_array,
                                                  &best_intra_mode);
+#endif
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 
     bestcandidate_buffers[0] = candidate_buffer;

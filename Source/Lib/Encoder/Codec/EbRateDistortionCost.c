@@ -548,7 +548,10 @@ int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8
 
 uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
-                             EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
+#if !FIX_REMOVE_UNUSED_CODE
+                             EbBool use_ssd,
+#endif
+                             PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
                              uint8_t md_pass, uint32_t left_neighbor_mode,
@@ -563,7 +566,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     UNUSED(top_neighbor_mode);
     UNUSED(md_pass);
     UNUSED(enable_inter_intra);
+#if !FIX_REMOVE_UNUSED_CODE
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr, pcs_ptr->parent_pcs_ptr->slice_type)
         && candidate_ptr->use_intrabc) {
         uint64_t rate = 0;
@@ -758,28 +763,19 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         // Keep the Fast Luma and Chroma rate for future use
         candidate_ptr->fast_luma_rate = luma_rate;
         candidate_ptr->fast_chroma_rate = chroma_rate;
+#if !FIX_REMOVE_UNUSED_CODE
         if (use_ssd) {
             int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
             Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
             int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
             rate              = 0;
-
-            model_rd_from_sse(blk_geom->bsize,
-                              quantizer,
-                              scs_ptr->encoder_bit_depth,
-                              luma_distortion,
-                              &rate,
-                              &luma_sad);
+            model_rd_from_sse(blk_geom->bsize, quantizer, luma_distortion, &rate, &luma_sad);
             luma_rate += rate;
             total_distortion = luma_sad;
 
             rate = 0;
-            model_rd_from_sse(blk_geom->bsize_uv,
-                              quantizer,
-                              scs_ptr->encoder_bit_depth,
-                              chroma_distortion,
-                              &chroma_rate,
-                              &chromasad_);
+            model_rd_from_sse(
+                blk_geom->bsize_uv, quantizer, chroma_distortion, &chroma_rate, &chromasad_);
             chroma_rate += rate;
             total_distortion += chromasad_;
 
@@ -787,6 +783,7 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
             return (RDCOST(lambda, rate, total_distortion));
         } else {
+#endif
             luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
             chromasad_       = chroma_distortion << AV1_COST_PRECISION;
             total_distortion = luma_sad + chromasad_;
@@ -795,7 +792,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
             // Assign fast cost
             return (RDCOST(lambda, rate, total_distortion));
+#if !FIX_REMOVE_UNUSED_CODE
         }
+#endif
     }
 }
 
@@ -1333,7 +1332,10 @@ void two_pass_cost_update_64bit(PictureControlSet *pcs_ptr, ModeDecisionCandidat
 
 uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
-                             EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
+#if !FIX_REMOVE_UNUSED_CODE
+                            EbBool use_ssd,
+#endif
+                             PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
                              uint8_t md_pass, uint32_t left_neighbor_mode,
@@ -1613,28 +1615,20 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     // Keep the Fast Luma and Chroma rate for future use
     candidate_ptr->fast_luma_rate = luma_rate;
     candidate_ptr->fast_chroma_rate = chroma_rate;
+#if !FIX_REMOVE_UNUSED_CODE
     if (use_ssd) {
         int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
 
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         rate              = 0;
-        model_rd_from_sse(blk_geom->bsize,
-                          quantizer,
-                          pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth,
-                          luma_distortion,
-                          &rate,
-                          &luma_sad);
+        model_rd_from_sse(blk_geom->bsize, quantizer, luma_distortion, &rate, &luma_sad);
         luma_rate += rate;
         total_distortion = luma_sad;
 
         rate = 0;
-        model_rd_from_sse(blk_geom->bsize_uv,
-                          quantizer,
-                          pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth,
-                          chroma_distortion,
-                          &chroma_rate,
-                          &chromasad_);
+        model_rd_from_sse(
+            blk_geom->bsize_uv, quantizer, chroma_distortion, &chroma_rate, &chromasad_);
         chroma_rate += rate;
         total_distortion += chromasad_;
 
@@ -1649,6 +1643,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         }
         return (RDCOST(lambda, rate, total_distortion));
     } else {
+#endif
         luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         chromasad_       = chroma_distortion << AV1_COST_PRECISION;
         total_distortion = luma_sad + chromasad_;
@@ -1664,7 +1659,9 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
             if (skip_mode_rate < rate) return (RDCOST(lambda, skip_mode_rate, total_distortion));
         }
         return (RDCOST(lambda, rate, total_distortion));
+#if !FIX_REMOVE_UNUSED_CODE
     }
+#endif
 }
 EbErrorType av1_txb_estimate_coeff_bits(
     struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
