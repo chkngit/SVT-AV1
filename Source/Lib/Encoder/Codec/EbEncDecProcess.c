@@ -177,7 +177,9 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
     neighbor_array_unit_reset(pcs_ptr->ep_mv_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_skip_flag_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_mode_type_neighbor_array[tile_idx]);
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     neighbor_array_unit_reset(pcs_ptr->ep_leaf_depth_neighbor_array[tile_idx]);
+#endif
     neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array[tile_idx]);
@@ -2705,6 +2707,45 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
+#if TUNE_TX_TYPE_LEVELS
+    // TxT Groups - The different groups of transform types that can be searched
+    // Group #          Settings
+    // 1                DCT_DCT
+    // 2                DCT-DCT + V-DCT + H-DCT + ADST-ADST
+    // 3                DCT-DCT + V-DCT + H-DCT + ADST-ADST
+    // 4                DCT-DCT + V-DCT + H-DCT + ADST-ADST + DCT-ADST + ADST-DCT
+    // 5                DCT-DCT + V-DCT + H-DCT + ADST-ADST + DCT-ADST + ADST-DCT + FLIFADST-FLIPADST + IDTX
+    // 6                All Transform Types
+
+    // txt_level specifies the group of transform types to search over depending on block type/size.
+    // txt_level         Settings
+    // 0                 OFF (DCT_DCT only)
+    // 1                 FULL: Group 6 + Stats OFF
+    // 2                 Group 6 + Stats ON
+    // 3                 Inter: Group 5, All types for Intra + Stats OFF
+    // 4                 Inter: For block size >= 16x16 Group 3 else Group 5, Intra: All types, Stats OFF
+    // 5                 Inter: For block size >= 16x16 Group 2 else Group 3,
+    //                   Intra: For block size >= 16x16 Group 4 else All types,
+    //                   Stats OFF
+    uint8_t txt_level = 0;
+    if (pd_pass == PD_PASS_0)
+        txt_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        txt_level = 0;
+    else
+        if (enc_mode <= ENC_M4)
+            txt_level = 1;
+#if !TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M5)
+            txt_level = 3;
+        else if (enc_mode <= ENC_M6)
+            txt_level = 4;
+#endif
+        else
+            txt_level = 5;
+
+    set_txt_controls(context_ptr, txt_level);
+#else
     // Tx_search Level for Luma                       Settings
     // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
     // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
@@ -2736,6 +2777,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_cycles_reduction_level = 5;
     }
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
+#endif
     if (pd_pass == PD_PASS_0)
         context_ptr->interpolation_search_level = IFS_OFF;
     else if (pd_pass == PD_PASS_1)

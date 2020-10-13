@@ -1485,7 +1485,11 @@ int32_t av1_quantize_inv_quantize(
 
     QuantParam qparam;
 
+#if FEATURE_RDOQ_OPT
+     qparam.log_scale = av1_get_tx_scale_tab[txsize];
+#else
     qparam.log_scale = av1_get_tx_scale(txsize);
+#endif
     qparam.tx_size   = txsize;
     qparam.qmatrix   = q_matrix;
     qparam.iqmatrix  = iq_matrix;
@@ -1494,14 +1498,44 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_rdoq;
 
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
+#if !TUNE_TX_TYPE_LEVELS
     if (scs_ptr->static_config.rdoq_level != DEFAULT && md_context->pd_pass == PD_PASS_2)
         perform_rdoq = scs_ptr->static_config.rdoq_level;
     else {
+#endif
         perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
             md_context->rdoq_level);
+#if !TUNE_TX_TYPE_LEVELS
+    }
+#endif
+#if FEATURE_OPT_RDOQ
+    const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
+    const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
+
+    if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
+
+        int satd = svt_aom_satd(coeff, n_coeffs);
+#if FEATURE_RDOQ_OPT
+        const int shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[txsize]);
+#else
+        const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
+#endif
+
+        satd = RIGHT_SIGNED_SHIFT(satd, shift);
+        satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
+
+        const int skip_block_trellis =
+            ((uint64_t)satd >
+            (uint64_t)md_context->rdoq_ctrls.satd_factor * qstep * sqrt_tx_pixels_2d[txsize]);
+
+        if (skip_block_trellis)
+            perform_rdoq = 0;
     }
 
+    if (perform_rdoq && ((!component_type && md_context->rdoq_ctrls.fp_q_l) || (component_type && md_context->rdoq_ctrls.fp_q_c))) {
+#else
     if (perform_rdoq) {
+#endif
         if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                              n_coeffs,
@@ -2387,12 +2421,16 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
 
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
@@ -2581,12 +2619,16 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
 
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =

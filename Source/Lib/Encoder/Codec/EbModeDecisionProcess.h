@@ -64,14 +64,20 @@ typedef struct {
 typedef struct MdBlkStruct {
     unsigned             tested_blk_flag : 1; //tells whether this CU is tested in MD.
     unsigned             mdc_array_index : 7;
+#if TUNE_REMOVE_UNUSED_NEIG_ARRAY
+    unsigned             count_non_zero_coeffs : 12;
+#else
     unsigned             count_non_zero_coeffs : 11;
+#endif
     unsigned             top_neighbor_depth : 8;
     unsigned             left_neighbor_depth : 8;
     unsigned             top_neighbor_mode : 2;
     unsigned             left_neighbor_mode : 2;
     unsigned             full_distortion : 32;
+#if !FIX_REMOVE_UNUSED_CODE
     unsigned             chroma_distortion : 32;
     unsigned             chroma_distortion_inter_depth : 32;
+#endif
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
@@ -164,11 +170,27 @@ typedef struct  AMdCycleRControls {
     uint8_t mode_offset;
 #endif
 }AMdCycleRControls;
+#if TUNE_TX_TYPE_LEVELS
+typedef struct TxtControls {
+    uint8_t enabled;
+
+    uint8_t txt_group_inter_lt_16x16;       // group to use when inter and tx block < 16x16
+    uint8_t txt_group_inter_gt_eq_16x16;    // group to use when inter and tx block >= 16x16
+
+    uint8_t txt_group_intra_lt_16x16;       // group to use when intra and tx block < 16x16
+    uint8_t txt_group_intra_gt_eq_16x16;    // group to use when intra and tx block >= 16x16
+
+    uint8_t use_stats;    // On/Off feature control
+    uint16_t intra_th;    // Threshold to bypass intra TXT <the higher th the higher speed>
+    uint16_t inter_th;    // Threshold to bypass inter TXT <the higher th the higher speed>
+}TxtControls;
+#else
 typedef struct  TxtCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th;  // Threshold to bypass inter TXT <the higher th the higher speed>
 }TxtCycleRControls;
+#endif
 typedef struct  TxsCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXS <the higher th the higher speed>
@@ -290,7 +312,9 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *mv_neighbor_array;
     NeighborArrayUnit *skip_flag_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
+#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     NeighborArrayUnit *leaf_depth_neighbor_array;
+#endif
     NeighborArrayUnit *luma_recon_neighbor_array;
     NeighborArrayUnit *cb_recon_neighbor_array;
     NeighborArrayUnit *cr_recon_neighbor_array;
@@ -299,7 +323,9 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *cb_recon_neighbor_array16bit;
     NeighborArrayUnit *cr_recon_neighbor_array16bit;
     NeighborArrayUnit *tx_search_luma_recon_neighbor_array16bit;
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     NeighborArrayUnit *skip_coeff_neighbor_array;
+#endif
     NeighborArrayUnit *
         luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *
