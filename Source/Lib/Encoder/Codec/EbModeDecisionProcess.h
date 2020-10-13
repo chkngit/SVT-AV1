@@ -432,7 +432,9 @@ typedef struct ModeDecisionContext {
     uint32_t me_block_offset;
     uint32_t me_cand_offset;
     EbPictureBufferDesc *cfl_temp_prediction_ptr;
+#if !FEATURE_OPT_IFS
     EbPictureBufferDesc *prediction_ptr_temp;
+#endif
     EbPictureBufferDesc
         *residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
     uint8_t  tx_depth;
