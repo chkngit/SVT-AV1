@@ -3926,22 +3926,22 @@ void process_first_pass_frame(
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
 
-    //for (seg_idx = 0; seg_idx < pcs_ptr->first_pass_seg_total_count; ++seg_idx) {
+    for (seg_idx = 0; seg_idx < pcs_ptr->first_pass_seg_total_count; ++seg_idx) {
 
-    //    EbObjectWrapper               *out_results_wrapper_ptr;
-    //    PictureDecisionResults        *out_results_ptr;
+        EbObjectWrapper               *out_results_wrapper_ptr;
+        PictureDecisionResults        *out_results_ptr;
 
-    //    eb_get_empty_object(
-    //        context_ptr->picture_decision_results_output_fifo_ptr,
-    //        &out_results_wrapper_ptr);
-    //    out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
-    //    out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
-    //    out_results_ptr->segment_index = seg_idx;
-    //    out_results_ptr->task_type = 2;// define a macro
-    //    eb_post_full_object(out_results_wrapper_ptr);
-    //}
+        eb_get_empty_object(
+            context_ptr->picture_decision_results_output_fifo_ptr,
+            &out_results_wrapper_ptr);
+        out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
+        out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
+        out_results_ptr->segment_index = seg_idx;
+        out_results_ptr->task_type = 2;// define a macro
+        eb_post_full_object(out_results_wrapper_ptr);
+    }
 
-   // eb_block_on_semaphore(pcs_ptr->first_pass_done_semaphore);
+    eb_block_on_semaphore(pcs_ptr->first_pass_done_semaphore);
     // anaghdin piture_number not set yet
     if (pcs_ptr->picture_number > 0)
         memcpy(context_ptr->first_pass_golden_frame->buffer_y,
