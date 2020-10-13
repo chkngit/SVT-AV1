@@ -26,12 +26,19 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
     // If the MV points so far into the UMV border that no visible pixels
     // are used for reconstruction, the subpel part of the MV can be
     // discarded and the MV limited to 16 pixels with equivalent results.
+#if OPT_11
+    MV            clamped_mv = { (int16_t)(src_mv->row * (1 << (1 - ss_y))),
+                             (int16_t)(src_mv->col * (1 << (1 - ss_x))) };
+    return clamped_mv;
+#endif
     const int32_t spel_left   = (AOM_INTERP_EXTEND + bw) << SUBPEL_BITS;
     const int32_t spel_right  = spel_left - SUBPEL_SHIFTS;
     const int32_t spel_top    = (AOM_INTERP_EXTEND + bh) << SUBPEL_BITS;
     const int32_t spel_bottom = spel_top - SUBPEL_SHIFTS;
+#if !OPT_11
     MV            clamped_mv  = {(int16_t)(src_mv->row * (1 << (1 - ss_y))),
                                  (int16_t)(src_mv->col * (1 << (1 - ss_x)))};
+#endif
     assert(ss_x <= 1);
     assert(ss_y <= 1);
 
@@ -3213,6 +3220,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                  EbPictureBufferDesc *ref_pic_list0,
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
+#if OPT_10
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
     EbBool use_uv = EB_FALSE;
     const int32_t num_planes      = use_uv ? MAX_MB_PLANE : 1;
@@ -3324,6 +3335,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                     const int32_t tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
 #if FIX_IFS
                     av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->blk_ptr,
@@ -3426,6 +3440,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         candidate_buffer_ptr, cm, md_context_ptr);
 #if FIX_IFS
                     av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->blk_ptr,
@@ -3535,6 +3552,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         candidate_buffer_ptr, cm, md_context_ptr);
 #if FIX_IFS
                     av1_inter_prediction(
+#if OPT_10
+                        scs_ptr,
+#endif
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->blk_ptr,
@@ -4389,6 +4409,9 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
 int32_t   is_inter_block(const BlockModeInfo *mbmi);
 
 EbErrorType av1_inter_prediction(
+#if OPT_10
+        SequenceControlSet *scs_ptr,
+#endif
         PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
         uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
         uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
@@ -4423,7 +4446,9 @@ EbErrorType av1_inter_prediction(
         assert(is_compound == 0);
         assert(blk_geom->bwidth > 4 && blk_geom->bheight > 4);
     }
-
+#if OPT_10
+    ScaleFactors sf_identity = scs_ptr->sf_identity;
+#else
         //=============================================
     ScaleFactors sf_identity;
     eb_av1_setup_scale_factors_for_frame(&sf_identity,
@@ -4431,9 +4456,14 @@ EbErrorType av1_inter_prediction(
                                          200,
                                          200,
                                          200);
-
+#endif
     ScaleFactors ref0_scale_factors;
+
+#if OPT_10
+    if (picture_control_set_ptr != NULL && !picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
+#else
     if(ref_pic_list0 != NULL && picture_control_set_ptr!=NULL){
+#endif
         eb_av1_setup_scale_factors_for_frame(&ref0_scale_factors,
                                              ref_pic_list0->width,
                                              ref_pic_list0->height,
@@ -4442,16 +4472,24 @@ EbErrorType av1_inter_prediction(
     }
 
     ScaleFactors ref1_scale_factors;
+#if OPT_10
+    if (picture_control_set_ptr != NULL && !picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list1 != NULL) {
+#else
     if(ref_pic_list1 != NULL && picture_control_set_ptr != NULL){
+#endif
         eb_av1_setup_scale_factors_for_frame(&ref1_scale_factors,
                                              ref_pic_list1->width,
                                              ref_pic_list1->height,
                                              picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
                                              picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
     }
-
+#if !OPT_9
     ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if OPT_10
+    if (picture_control_set_ptr != NULL && !picture_control_set_ptr->parent_pcs_ptr->is_superres_none) {
+#else
     if(picture_control_set_ptr != NULL) {
+#endif
         uint32_t num_of_list_to_search =
                 (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE) ? (uint32_t) REF_LIST_0
                                                                                  : (uint32_t) REF_LIST_1;
@@ -4482,7 +4520,7 @@ EbErrorType av1_inter_prediction(
         }
     }
     //=============================================
-
+#endif
     //special treatment for chroma in 4XN/NX4 blocks
     //if one of the neighbour blocks of the parent square is intra the chroma prediction will follow the normal path using the luma MV of the current nsq block which is the latest sub8x8.
     //for this case: only uniPred is allowed.
@@ -4566,6 +4604,43 @@ EbErrorType av1_inter_prediction(
         }
 
         if (sub8x8_inter) {
+#if OPT_9
+            ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if OPT_10
+            if (picture_control_set_ptr != NULL && !picture_control_set_ptr->parent_pcs_ptr->is_superres_none) {
+#else
+            if (picture_control_set_ptr != NULL) {
+#endif
+                uint32_t num_of_list_to_search =
+                    (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
+                    : (uint32_t)REF_LIST_1;
+
+                EbReferenceObject *reference_object;
+                for (uint8_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
+                    uint8_t ref_idx;
+                    uint8_t num_of_ref_pic_to_search = (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE)
+                        ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
+                        : (list_idx == REF_LIST_0)
+                        ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
+                        : picture_control_set_ptr->parent_pcs_ptr->ref_list1_count;
+                    for (ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
+
+                        reference_object = (EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]
+                            ->object_ptr;
+
+                        EbPictureBufferDesc *ref_pic_ptr = is16bit ? reference_object->reference_picture16bit
+                            : reference_object->reference_picture;
+
+                        eb_av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
+                            ref_pic_ptr->width,
+                            ref_pic_ptr->height,
+                            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+                            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+
+                    }
+                }
+            }
+#endif
             // block size
             const int32_t   b4_w        = block_size_wide[bsize] >> ss_x;
             const int32_t   b4_h        = block_size_high[bsize] >> ss_y;
@@ -4602,9 +4677,11 @@ EbErrorType av1_inter_prediction(
 
                     EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(picture_control_set_ptr, is16bit,
                                                                       list_idx, ref_idx);
-
+#if OPT_10
+                    const struct ScaleFactors *const sf = (use_intrabc || picture_control_set_ptr->parent_pcs_ptr->is_superres_none) ? &sf_identity : &(scale_factors[list_idx][ref_idx]);
+#else
                     const struct ScaleFactors *const sf = use_intrabc ? &sf_identity : &(scale_factors[list_idx][ref_idx]);
-
+#endif
                     // Cb
                     src_ptr = ref_pic->buffer_cb +
                               (((ref_pic->origin_x) / 2 + (ref_pic->origin_y) / 2 * ref_pic->stride_cb)
@@ -4723,7 +4800,11 @@ EbErrorType av1_inter_prediction(
         uint32_t ss_y = 0;
 
         /*ScaleFactor*/
+#if OPT_10
+        const struct ScaleFactors *const sf = (use_intrabc || picture_control_set_ptr == NULL || picture_control_set_ptr->parent_pcs_ptr->is_superres_none) ?
+#else
         const struct ScaleFactors *const sf = use_intrabc || picture_control_set_ptr == NULL ?
+#endif
                                                 &sf_identity :
                                                 &ref0_scale_factors;
 
@@ -4893,7 +4974,11 @@ EbErrorType av1_inter_prediction(
         uint32_t ss_y = 0;
 
         /*ScaleFactor*/
+#if OPT_10
+        const struct ScaleFactors *const sf = (use_intrabc || picture_control_set_ptr->parent_pcs_ptr->is_superres_none) ?
+#else
         const struct ScaleFactors *const sf = use_intrabc ?
+#endif
                                                 &sf_identity :
                                                 &ref1_scale_factors;
 
@@ -6335,6 +6420,10 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
     ModeDecisionContext *  context_ptr,
     ModeDecisionCandidate *candidate_ptr) {
 
+#if OPT_10
+        SequenceControlSet *scs_ptr =
+            (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
             ? EB_8_BIT_MD
             : context_ptr->hbd_mode_decision;
@@ -6401,6 +6490,9 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
 
         //we call the regular inter prediction path here(no compound)
         av1_inter_prediction(
+#if OPT_10
+            scs_ptr,
+#endif
             pcs_ptr,
             0, //fixed interpolation filter for compound search
             context_ptr->blk_ptr,
@@ -6438,6 +6530,9 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
 
         //we call the regular inter prediction path here(no compound)
         av1_inter_prediction(
+#if OPT_10
+            scs_ptr,
+#endif
             pcs_ptr,
             0, //fixed interpolation filter for compound search
             context_ptr->blk_ptr,
@@ -6572,6 +6667,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                     ->reference_picture16bit;
 
         av1_inter_prediction(
+#if OPT_10
+                scs_ptr,
+#endif
                 picture_control_set_ptr,
                 candidate_buffer_ptr->candidate_ptr->interp_filters,
                 md_context_ptr->blk_ptr,
@@ -6767,6 +6865,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 #endif
 #endif
     av1_inter_prediction(
+#if OPT_10
+            scs_ptr,
+#endif
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
             md_context_ptr->blk_ptr,

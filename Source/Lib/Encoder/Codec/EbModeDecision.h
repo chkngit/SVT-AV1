@@ -77,8 +77,10 @@ typedef struct ModeDecisionCandidate {
     uint16_t    count_non_zero_coeffs;
     uint8_t     type;
     PaletteInfo *palette_info;
+#if !OPT_0_BIS
     // MD Rate Estimation Ptr
     MdRateEstimationContext *md_rate_estimation_ptr; // 64 bits
+#endif
     uint64_t                 fast_luma_rate;
     uint64_t                 fast_chroma_rate;
     uint64_t                 total_rate;
@@ -157,7 +159,11 @@ typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_
                                         struct ModeDecisionContext *        context_ptr,
                                         PictureControlSet *                 pcs_ptr,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
+typedef uint64_t (*EbFastCostFunc)(
+#if OPT_0
+                                   struct ModeDecisionContext *context_ptr, 
+#endif
+                                   BlkStruct *                  blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
                                    uint64_t lambda, 
@@ -166,8 +172,11 @@ typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
 #endif 
                                    PictureControlSet *pcs_ptr,
                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
-                                   uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
+                                   uint32_t miRow, uint32_t miCol,
+                                   uint8_t enable_inter_intra,
+#if !OPT_0
                                    uint8_t md_pass,
+#endif
                                    uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 typedef EbErrorType (*EB_FULL_COST_FUNC)(

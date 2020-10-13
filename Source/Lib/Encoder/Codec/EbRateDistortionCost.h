@@ -35,13 +35,22 @@ extern uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *
 
 extern void coding_loop_context_generation(
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint32_t sb_sz, 
+    uint32_t blk_origin_y,  
+#if !OPT_6
+    uint32_t sb_sz, 
+#endif
 #if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     NeighborArrayUnit *skip_coeff_neighbor_array,
 #endif
+#if !OPT_6
     NeighborArrayUnit *inter_pred_dir_neighbor_array,
     NeighborArrayUnit *ref_frame_type_neighbor_array,
-    NeighborArrayUnit *intra_luma_mode_neighbor_array, NeighborArrayUnit *skip_flag_neighbor_array,
+#endif
+#if !OPT_8  
+    NeighborArrayUnit *intra_luma_mode_neighbor_array,
+#endif
+    NeighborArrayUnit *skip_flag_neighbor_array,
+
 #if TUNE_REMOVE_UNUSED_NEIG_ARRAY
     NeighborArrayUnit *mode_type_neighbor_array,
     NeighborArrayUnit *leaf_partition_neighbor_array);
@@ -135,30 +144,43 @@ extern EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr,
                                             uint64_t       y_txb_distortion[DIST_CALC_TOTAL],
                                             uint64_t *y_txb_coeff_bits, uint32_t component_mask);
 
-extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
+extern uint64_t av1_intra_fast_cost(
+#if OPT_0
+                                    struct ModeDecisionContext *context_ptr,
+#endif
+                                    BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
                                     uint64_t chroma_distortion, uint64_t lambda, 
 #if !FIX_REMOVE_UNUSED_CODE
                                     EbBool use_ssd,
 #endif
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
-                                    const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
+                                    const BlockGeom *blk_geom,                      
+                                    uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,
+#if !OPT_0
                                     uint8_t md_pass,
+#endif
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
-extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
+extern uint64_t av1_inter_fast_cost(
+#if OPT_0
+                                    struct ModeDecisionContext *context_ptr,
+#endif
+                                    BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
                                     uint64_t chroma_distortion, uint64_t lambda, 
 #if !FIX_REMOVE_UNUSED_CODE
                                     EbBool use_ssd,
 #endif
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
-                                    const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
+                                    const BlockGeom *blk_geom,                      
+                                    uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,
+#if !OPT_0
                                     uint8_t md_pass,
+#endif
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
-
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,

@@ -36,6 +36,9 @@ void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride
                                int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                InterPredParams *inter_pred_params);
 EbErrorType av1_inter_prediction(
+#if OPT_10
+        SequenceControlSet             *scs_ptr,
+#endif
         PictureControlSet              *pcs_ptr,
         uint32_t                        interp_filters,
         BlkStruct                      *blk_ptr,

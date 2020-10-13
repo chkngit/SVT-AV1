@@ -922,7 +922,9 @@ static AOM_FORCE_INLINE void update_coeff_eob(
     assert(si != *eob - 1);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
+
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
+
     if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     else {
@@ -1092,7 +1094,9 @@ static AOM_FORCE_INLINE void update_coeff_simple(
     assert(si > 0);
     const int     ci        = scan[si];
     const TranLow qc        = qcoeff[ci];
+
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
+
     if (qc == 0)
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     else {
@@ -1254,6 +1258,26 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
         if (skip_cost < non_skip_cost) {
             return;
         }
+    }
+
+#endif
+
+#if FEATURE_REMOVE_ISOLATED
+    uint16_t start_index[64*64];
+    uint16_t zero_coeff_cnt[64 * 64];
+    for (int i = *eob - 1; i >= 0; i--) {
+        const int rc = scan[i];
+        const int qcoeff = qcoeff_ptr[rc];
+        const int coeff = coeff_ptr[rc];
+        const int coeff_sign = -(coeff < 0);
+        int64_t   abs_coeff = (coeff ^ coeff_sign) - coeff_sign;
+        if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
+            eob_out--;
+            qcoeff_ptr[rc] = 0;
+            dqcoeff_ptr[rc] = 0;
+        }
+        else
+            break;
     }
 
 #endif
@@ -2274,6 +2298,7 @@ void cu_full_distortion_fast_txb_mode_r(
     uint16_t              txb_itr           = 0;
     uint8_t               tx_depth          = candidate_buffer->candidate_ptr->tx_depth;
     int                   current_txb_index = 0;
+
     EbPictureBufferDesc * transform_buffer =
         context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
 
@@ -2540,7 +2565,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
     uint64_t curr_non_split_rate_blk1 = 0;
     uint64_t curr_non_split_rate_blk2 = 0;
     uint64_t curr_non_split_rate_blk3 = 0;
-
+#if !OPT_8
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
@@ -2552,6 +2577,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
 #endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
@@ -2754,7 +2780,7 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
     // current depth blocks
     uint32_t curr_depth_blk0_mds =
         context_ptr->blk_geom->sqi_mds - context_ptr->blk_geom->quadi * step;
-
+#if !OPT_8
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
@@ -2766,6 +2792,7 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
 #if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_depth =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_depth;
+#endif
 #endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;

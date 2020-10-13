@@ -294,9 +294,13 @@ void tpl_mc_flow_dispenser(
     PictureParentControlSet         *pcs_ptr,
     int32_t                          frame_idx)
 {
+#if !OPT_10
     uint32_t    picture_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+#endif
     uint32_t    picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
+#if !OPT_10
     uint32_t    picture_height_in_sb = (pcs_ptr->enhanced_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+#endif
     int16_t     x_curr_mv = 0;
     int16_t     y_curr_mv = 0;
     uint32_t    me_mb_offset = 0;
@@ -319,13 +323,15 @@ void tpl_mc_flow_dispenser(
 
     blk_geom.bwidth = 16;
     blk_geom.bheight = 16;
-
+#if OPT_10
+    sf = scs_ptr->sf_identity;
+#else
     eb_av1_setup_scale_factors_for_frame(
         &sf, picture_width_in_sb * BLOCK_SIZE_64,
         picture_height_in_sb * BLOCK_SIZE_64,
         picture_width_in_sb * BLOCK_SIZE_64,
         picture_height_in_sb * BLOCK_SIZE_64);
-
+#endif
     MacroblockPlane mb_plane;
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
 

@@ -144,6 +144,48 @@ extern "C" {
 #define FIX_ENC_MODE_CHECK                           1 // Make enc mode check conform to convention of using "<="
 
 // END  svt-03 /////////////////////////////////////////////////////////
+#define SHUT_TF                                  0
+#define FEATURE_DCT_DCT_DEDICATED_BUFFER         0
+#define FEATURE_REMOVE_ISOLATED                  0
+#define REDUCE_NFL                               0
+#define PD0_PF_N2                                0
+#define CLEAN_UP_ISOLATED_COEFF                  0
+
+#define FEATURE_NIC_CTRL                         0 // Improve NIC ctrl
+#if FEATURE_NIC_CTRL
+#define FEATURE_NIC_CTRL_0                       1 // lossless refactor
+#define FEATURE_NIC_CTRL_1                       1 // lossy refactor
+
+#define NIC_CTRL_M8 1
+#if NIC_CTRL_M8
+#define INCREASE_NIC  1
+#define NIC_CTRL_M8_0 1 // MOD_LEVEL_5
+#define NIC_CTRL_M8_1 1
+#endif
+#define NIC_UNDO_SQ 0
+#define NIC_UNDO_INTRA 0
+#define NIC_FACTOR 0
+#endif
+
+#define LOSSLESS_OPT 1
+#if LOSSLESS_OPT
+#define OPT_0  1 
+#define OPT_0_BIS 0
+#define OPT_1  1 // under debugging
+
+#define OPT_2  0 // under debugging eb_av1_count_overlappable_neighbors
+
+#define OPT_4  1 // is_inter_ctx
+#define OPT_5  1
+#define OPT_6  1 // shut inter_pred_dir_neighbor_array,  ref_frame_type_neighbor_array
+#define OPT_8  1 // md_intra_chroma_mode_neighbor_array, md_mv_neighbor_array
+#define OPT_9  1 // 4x4 useless operations 
+#define OPT_10 1 // scale_factor
+
+#define OPT_11 0 // under debugging
+
+#endif
+// END  svt-03 /////////////////////////////////////////////////////////
 
 #define TUNE_PRESETS_CLEANUP                    1 // Tune and clean up presets
 

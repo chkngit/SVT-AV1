@@ -132,10 +132,17 @@ enum {
 #define BLOCK_MAX_COUNT_SB_128 4421
 #define BLOCK_MAX_COUNT_SB_64 1101
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
+#if REDUCE_NFL
+#define MAX_NFL 150 // Maximum number of candidates MD can support
+#define MAX_NFL_BUFF_Y \
+    (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
+#define MAX_NFL_BUFF (MAX_NFL_BUFF_Y) //need one extra temp buffer for each fast loop call
+#else
 #define MAX_NFL 250 // Maximum number of candidates MD can support
 #define MAX_NFL_BUFF_Y \
     (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
 #define MAX_NFL_BUFF (MAX_NFL_BUFF_Y + 84) //need one extra temp buffer for each fast loop call
+#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9

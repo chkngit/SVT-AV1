@@ -3964,6 +3964,10 @@ void mctf_frame(
     }
     else
         context_ptr->tf_level = 0;
+
+#if SHUT_TF
+    context_ptr->tf_level = 0;
+#endif
 #if FEATURE_OPT_TF
     set_tf_controls(pcs_ptr, context_ptr->tf_level);
     if (pcs_ptr->tf_ctrls.enabled) {
@@ -4860,6 +4864,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                 pcs_ptr->self_updated_links = 0;
                 pcs_ptr->other_updated_links_cnt = 0;
+
 #if FEATURE_NEW_DELAY
                 pcs_ptr->tpl_group_size = 0;
                 if (pcs_ptr->picture_number == 0)

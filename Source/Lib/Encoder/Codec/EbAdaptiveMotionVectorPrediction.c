@@ -2025,6 +2025,7 @@ int av1_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, 
 
 int is_inside_tile_boundary(TileInfo *tile, int16_t mvx, int16_t mvy, int mi_col, int mi_row,
                             BlockSize bsize) {
+
     const int bw             = block_size_wide[bsize];
     const int bh             = block_size_high[bsize];
     const int scale_px_to_mv = 8;
