@@ -30,6 +30,9 @@
 
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
+#if TUNE_CDF
+void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext * dst_rate);
+#endif
 void eb_av1_cdef_search(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                         PictureControlSet *pcs_ptr);
 
@@ -1718,6 +1721,9 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
         obmc_ctrls->me_count = 0;
         obmc_ctrls->mvp_ref_count = 0;
         obmc_ctrls->near_count = 0;
+#if FEATURE_NEW_OBMC_LEVELS
+        obmc_ctrls->max_blk_size_16x16 = 0;
+#endif
         break;
     case 1:
         obmc_ctrls->enabled = 1;
@@ -1725,7 +1731,32 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
         obmc_ctrls->me_count = ~0;
         obmc_ctrls->mvp_ref_count = 4;
         obmc_ctrls->near_count = 3;
+#if FEATURE_NEW_OBMC_LEVELS
+        obmc_ctrls->max_blk_size_16x16 = 0;
+#endif
         break;
+#if FEATURE_NEW_OBMC_LEVELS
+    case 2:
+        obmc_ctrls->enabled = 1;
+        obmc_ctrls->pme_best_ref = 1;
+        obmc_ctrls->me_count = ~0;
+        obmc_ctrls->mvp_ref_count = 4;
+        obmc_ctrls->near_count = 3;
+#if FEATURE_NEW_OBMC_LEVELS
+        obmc_ctrls->max_blk_size_16x16 = 0;
+#endif
+        break;
+    case 3:
+        obmc_ctrls->enabled = 1;
+        obmc_ctrls->pme_best_ref = 1;
+        obmc_ctrls->me_count = ~0;
+        obmc_ctrls->mvp_ref_count = 1;
+        obmc_ctrls->near_count = 3;
+#if FEATURE_NEW_OBMC_LEVELS
+        obmc_ctrls->max_blk_size_16x16 = 1;
+#endif
+        break;
+#else
     case 2:
         obmc_ctrls->enabled = 1;
         obmc_ctrls->pme_best_ref = 0;
@@ -1740,6 +1771,7 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
         obmc_ctrls->mvp_ref_count = 1;
         obmc_ctrls->near_count = 1;
         break;
+#endif
     default:
         assert(0);
         break;
@@ -1747,6 +1779,72 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
 
 
 }
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+#if FEATURE_PD0_CUT_DEPTH
+void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level, uint32_t sb_width, uint32_t sb_height) {
+#else
+void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
+#endif
+    DepthRefinementCtrls *depth_refinement_ctrls = &mdctxt->depth_refinement_ctrls;
+
+    switch (block_based_depth_refinement_level)
+    {
+    case 0:
+        depth_refinement_ctrls->enabled = 0;
+        break;
+    case 1:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 25;
+        depth_refinement_ctrls->sub_to_current_th = 25;
+        depth_refinement_ctrls->use_pred_block_cost = 0;
+#if FEATURE_PD0_CUT_DEPTH
+        depth_refinement_ctrls->disallow_below_16x16 = 0;
+#endif
+        break;
+    case 2:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = 20;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+#if FEATURE_PD0_CUT_DEPTH
+        depth_refinement_ctrls->disallow_below_16x16 = 0;
+#endif
+        break;
+    case 3:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = 0;
+        depth_refinement_ctrls->sub_to_current_th = 15;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+#if FEATURE_PD0_CUT_DEPTH
+        depth_refinement_ctrls->disallow_below_16x16 = 0;
+#endif
+        break;
+    case 4:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -5;
+        depth_refinement_ctrls->sub_to_current_th = 10;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+#if FEATURE_PD0_CUT_DEPTH
+        depth_refinement_ctrls->disallow_below_16x16 = 0;
+#endif
+        break;
+    case 5:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -10;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+#if FEATURE_PD0_CUT_DEPTH
+        depth_refinement_ctrls->disallow_below_16x16 =
+            (pcs_ptr->slice_type != I_SLICE && scs_ptr->static_config.super_block_size == 64 && sb_width % 16 == 0 && sb_height % 16 == 0)
+                ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((5 * 64 * 64) / 4)) : 0;
+#endif
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
 
     DepthRefinementCtrls *depth_refinement_ctrls = &mdctxt->depth_refinement_ctrls;
@@ -1766,6 +1864,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
         break;
     }
 }
+#endif
 /*
  * Control NSQ search
  */
@@ -4773,6 +4872,18 @@ void *mode_decision_kernel(void *input_ptr) {
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
 
+#if TUNE_CDF
+        if (!pcs_ptr->cdf_ctrl.update_mv)
+            copy_mv_rate(pcs_ptr, &context_ptr->md_context->rate_est_table);
+        if (!pcs_ptr->cdf_ctrl.update_se)
+            av1_estimate_syntax_rate(&context_ptr->md_context->rate_est_table,
+                pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+                &pcs_ptr->md_frame_context);
+
+        if (!pcs_ptr->cdf_ctrl.update_coef)
+            av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
+                &pcs_ptr->md_frame_context);
+#endif
         // Segment-loop
         while (assign_enc_dec_segments(segments_ptr,
                                        &segment_index,
@@ -4850,7 +4961,11 @@ void *mode_decision_kernel(void *input_ptr) {
                     context_ptr->sb_index = sb_index;
                     context_ptr->md_context->sb_class = NONE_CLASS;
 
+#if TUNE_CDF
+                    if (pcs_ptr->cdf_ctrl.enabled) {
+#else
                     if (pcs_ptr->update_cdf) {
+#endif
                         if (scs_ptr->seq_header.pic_based_rate_est &&
                             scs_ptr->enc_dec_segment_row_count_array[pcs_ptr->temporal_layer_index] == 1 &&
                             scs_ptr->enc_dec_segment_col_count_array[pcs_ptr->temporal_layer_index] == 1) {
@@ -4891,14 +5006,23 @@ void *mode_decision_kernel(void *input_ptr) {
                             }
                         }
                         // Initial Rate Estimation of the syntax elements
+#if TUNE_CDF
+                        if (pcs_ptr->cdf_ctrl.update_se)
+#endif
                         av1_estimate_syntax_rate(&context_ptr->md_context->rate_est_table,
                             pcs_ptr->slice_type == I_SLICE,
                             &pcs_ptr->ec_ctx_array[sb_index]);
                         // Initial Rate Estimation of the Motion vectors
+#if TUNE_CDF
+                        if (pcs_ptr->cdf_ctrl.update_mv)
+#endif
                         av1_estimate_mv_rate(pcs_ptr,
                             &context_ptr->md_context->rate_est_table,
                             &pcs_ptr->ec_ctx_array[sb_index]);
 
+#if TUNE_CDF
+                        if (pcs_ptr->cdf_ctrl.update_coef)
+#endif
                         av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
                             &pcs_ptr->ec_ctx_array[sb_index]);
 

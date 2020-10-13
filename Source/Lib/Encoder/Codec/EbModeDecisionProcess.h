@@ -149,6 +149,9 @@ typedef struct  ObmcControls {
     uint8_t pme_best_ref;  //limit injection to best ref in pme
     uint8_t mvp_ref_count; //closest references allowed in mvp 0:4
     uint8_t near_count;    //how many near to consider injecting obmc 0..3
+#if FEATURE_NEW_OBMC_LEVELS
+    EbBool max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
+#endif
 }ObmcControls;
 typedef struct  AMdCycleRControls {
     uint8_t enabled; // On/Off feature control

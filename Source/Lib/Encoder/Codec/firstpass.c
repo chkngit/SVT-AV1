@@ -2103,17 +2103,26 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if FIX_REMOVE_UNUSED_CODE
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
+    PictureControlSet *pcs_ptr) {
+#else
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
-
+#endif
     EbErrorType return_error = EB_ErrorNone;
-
+#if !FIX_REMOVE_UNUSED_CODE
     // ADP
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
-
+#endif
     // CDF
+#if TUNE_CDF
+    pcs_ptr->cdf_ctrl.enabled = pcs_ptr->cdf_ctrl.update_coef = 0;
+    pcs_ptr->cdf_ctrl.update_mv = pcs_ptr->cdf_ctrl.update_se = 0;
+#else
     pcs_ptr->update_cdf = 0;
+#endif
 
     // Filter INTRA
     // pic_filter_intra_level specifies whether filter intra would be active

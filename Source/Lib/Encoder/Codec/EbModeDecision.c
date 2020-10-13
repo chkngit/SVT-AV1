@@ -104,6 +104,12 @@ MotionMode obmc_motion_mode_allowed(const PictureControlSet *   pcs_ptr,
                                     struct ModeDecisionContext *context_ptr, const BlockSize bsize,
                                     MvReferenceFrame rf0, MvReferenceFrame rf1,
                                     PredictionMode mode) {
+#if FEATURE_NEW_OBMC_LEVELS
+    // check if should cap the max block size for obmc
+    if (context_ptr->obmc_ctrls.max_blk_size_16x16)
+        if (block_size_wide[bsize] > 16 || block_size_high[bsize] > 16)
+            return SIMPLE_TRANSLATION;
+#endif
     if (!context_ptr->obmc_ctrls.enabled) return SIMPLE_TRANSLATION;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 

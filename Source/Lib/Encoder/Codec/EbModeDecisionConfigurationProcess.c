@@ -426,6 +426,7 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
+#if !FIX_REMOVE_UNUSED_CODE
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -720,24 +721,89 @@ void derive_sb_md_mode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     // Set the search method using the SB cost (mapping)
     derive_search_method(pcs_ptr, context_ptr);
 }
+#endif
+#if TUNE_CDF
+/******************************************************
+* Sets cdf update controls
+******************************************************/
+void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level)
+{
+    CdfControls * ctrl = &pcs->cdf_ctrl;
+    switch (update_cdf_level)
+    {
+    case 0:
+        ctrl->update_mv = 0;
+        ctrl->update_se = 0;
+        ctrl->update_coef = 0;
+        break;
+    case 1:
+        ctrl->update_mv = 1;
+        ctrl->update_se = 1;
+        ctrl->update_coef = 1;
+        break;
+    case 2:
+        ctrl->update_mv = 0;
+        ctrl->update_se = 1;
+        ctrl->update_coef = 1;
+        break;
+    case 3:
+        ctrl->update_mv = 0;
+        ctrl->update_se = 1;
+        ctrl->update_coef = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
 
+    ctrl->update_mv = pcs->slice_type == I_SLICE ? 0 : ctrl->update_mv;
+    ctrl->enabled = ctrl->update_coef | ctrl->update_mv | ctrl->update_se;
+}
+#endif
 /******************************************************
 * Derive Mode Decision Config Settings for OQ
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if FIX_REMOVE_UNUSED_CODE
+EbErrorType signal_derivation_mode_decision_config_kernel_oq(
+    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
+#else
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
+#endif
     UNUSED(scs_ptr);
     EbErrorType return_error = EB_ErrorNone;
-
+#if !FIX_REMOVE_UNUSED_CODE
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
+#endif
 
+#if TUNE_CDF
+    uint8_t update_cdf_level = 0;
+#if TUNE_NEW_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M3)
+#else
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
+        update_cdf_level = 1;
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+        update_cdf_level = 2;
+#if !TUNE_NEW_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
+#endif
+    else
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+
+    //set the conrols uisng the required level
+    set_cdf_controls(pcs_ptr, update_cdf_level);
+#else
         if (pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->update_cdf = 1;
         else
             pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
     //Filter Intra Mode : 0: OFF  1: ON
     // pic_filter_intra_level specifies whether filter intra would be active
     // for a given picture.
@@ -795,8 +861,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
+#if FEATURE_NEW_OBMC_LEVELS
+#if TUNE_NEW_PRESETS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#endif
+            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
+#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     }
