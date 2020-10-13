@@ -5773,7 +5773,9 @@ uint32_t product_full_mode_decision(
             eb_memcpy(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1, &candidate_ptr->wm_params_l1, sizeof(EbWarpedMotionParams));
         }
     }
-
+#if FIX_BYPASS_USELESS_OPERATIONS
+    }
+#endif
     uint32_t txb_itr;
     uint32_t txb_index;
     uint32_t tu_total_count;

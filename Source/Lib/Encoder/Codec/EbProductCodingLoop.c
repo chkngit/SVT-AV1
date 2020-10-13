@@ -538,6 +538,7 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
         }
     }
 
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     //neighbor_array_unit_reset(pcs_ptr->md_skip_coeff_neighbor_array[depth]);
     copy_neigh_arr(pcs_ptr->md_skip_coeff_neighbor_array[src_idx][tile_idx],
                    pcs_ptr->md_skip_coeff_neighbor_array[dst_idx][tile_idx],
@@ -546,6 +547,7 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
                    blk_geom->bwidth,
                    blk_geom->bheight,
                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
     //neighbor_array_unit_reset(pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
     copy_neigh_arr(pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[src_idx][tile_idx],
                    pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[dst_idx][tile_idx],
@@ -7111,7 +7113,9 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     //CHKN uint8_t                         compoud_reference_type_context;
     //CHKN uint32_t                        partitionContext;
 
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     dst_cu->skip_coeff_context             = src_cu->skip_coeff_context;
+#endif
     dst_cu->reference_mode_context         = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
     dst_cu->segment_id                     = src_cu->segment_id;
@@ -7196,7 +7200,9 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     //CHKN uint8_t                         compoud_reference_type_context;
     //CHKN uint32_t                        partitionContext;
 
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     dst_cu->skip_coeff_context             = src_cu->skip_coeff_context;
+#endif
     dst_cu->reference_mode_context         = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
     eb_memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
@@ -7416,10 +7422,15 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
     uint32_t               start_fast_buffer_index  = MODE_DECISION_CANDIDATE_MAX_COUNT_Y;
     uint32_t               start_full_buffer_index  = MAX_NFL_BUFF_Y;
     uint32_t               uv_mode_total_count      = start_fast_buffer_index;
+#if FIX_BYPASS_USELESS_OPERATIONS
+    // Shut RDOQ
+    context_ptr->md_staging_skip_rdoq = 0;
+#else
     EbBool                 tem_md_staging_skip_rdoq = context_ptr->md_staging_skip_rdoq;
     if (context_ptr->chroma_at_last_md_stage) {
         context_ptr->md_staging_skip_rdoq = 0;
     }
+#endif
     UvPredictionMode uv_mode_end = context_ptr->md_enable_paeth
         ? UV_PAETH_PRED
         : context_ptr->md_enable_smooth ? UV_SMOOTH_H_PRED : UV_D67_PRED;
@@ -7723,8 +7734,10 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
         }
     }
 
+#if !FIX_BYPASS_USELESS_OPERATIONS
     if (context_ptr->chroma_at_last_md_stage)
         context_ptr->md_staging_skip_rdoq = tem_md_staging_skip_rdoq;
+#endif
 }
 void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
@@ -8300,6 +8313,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
         read_refine_me_mvs(
             pcs_ptr, context_ptr, input_picture_ptr);
+#if !FIX_MOVE_PME_RES_INIT_UNDER_PME
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
             context_ptr->pme_res[li][ri].dist = 0xFFFFFFFF;
@@ -8307,6 +8321,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
             context_ptr->pme_res[li][ri].ref_i = ri;
         }
     }
+#endif
     // Perform md reference pruning
     if (context_ptr->ref_pruning_ctrls.enabled)
     perform_md_reference_pruning(
@@ -8416,7 +8431,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
             //Sort:  md_stage_1_count[cand_class_it]
             memset(context_ptr->cand_buff_indices[cand_class_it],
                    0xFF,
+#if FIX_USE_MDS_CNT_INIT // to use md_stage_3 count signal
+                   context_ptr->md_stage_3_total_count * sizeof(uint32_t));
+#else
                    MAX_NFL_BUFF * sizeof(uint32_t));
+#endif
             sort_fast_cost_based_candidates(
                 context_ptr,
                 buffer_start_idx,

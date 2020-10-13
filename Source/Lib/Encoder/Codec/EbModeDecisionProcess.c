@@ -378,7 +378,9 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
             neighbor_array_unit_reset(pcs_ptr->md_cr_recon_neighbor_array16bit[depth][tile_idx]);
         }
 
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
         neighbor_array_unit_reset(pcs_ptr->md_skip_coeff_neighbor_array[depth][tile_idx]);
+#endif
         neighbor_array_unit_reset(
             pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
         neighbor_array_unit_reset(
