@@ -7104,6 +7104,8 @@ void check_similar_block(const BlockGeom *blk_geom, ModeDecisionContext *context
         }
     }
 }
+
+#if !FEATURE_NEW_INTER_COMP_LEVELS
 void set_inter_comp_controls(ModeDecisionContext *mdctxt, uint8_t inter_comp_mode) {
 
     InterCompoundControls*inter_comp_ctrls = &mdctxt->inter_comp_ctrls;
@@ -7133,6 +7135,7 @@ void set_inter_comp_controls(ModeDecisionContext *mdctxt, uint8_t inter_comp_mod
         break;
     }// AVG / DIT /DIFF/ WEDGE
 }
+#endif
 
 /******************************************************
 * Derive md Settings(feature signals) that could be

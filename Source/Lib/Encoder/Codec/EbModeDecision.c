@@ -1112,6 +1112,53 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     return;
 }
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+/*
+ * This function configures the compound modes to be injected
+ */
+void set_compound_to_inject(ModeDecisionContext *context_ptr, EbBool * comp_inj_table,
+                            EbBool avg, EbBool dist, EbBool diff, EbBool wdg) {
+
+    if (get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
+        wdg = 0;
+
+    comp_inj_table[MD_COMP_AVG] = avg;
+    comp_inj_table[MD_COMP_DIST] = dist;
+    comp_inj_table[MD_COMP_DIFF0] = diff;
+    comp_inj_table[MD_COMP_WEDGE] = wdg;
+}
+
+/*
+ * Reduce the compound types to inject based on the distance of the reference frames from the current frame.
+ *
+ * INPUTS
+ * allowed_comp_types --> array containing the max allowed compound types; the distance-based settings should be a subset of this list.
+ * allowed_dist1_comp_types --> array containing compound types allowed if both ref frames are within distance = 1 of the current frame
+ * allowed_dist2_comp_types --> array containing compound types allowed if both ref frames are within distance = 2 of the current frame
+ * list0_ref_idx --> the ref index of the list0 reference frame
+ * list1_ref_idx --> the ref index of the list1 reference frame
+ *
+ * RETURNS
+ * Nothing, but modifies allowed_comp_types
+ */
+void set_comp_types_by_distance(uint8_t allowed_comp_types[MD_COMP_TYPES],
+                                uint8_t allowed_dist1_comp_types[MD_COMP_TYPES],
+                                uint8_t allowed_dist2_comp_types[MD_COMP_TYPES],
+                                uint8_t list0_ref_idx,
+                                uint8_t list1_ref_idx) {
+
+    if (list0_ref_idx > 1 || list1_ref_idx > 1) {
+        // distance 2 compound types should be a subset of the allowed compound types
+        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++)
+            allowed_comp_types[cur_type] &= allowed_dist2_comp_types[cur_type];
+    }
+    else if (list0_ref_idx > 0 || list1_ref_idx > 0) {
+        // distance 1 compound types should be a subset of the allowed compound types
+        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++)
+            allowed_comp_types[cur_type] &= allowed_dist1_comp_types[cur_type];
+    }
+}
+#endif
 void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      ModeDecisionContext *context_ptr, SuperBlock *sb_ptr,
                                      uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
@@ -1128,7 +1175,9 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     int          umv0tile               = (scs_ptr->static_config.unrestricted_motion_vector == 0);
     uint32_t     mi_row                 = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t     mi_col                 = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE       tot_comp_types = context_ptr->compound_types_to_try;
+#endif
 
     if (is_compound_enabled) {
         /**************
@@ -1206,11 +1255,31 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                                            to_inject_mv_x_l1,
                                                            to_inject_mv_y_l1,
                                                            to_inject_ref_type) == EB_FALSE)) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        // Set the allowable compound types to be injected
+                        uint8_t allowed_comp_types[MD_COMP_TYPES];
+                        memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                        // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                        set_comp_types_by_distance(allowed_comp_types,
+                                                   context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                                                   context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                                                   list0_ref_index,
+                                                   list1_ref_index);
+
+                        EbBool mask_done = 0;
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            // Skip the current compound type if not set to be injected
+                            if (allowed_comp_types[cur_type] == 0)
+                                continue;
+#else
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                             if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                 tot_comp_types = MD_COMP_AVG;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                             cand_array[cand_total_cnt].type             = INTER_MODE;
                             cand_array[cand_total_cnt].distortion_ready = 0;
                             cand_array[cand_total_cnt].use_intrabc      = 0;
@@ -1263,9 +1332,18 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 best_pred_mv[1].as_mv.col;
                             cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
                                 best_pred_mv[1].as_mv.row;
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1) {
+                                    calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+#endif
                             //BIP 3x3
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
@@ -1350,11 +1428,31 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                                            to_inject_mv_x_l1,
                                                            to_inject_mv_y_l1,
                                                            to_inject_ref_type) == EB_FALSE)) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        // Set the allowable compound types to be injected
+                        uint8_t allowed_comp_types[MD_COMP_TYPES];
+                        memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                        // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                        set_comp_types_by_distance(allowed_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                            list0_ref_index,
+                            list1_ref_index);
+
+                        EbBool mask_done = 0;
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            // Skip the current compound type if not set to be injected
+                            if (allowed_comp_types[cur_type] == 0)
+                                continue;
+#else
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                             if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                 tot_comp_types = MD_COMP_AVG;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                             cand_array[cand_total_cnt].type             = INTER_MODE;
                             cand_array[cand_total_cnt].distortion_ready = 0;
                             cand_array[cand_total_cnt].use_intrabc      = 0;
@@ -1408,9 +1506,18 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 best_pred_mv[1].as_mv.col;
                             cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
                                 best_pred_mv[1].as_mv.row;
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1) {
+                                    calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+#endif
                             //BIP 3x3
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
@@ -1495,9 +1602,13 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
     uint32_t mi_row   = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t mi_col   = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     av1_set_ref_frame(rf, ref_pair);
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE cur_type; //MVP
+#endif
     BlockSize    bsize          = context_ptr->blk_geom->bsize; // bloc size
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE tot_comp_types =  context_ptr->compound_types_to_try;
+#endif
     //single ref/list
     if (rf[1] == NONE_FRAME) {
         MvReferenceFrame frame_type = rf[0];
@@ -1532,13 +1643,22 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         inj_mv = inj_mv && inside_tile;
         if (inj_mv) {
             uint8_t inter_type;
+#if FEATURE_INTER_INTRA_LEVELS
+            uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->inter_intra_comp_ctrls.enabled, bsize, NEARESTMV, rf);
+
+            if (is_ii_allowed && context_ptr->inter_intra_comp_ctrls.closest_ref_only)
+                if (ref_idx > 0)
+                    is_ii_allowed = 0;
+#else
             uint8_t is_ii_allowed =
                 svt_is_interintra_allowed(context_ptr->md_inter_intra_level, bsize, NEARESTMV, rf);
+#endif
+#if !FEATURE_NEW_INTER_COMP_LEVELS
             uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
-
             if (context_ptr->md_inter_intra_level > 2)
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     is_ii_allowed = 0;
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
             uint8_t is_obmc_allowed =
                 obmc_motion_mode_allowed(pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARESTMV) ==
@@ -1641,13 +1761,23 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
             inj_mv = inj_mv && inside_tile;
             if (inj_mv) {
                 uint8_t inter_type;
+#if FEATURE_INTER_INTRA_LEVELS
+                uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->inter_intra_comp_ctrls.enabled, bsize, NEARMV, rf);
+
+                if (is_ii_allowed && context_ptr->inter_intra_comp_ctrls.closest_ref_only)
+                    if (ref_idx > 0)
+                        is_ii_allowed = 0;
+#else
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
                     context_ptr->md_inter_intra_level, bsize, NEARMV, rf);
+#endif
+#if !FEATURE_NEW_INTER_COMP_LEVELS
                 uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
                 if (context_ptr->md_inter_intra_level > 2) {
                     if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     is_ii_allowed = 0;
                 }
+#endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 uint8_t is_obmc_allowed =
                     obmc_motion_mode_allowed(pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARMV) ==
@@ -1779,11 +1909,39 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
             }
             inj_mv = inj_mv && inside_tile;
             if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                // Set the allowable compound types to be injected
+                uint8_t allowed_comp_types[MD_COMP_TYPES];
+                memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                set_comp_types_by_distance(allowed_comp_types,
+                    context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                    context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                    ref_idx_0,
+                    ref_idx_1);
+
+                EbBool is_skip_mode =
+                    pcs_ptr->parent_pcs_ptr->is_skip_mode_allowed &&
+                    (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
+                    (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
+                    ? EB_TRUE : EB_FALSE;
+                EbBool mask_done = 0;
+                for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                    // Skip the current compound type if not set to be injected
+                    if (is_skip_mode && cur_type == MD_COMP_AVG) {
+                        //always inject avg for skip_mode
+                    }
+                    else if (allowed_comp_types[cur_type] == 0)
+                        continue;
+#else
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                     ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     tot_comp_types = MD_COMP_AVG;
 
                 for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                     cand_array[cand_idx].type               = INTER_MODE;
                     cand_array[cand_idx].inter_mode         = NEAREST_NEARESTMV;
                     cand_array[cand_idx].pred_mode          = NEAREST_NEARESTMV;
@@ -1792,12 +1950,17 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                     cand_array[cand_idx].is_interintra_used = 0;
                     cand_array[cand_idx].distortion_ready   = 0;
                     cand_array[cand_idx].use_intrabc        = 0;
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    cand_array[cand_idx].merge_flag =
+                        cur_type == MD_COMP_AVG && is_skip_mode ? EB_TRUE : EB_FALSE;
+#else
                     cand_array[cand_idx].merge_flag =
                         cur_type == MD_COMP_AVG && pcs_ptr->parent_pcs_ptr->is_skip_mode_allowed &&
                                 (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
                                 (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
                             ? EB_TRUE
                             : EB_FALSE;
+#endif
 
                     cand_array[cand_idx].prediction_direction[0] = BI_PRED;
                     cand_array[cand_idx].is_new_mv               = 0;
@@ -1832,9 +1995,18 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                     ++context_ptr->injected_mv_count_bipred;
                     //NRST-NRST
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                        if (mask_done != 1) {
+                            calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                            mask_done = 1;
+                        }
+                    }
+#else
                     if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                         calc_pred_masked_compound(
                             pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                     determine_compound_mode(pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
                     INCRMENT_CAND_TOTAL_COUNT(cand_idx);
                 }
@@ -1882,10 +2054,30 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                 }
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    // Set the allowable compound types to be injected
+                    uint8_t allowed_comp_types[MD_COMP_TYPES];
+                    memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                    // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                    set_comp_types_by_distance(allowed_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                        ref_idx_0,
+                        ref_idx_1);
+
+                    EbBool mask_done = 0;
+                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        // Skip the current compound type if not set to be injected
+                        if (allowed_comp_types[cur_type] == 0)
+                            continue;
+#else
                     if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                         ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                         tot_comp_types = MD_COMP_AVG;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                         cand_array[cand_idx].type                    = INTER_MODE;
                         cand_array[cand_idx].inter_mode              = NEAR_NEARMV;
                         cand_array[cand_idx].pred_mode               = NEAR_NEARMV;
@@ -1929,10 +2121,18 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                             [context_ptr->injected_mv_count_bipred] = ref_pair;
                         ++context_ptr->injected_mv_count_bipred;
                         //NR-NR
-
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1) {
+                                calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                         determine_compound_mode(
                             pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
                         INCRMENT_CAND_TOTAL_COUNT(cand_idx);
@@ -1960,7 +2160,9 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_pair);
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE tot_comp_types = context_ptr->compound_types_to_try;
+#endif
     {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
@@ -2017,10 +2219,30 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                 inj_mv = inj_mv && inside_tile;
                 inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
                 if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    // Set the allowable compound types to be injected
+                    uint8_t allowed_comp_types[MD_COMP_TYPES];
+                    memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                    // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                    set_comp_types_by_distance(allowed_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                        ref_idx_0,
+                        ref_idx_1);
+
+                    EbBool mask_done = 0;
+                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        // Skip the current compound type if not set to be injected
+                        if (allowed_comp_types[cur_type] == 0)
+                            continue;
+#else
                     if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                         ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                         tot_comp_types = MD_COMP_AVG;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                         cand_array[cand_idx].type               = INTER_MODE;
                         cand_array[cand_idx].inter_mode         = NEAREST_NEWMV;
                         cand_array[cand_idx].pred_mode          = NEAREST_NEWMV;
@@ -2072,9 +2294,18 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                             [context_ptr->injected_mv_count_bipred] = ref_pair;
                         ++context_ptr->injected_mv_count_bipred;
                         //NRST_N
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1) {
+                                calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                         determine_compound_mode(
                             pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
                         INCRMENT_CAND_TOTAL_COUNT(cand_idx);
@@ -2124,10 +2355,30 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                 inj_mv = inj_mv && inside_tile;
                 inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
                 if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    // Set the allowable compound types to be injected
+                    uint8_t allowed_comp_types[MD_COMP_TYPES];
+                    memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                    // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                    set_comp_types_by_distance(allowed_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                        ref_idx_0,
+                        ref_idx_1);
+
+                    EbBool mask_done = 0;
+                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        // Skip the current compound type if not set to be injected
+                        if (allowed_comp_types[cur_type] == 0)
+                            continue;
+#else
                     if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                         ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                         tot_comp_types = MD_COMP_AVG;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                         cand_array[cand_idx].type                    = INTER_MODE;
                         cand_array[cand_idx].inter_mode              = NEW_NEARESTMV;
                         cand_array[cand_idx].pred_mode               = NEW_NEARESTMV;
@@ -2177,10 +2428,18 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                             [context_ptr->injected_mv_count_bipred] = ref_pair;
                         ++context_ptr->injected_mv_count_bipred;
                         //N_NRST
-
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1) {
+                                calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                         determine_compound_mode(
                             pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
                         INCRMENT_CAND_TOTAL_COUNT(cand_idx);
@@ -2223,11 +2482,31 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                                ref_pair) == EB_FALSE;
                     inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
                     if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        // Set the allowable compound types to be injected
+                        uint8_t allowed_comp_types[MD_COMP_TYPES];
+                        memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                        // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                        set_comp_types_by_distance(allowed_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                            ref_idx_0,
+                            ref_idx_1);
+
+                        EbBool mask_done = 0;
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            // Skip the current compound type if not set to be injected
+                            if (allowed_comp_types[cur_type] == 0)
+                                continue;
+#else
                         if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                             ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                             tot_comp_types = MD_COMP_AVG;
 
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                             cand_array[cand_idx].type               = INTER_MODE;
                             cand_array[cand_idx].inter_mode         = NEW_NEARMV;
                             cand_array[cand_idx].pred_mode          = NEW_NEARMV;
@@ -2274,9 +2553,18 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                             ++context_ptr->injected_mv_count_bipred;
 
                             //NEW_NEARMV
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1) {
+                                    calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
 
@@ -2321,11 +2609,31 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                                ref_pair) == EB_FALSE;
                     inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
                     if (inj_mv) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        // Set the allowable compound types to be injected
+                        uint8_t allowed_comp_types[MD_COMP_TYPES];
+                        memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                        // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                        set_comp_types_by_distance(allowed_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                            ref_idx_0,
+                            ref_idx_1);
+
+                        EbBool mask_done = 0;
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            // Skip the current compound type if not set to be injected
+                            if (allowed_comp_types[cur_type] == 0)
+                                continue;
+#else
                         if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1 &&
                             ref_idx_1 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                             tot_comp_types = MD_COMP_AVG;
 
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                             cand_array[cand_idx].type               = INTER_MODE;
                             cand_array[cand_idx].inter_mode         = NEAR_NEWMV;
                             cand_array[cand_idx].pred_mode          = NEAR_NEWMV;
@@ -2370,9 +2678,18 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                             ++context_ptr->injected_mv_count_bipred;
 
                             //NEAR_NEWMV
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1) {
+                                    calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_idx]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx]);
+#endif
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
 
@@ -2990,8 +3307,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
     uint32_t           mi_row           = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t           mi_col           = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     BlockSize          bsize            = context_ptr->blk_geom->bsize; // bloc size
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE       cur_type; //NN
     MD_COMP_TYPE       tot_comp_types = context_ptr->compound_types_to_try;
+#endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
@@ -3306,12 +3625,32 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                                            to_inject_mv_x_l1,
                                                            to_inject_mv_y_l1,
                                                            to_inject_ref_type) == EB_FALSE)) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        // Set the allowable compound types to be injected
+                        uint8_t allowed_comp_types[MD_COMP_TYPES];
+                        memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                        // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                        set_comp_types_by_distance(allowed_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                            context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                            list0_ref_index,
+                            list1_ref_index);
+
+                        EbBool mask_done = 0;
+                        for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                            // Skip the current compound type if not set to be injected
+                            if (allowed_comp_types[cur_type] == 0)
+                                continue;
+#else
                         if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                             if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 ||
                                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                 tot_comp_types = MD_COMP_AVG;
 
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                             cand_array[cand_total_cnt].type = INTER_MODE;
 
                             cand_array[cand_total_cnt].distortion_ready = 0;
@@ -3370,10 +3709,18 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                             cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
                                 best_pred_mv[1].as_mv.row;
                             //NEW_NEW
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                            if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                                if (mask_done != 1) {
+                                    calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+                                    mask_done = 1;
+                                }
+                            }
+#else
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
-
                                 calc_pred_masked_compound(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+#endif
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
                             INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt);
@@ -3404,8 +3751,10 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
 
     ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
     uint32_t cand_total_cnt = (*candidate_total_cnt);
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE cur_type;
     MD_COMP_TYPE tot_comp_types = context_ptr->compound_types_to_try;
+#endif
     uint8_t inj_mv;
     int inside_tile = 1;
     MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
@@ -3626,10 +3975,30 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
             if (inj_mv && gm_params_0->wmtype > TRANSLATION && gm_params_1->wmtype > TRANSLATION) {
                 uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                // Set the allowable compound types to be injected
+                uint8_t allowed_comp_types[MD_COMP_TYPES];
+                memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
+
+                // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                set_comp_types_by_distance(allowed_comp_types,
+                    context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                    context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                    ref_idx_0,
+                    ref_idx_1);
+
+                // Warped prediction is only compatible with MD_COMP_AVG and MD_COMP_DIST
+                for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_DIFF0; cur_type++) {
+
+                    // Skip the current compound type if not set to be injected
+                    if (allowed_comp_types[cur_type] == 0 || cur_type > MD_COMP_DIST)
+                        continue;
+#else
                 // Warped prediction is only compatible with MD_COMP_AVG and MD_COMP_DIST.
                 for (cur_type = MD_COMP_AVG;
                     cur_type <= MIN(MD_COMP_DIST, tot_comp_types);
                     cur_type++) {
+#endif
                     cand_array[cand_total_cnt].type = INTER_MODE;
                     cand_array[cand_total_cnt].distortion_ready = 0;
                     cand_array[cand_total_cnt].use_intrabc = 0;
@@ -3667,9 +4036,11 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
                     cand_array[cand_total_cnt].motion_vector_yl1 =
                         to_inject_mv_y_l1;
                     //GLOB-GLOB
+#if !FEATURE_NEW_INTER_COMP_LEVELS // useless for GLOBAL b/c DIFF/WEDGE aren't allowed
                     if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                         calc_pred_masked_compound(
                             pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+#endif
                     determine_compound_mode(pcs_ptr,
                         context_ptr,
                         &cand_array[cand_total_cnt],
@@ -3715,8 +4086,9 @@ void inject_pme_candidates(
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
     BlockSize              bsize           = context_ptr->blk_geom->bsize; // bloc size
-
+#if !FEATURE_NEW_INTER_COMP_LEVELS
     MD_COMP_TYPE tot_comp_types = context_ptr->compound_types_to_try;
+#endif
     Mv mv;
     MvUnit mv_unit;
     for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
@@ -3902,13 +4274,32 @@ void inject_pme_candidates(
                         to_inject_mv_x_l1,
                         to_inject_mv_y_l1,
                         to_inject_ref_type) == EB_FALSE) {
-                    if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                    // Set the allowable compound types to be injected
+                    uint8_t allowed_comp_types[MD_COMP_TYPES];
+                    memcpy(allowed_comp_types, context_ptr->inter_comp_ctrls.allowed_comp_types, sizeof(uint8_t) * MD_COMP_TYPES);
 
+                    // Reduce the compound types to inject based on the distance of the reference frames from the current frame
+                    set_comp_types_by_distance(allowed_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist1_comp_types,
+                        context_ptr->inter_comp_ctrls.allowed_dist2_comp_types,
+                        ref_idx_0,
+                        ref_idx_1);
+
+                    EbBool mask_done = 0;
+                    for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < MD_COMP_TYPES; cur_type++) {
+
+                        // Skip the current compound type if not set to be injected
+                        if (allowed_comp_types[cur_type] == 0)
+                            continue;
+#else
+                    if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
                         if (is_reference_best_pme(context_ptr, list_idx_0, ref_idx_0, 2) == 0 ||
                             is_reference_best_pme(context_ptr, list_idx_1, ref_idx_1, 2) == 0)
                             tot_comp_types = MD_COMP_AVG;
 
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
+#endif
                         cand_array[cand_total_cnt].type = INTER_MODE;
                         cand_array[cand_total_cnt].distortion_ready = 0;
                         cand_array[cand_total_cnt].use_intrabc = 0;
@@ -3961,9 +4352,18 @@ void inject_pme_candidates(
                             best_pred_mv[1].as_mv.row;
 
                         //MVP REFINE
+#if FEATURE_NEW_INTER_COMP_LEVELS
+                        if (cur_type == MD_COMP_DIFF0 || cur_type == MD_COMP_WEDGE) {
+                            if (mask_done != 1) {
+                                calc_pred_masked_compound(pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+                                mask_done = 1;
+                            }
+                        }
+#else
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(
                                 pcs_ptr, context_ptr, &cand_array[cand_total_cnt]);
+#endif
                         determine_compound_mode(
                             pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
                         INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt);

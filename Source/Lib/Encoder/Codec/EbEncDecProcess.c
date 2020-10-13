@@ -2813,6 +2813,43 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->bipred3x3_injection =
         sequence_control_set_ptr->static_config.bipred_3x3_inject;
         }
+#if FEATURE_NEW_INTER_COMP_LEVELS
+
+    context_ptr->inject_inter_candidates = 1;
+
+    if (sequence_control_set_ptr->compound_mode) {
+        if (sequence_control_set_ptr->static_config.compound_level == DEFAULT) {
+            if (pd_pass == PD_PASS_0)
+                context_ptr->inter_compound_mode = 0;
+            else if (pd_pass == PD_PASS_1)
+                context_ptr->inter_compound_mode = 0;
+#if TUNE_NEW_PRESETS
+            else if (enc_mode <= ENC_MR)
+#else
+            else if (enc_mode <= ENC_M0)
+#endif
+                context_ptr->inter_compound_mode = 1;
+#if TUNE_NEW_PRESETS
+            else if (enc_mode <= ENC_M0)
+#else
+            else if (enc_mode <= ENC_M1)
+#endif
+                context_ptr->inter_compound_mode = 3;
+            else if (enc_mode <= ENC_M3)
+                context_ptr->inter_compound_mode = 4;
+            else if (enc_mode <= ENC_M4)
+                context_ptr->inter_compound_mode = 6;
+            else
+                context_ptr->inter_compound_mode = 0;
+        }
+        else {
+            context_ptr->inter_compound_mode = sequence_control_set_ptr->static_config.compound_level;
+        }
+    }
+    else {
+        context_ptr->inter_compound_mode = 0;
+    }
+#else
         // Level   Settings
         // 0       OFF: No compound mode search : AVG only
         // 1       ON: Full - AVG/DIST/DIFF/WEDGE
@@ -2832,6 +2869,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
     else
             context_ptr->inter_compound_mode = 0;
+#endif
     if (pd_pass == PD_PASS_0) {
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
     }
