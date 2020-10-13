@@ -66,6 +66,7 @@ extern "C" {
 #define PARTIAL_FREQUENCY                        1 //Calculate partial frequency transforms N2 or N4
 #define TUNE_SC_QPS_IMP                          1 // Improve QP assignment for SC
 #define FEATURE_REMOVE_CIRCULAR                  1 // Remove circular actions from current NSQ feautres; replace them with non-circular levels
+#define FEATURE_NEW_INTER_COMP_LEVELS            1 // Add new levels and controls for inter compound; remove old levels
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
