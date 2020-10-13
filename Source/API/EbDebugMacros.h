@@ -81,6 +81,7 @@ extern "C" {
 #define FIX_ME_IDX_LUPT                          1 // bug fix stops encoder from deadlocking on >=360p clips
 #define FIX_OPTIMIZE_BUILD_QUANTIZER                 1 // Optimize eb_av1_build_quantizer():  called for each single frame (while the generated data does not change per frame). Moved buffer to sps, and performed 1 @ 1st frame only.
 #define FIX_REMOVE_UNUSED_CODE                       1 // Remove unused code
+#define FEATURE_OPT_IFS                              1 // Reverse IFS search order; regular to be performed last since the most probable then bypass the last evaluation if regular is the winner. 1 chroma compensation could be avoided if we add the ability to do chroma only when calling inter_comp.
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
