@@ -160,7 +160,9 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_cb_recon_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_cr_recon_neighbor_array[depth], tile_cnt);
 
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
         EB_DELETE_PTR_ARRAY(obj->md_skip_coeff_neighbor_array[depth], tile_cnt);
+#endif
         EB_DELETE_PTR_ARRAY(obj->md_luma_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_cr_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
@@ -506,6 +508,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
                 },
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                 {
                     &object_ptr->md_skip_coeff_neighbor_array[depth][tile_idx],
                     MAX_PICTURE_WIDTH_SIZE,
@@ -515,6 +518,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
                 },
+#endif
                 // for each 4x4
                 {
                     &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
