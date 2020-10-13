@@ -3375,7 +3375,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if TUNE_NICS
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_MR)
+#endif
 #else
         if (enc_mode <= ENC_M0)
 #endif
@@ -3408,8 +3412,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_NEW_PRESETS
 #if TUNE_PRESETS_CLEANUP
         if (enc_mode <= ENC_MRS)
-            context_ptr->md_stage_1_class_prune_th = 300;
-        else if (enc_mode <= ENC_M0)
 #else
         if (enc_mode <= ENC_MR)
 #endif
@@ -3617,11 +3619,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_MRS)
                 context_ptr->sq_weight = (uint32_t)~0;
             else
-#if !TUNE_PRESETS_CLEANUP
                 if (enc_mode <= ENC_MR)
+#if TUNE_PRESETS_CLEANUP
+                    context_ptr->sq_weight = 105;
+#else
                     context_ptr->sq_weight = 115;
-                else
 #endif
+                else
                     if (enc_mode <= ENC_M0)
 #if TUNE_PRESETS_CLEANUP
                         context_ptr->sq_weight = 100;
