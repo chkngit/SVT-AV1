@@ -1491,14 +1491,14 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     uint8_t sq_index         = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
     if (context_ptr->blk_geom->shape == PART_N) {
         context_ptr->parent_sq_type[sq_index] = candidate_buffer->candidate_ptr->type;
-
+#if !FEATURE_NEW_CYCLES_ALLOC
         context_ptr->parent_sq_has_coeff[sq_index] =
             (candidate_buffer->candidate_ptr->y_has_coeff ||
              candidate_buffer->candidate_ptr->u_has_coeff ||
              candidate_buffer->candidate_ptr->v_has_coeff)
                 ? 1
                 : 0;
-
+#endif
         context_ptr->parent_sq_pred_mode[sq_index] = candidate_buffer->candidate_ptr->pred_mode;
     }
         if (!context_ptr->blk_geom->has_uv) {
@@ -1852,13 +1852,16 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level);
 #if FEATURE_INTER_INTRA_LEVELS
 void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level);
 #endif
-
+#if !FEATURE_NEW_CYCLES_ALLOC
 void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_md_mode_based_on_sq_coeff_level);
+#endif
 void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_level);
 void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_level);
 void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level);
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
-
+#if FEATURE_NEW_CYCLES_ALLOC
+void set_cycles_allocation_ctrls(ModeDecisionContext* mdctxt, uint8_t input_resolution, uint8_t cycles_alloc_level);
+#endif
 /******************************************************
 * Derive EncDec Settings for first pass
 Input   : encoder mode and pd pass
@@ -1870,6 +1873,11 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     EbErrorType return_error = EB_ErrorNone;
 
     uint8_t pd_pass = context_ptr->pd_pass;
+
+#if FEATURE_NEW_CYCLES_ALLOC
+    // Do not use coeff-area based NSQ reduction in first pass
+    set_cycles_allocation_ctrls(context_ptr, pcs_ptr->parent_pcs_ptr->input_resolution, 0);
+#else
     // sb_classifier levels
     // Level                Settings
     // 0                    Off
@@ -1879,6 +1887,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 4                    TH 50%
     // 5                    TH 40%
     context_ptr->enable_area_based_cycles_allocation = 0;
+#endif
 
 #if TUNE_TX_TYPE_LEVELS
     context_ptr->md_staging_txt_level = 0;
@@ -2035,7 +2044,9 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
 #endif
+#if !FEATURE_NEW_CYCLES_ALLOC
     context_ptr->coeff_area_based_bypass_nsq_th = 0;
+#endif
 
     uint8_t adaptive_md_cycles_level = 0;
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
@@ -2045,9 +2056,11 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // skip HA, HB, and H4 if h_cost > (weighted sq_cost)
     // skip VA, VB, and V4 if v_cost > (weighted sq_cost)
     context_ptr->sq_weight = (uint32_t)~0;
+#if !FEATURE_NEW_CYCLES_ALLOC
     // Set coeff_based_nsq_cand_reduction
     context_ptr->switch_md_mode_based_on_sq_coeff = 0;
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
+#endif
 
     // Set pic_obmc_level @ MD
     context_ptr->md_pic_obmc_level = 0;
@@ -2146,9 +2159,10 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // Use coeff rate and slit flag rate only (i.e. no fast rate)
     context_ptr->shut_fast_rate = EB_FALSE;
     context_ptr->skip_intra = 0;
-
+#if !FIX_REMOVE_UNUSED_SIGNALS
     context_ptr->mds3_intra_prune_th = (uint16_t)~0;
     context_ptr->skip_cfl_cost_dev_th = (uint16_t)~0;
+#endif
 #if FEATURE_MDS0_ELIMINATE_CAND
     context_ptr->early_cand_elimination = 0;
 #endif

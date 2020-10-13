@@ -2171,6 +2171,7 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
     default: assert(0); break;
     }
 }
+#if !FEATURE_NEW_CYCLES_ALLOC
 void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_md_mode_based_on_sq_coeff_level) {
     CoeffBSwMdCtrls *coeffb_sw_md_ctrls = &mdctxt->cb_sw_md_ctrls;
 
@@ -2218,7 +2219,7 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     default: assert(0); break;
     }
 }
-
+#endif
 #if FEATURE_OPT_RDOQ
 /*
  * Control RDOQ
@@ -2288,7 +2289,7 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
 /******************************************************
 * Derive SB classifier thresholds
 ******************************************************/
-
+#if !FEATURE_NEW_CYCLES_ALLOC
 uint8_t nsq_cycles_reduction_th[19] = {
  0, // NONE
  17, //[85%;100%]
@@ -2310,6 +2311,7 @@ uint8_t nsq_cycles_reduction_th[19] = {
  2,//[3%;6%]
  1 //[0%;3%]
 };
+#endif
 #if FEATURE_REMOVE_CIRCULAR
 void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode) {
     AMdCycleRControls* adaptive_md_cycles_red_ctrls = &mdctxt->admd_cycles_red_ctrls;
@@ -2759,6 +2761,99 @@ void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_leve
     }
 }
 #endif
+#if FEATURE_NEW_CYCLES_ALLOC
+void set_cycles_allocation_ctrls(ModeDecisionContext* mdctxt, uint8_t input_resolution, uint8_t cycles_alloc_level) {
+    CycleAllocCtrls* cycles_alloc_ctrls = &mdctxt->cycles_allocation_ctrls;
+    switch (cycles_alloc_level) {
+    case 0:
+        cycles_alloc_ctrls->enabled = 0;
+        break;
+    case 1:
+        cycles_alloc_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycles_alloc_ctrls->high_freq_band1_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycles_alloc_ctrls->high_freq_band1_level = 3;
+        cycles_alloc_ctrls->high_freq_band2_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycles_alloc_ctrls->high_freq_band2_level = 2;
+
+        // Low frequency band THs/actions
+        cycles_alloc_ctrls->enable_zero_coeff_action = 1;
+        cycles_alloc_ctrls->zero_coeff_action = 1;
+        cycles_alloc_ctrls->enable_one_coeff_action = 0;
+        cycles_alloc_ctrls->one_coeff_action = 0;
+
+        cycles_alloc_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band1_level = 0;
+        cycles_alloc_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band2_level = 0;
+        break;
+    case 2:
+        cycles_alloc_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycles_alloc_ctrls->high_freq_band1_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycles_alloc_ctrls->high_freq_band1_level = 3;
+        cycles_alloc_ctrls->high_freq_band2_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycles_alloc_ctrls->high_freq_band2_level = 2;
+
+        // Low frequency band THs/actions
+        cycles_alloc_ctrls->enable_zero_coeff_action = 1;
+        cycles_alloc_ctrls->zero_coeff_action = 2;
+        cycles_alloc_ctrls->enable_one_coeff_action = 0;
+        cycles_alloc_ctrls->one_coeff_action = 0;
+
+        cycles_alloc_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band1_level = 0;
+        cycles_alloc_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band2_level = 0;
+        break;
+    case 3:
+        cycles_alloc_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycles_alloc_ctrls->high_freq_band1_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycles_alloc_ctrls->high_freq_band1_level = 3;
+        cycles_alloc_ctrls->high_freq_band2_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycles_alloc_ctrls->high_freq_band2_level = 3;
+
+        // Low frequency band THs/actions
+        cycles_alloc_ctrls->enable_zero_coeff_action = 1;
+        cycles_alloc_ctrls->zero_coeff_action = 2;
+        cycles_alloc_ctrls->enable_one_coeff_action = 0;
+        cycles_alloc_ctrls->one_coeff_action = 0;
+
+        cycles_alloc_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band1_level = 0;
+        cycles_alloc_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band2_level = 0;
+        break;
+    case 4:
+        cycles_alloc_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycles_alloc_ctrls->high_freq_band1_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycles_alloc_ctrls->high_freq_band1_level = 3;
+        cycles_alloc_ctrls->high_freq_band2_th = input_resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycles_alloc_ctrls->high_freq_band2_level = 3;
+
+        // Low frequency band THs/actions
+        cycles_alloc_ctrls->enable_zero_coeff_action = 1;
+        cycles_alloc_ctrls->zero_coeff_action = 0; // skip
+        cycles_alloc_ctrls->enable_one_coeff_action = 0;
+        cycles_alloc_ctrls->one_coeff_action = 0;
+
+        cycles_alloc_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band1_level = 0;
+        cycles_alloc_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycles_alloc_ctrls->low_freq_band2_level = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive EncDec Settings for OQ
 Input   : encoder mode and pd pass
@@ -2784,7 +2879,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         enc_mode = pcs_ptr->enc_mode;
 #endif
     uint8_t pd_pass = context_ptr->pd_pass;
-
+#if !FEATURE_NEW_CYCLES_ALLOC
     // sb_classifier levels
     // Level                Settings
     // 0                    Off
@@ -2806,7 +2901,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->enable_area_based_cycles_allocation = 1;
     }
-
+#endif
 #if TUNE_TX_TYPE_LEVELS
     // TxT Groups - The different groups of transform types that can be searched
     // Group #          Settings
@@ -3437,13 +3532,34 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // If using a mode offset, do not modify the NSQ-targeting features
     if (!mode_offset) {
 #endif
+#if FEATURE_NEW_CYCLES_ALLOC
+        uint8_t cycles_allocation_level = 0;
+        if (pd_pass == PD_PASS_0)
+            cycles_allocation_level = 0;
+        else if (pd_pass == PD_PASS_1)
+            cycles_allocation_level = 0;
+        else if (pcs_ptr->slice_type == I_SLICE)
+            cycles_allocation_level = 0;
+        else if (enc_mode <= ENC_MRS)
+            cycles_allocation_level = 0;
+        else if (enc_mode <= ENC_MR)
+            cycles_allocation_level = 1;
+        else if (enc_mode <= ENC_M1)
+            cycles_allocation_level = 2;
+        else if (enc_mode <= ENC_M2)
+            cycles_allocation_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 3 : 4;
+        else
+            cycles_allocation_level = 4;
+
+        set_cycles_allocation_ctrls(context_ptr, pcs_ptr->parent_pcs_ptr->input_resolution, cycles_allocation_level);
+#else
         if (pd_pass == PD_PASS_0)
             context_ptr->coeff_area_based_bypass_nsq_th = 0;
         else if (pd_pass == PD_PASS_1)
             context_ptr->coeff_area_based_bypass_nsq_th = 0;
         else
             context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
-
+#endif
 #if TUNE_NEW_PRESETS
         adaptive_md_cycles_redcution_controls(context_ptr, 0);
 #else
@@ -3520,6 +3636,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                         context_ptr->sq_weight = 95;
                     else
                         context_ptr->sq_weight = 90;
+#if !FEATURE_NEW_CYCLES_ALLOC
 #if !FEATURE_REMOVE_CIRCULAR
     }
     // If using a mode offset, do not modify the NSQ-targeting features
@@ -3565,6 +3682,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
 #if !FEATURE_REMOVE_CIRCULAR
     }
+#endif
 #endif
     // Set pic_obmc_level @ MD
     if (pd_pass == PD_PASS_0)
@@ -3923,7 +4041,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
     else
 #if DC_ONLY_AT_NON_REF
+#if FIX_ENC_MODE_CHECK
+        if (enc_mode <= ENC_M7)
+#else
         if (enc_mode < ENC_M8)
+#endif
             context_ptr->dc_cand_only_flag = EB_FALSE;
         else
             context_ptr->dc_cand_only_flag = !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
@@ -3983,6 +4105,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->skip_intra = 1;
     else
         context_ptr->skip_intra = 0;
+#if !FIX_REMOVE_UNUSED_SIGNALS
     // skip cfl based on inter/intra cost deviation (skip if intra_cost is
     // skip_cfl_cost_dev_th % greater than inter_cost)
     if (enc_mode <= ENC_MR)
@@ -3996,7 +4119,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->mds3_intra_prune_th = (uint16_t)~0;
     else
         context_ptr->mds3_intra_prune_th = 30;
-
+#endif
 #if FEATURE_RDOQ_OPT
     if (pd_pass == PD_PASS_0)
         context_ptr->use_prev_mds_res = EB_FALSE;

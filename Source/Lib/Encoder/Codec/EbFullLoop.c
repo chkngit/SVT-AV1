@@ -1723,6 +1723,7 @@ int32_t av1_quantize_inv_quantize(
     return cul_level;
 }
 
+#if !FIX_Y_COEFF_FLAG_UPDATE
 /****************************************
  ************  Full loop ****************
 ****************************************/
@@ -1957,7 +1958,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
     context_ptr->txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] *
                                   context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
 }
-
+#endif
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
                                  int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,

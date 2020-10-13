@@ -38,12 +38,13 @@ void cu_full_distortion_fast_txb_mode_r(
     uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU], COMPONENT_TYPE component_type,
     uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, EbBool is_full_loop);
 
+#if !FIX_Y_COEFF_FLAG_UPDATE
 void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                        ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                        EbPictureBufferDesc *input_picture_ptr, uint32_t qindex,
                        uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
                        uint64_t *y_full_distortion);
-
+#endif
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
                                  int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,

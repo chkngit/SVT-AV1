@@ -5283,6 +5283,13 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 COMPONENT_LUMA);
         uint64_t            y_full_cost;
+#if FIX_Y_COEFF_FLAG_UPDATE
+        //TODO: fix cbf decision
+        av1_txb_calc_cost_luma(txb_full_distortion_txt[tx_type],
+                               &(y_txb_coeff_bits_txt[tx_type]),
+                               &y_full_cost,
+                               full_lambda);
+#else
         //TODO: fix cbf decision
         av1_txb_calc_cost_luma(context_ptr->luma_txb_skip_context,
             candidate_buffer->candidate_ptr,
@@ -5293,6 +5300,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             &(y_txb_coeff_bits_txt[tx_type]),
             &y_full_cost,
             full_lambda);
+#endif
         uint64_t cost = RDCOST(
             full_lambda, y_txb_coeff_bits_txt[tx_type], txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL]);
         if (cost < best_cost_tx_search) {
@@ -5315,6 +5323,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     y_full_distortion[DIST_CALC_PREDICTION] += txb_full_distortion_txt[best_tx_type][DIST_CALC_PREDICTION];
 
     y_count_non_zero_coeffs[context_ptr->txb_itr] = y_count_non_zero_coeffs_txt[best_tx_type];
+#if FIX_Y_COEFF_FLAG_UPDATE
+    candidate_buffer->candidate_ptr->y_has_coeff |= ((y_count_non_zero_coeffs_txt[best_tx_type] > 0) << context_ptr->txb_itr);
+#endif
     candidate_buffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] = quantized_dc_txt[best_tx_type];
     candidate_buffer->candidate_ptr->eob[0][context_ptr->txb_itr] = eob_txt[best_tx_type];
 
@@ -8712,14 +8723,14 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     uint8_t sq_index         = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
     if (context_ptr->blk_geom->shape == PART_N) {
         context_ptr->parent_sq_type[sq_index] = candidate_buffer->candidate_ptr->type;
-
+#if !FEATURE_NEW_CYCLES_ALLOC
         context_ptr->parent_sq_has_coeff[sq_index] =
             (candidate_buffer->candidate_ptr->y_has_coeff ||
              candidate_buffer->candidate_ptr->u_has_coeff ||
              candidate_buffer->candidate_ptr->v_has_coeff)
             ? 1
             : 0;
-
+#endif
         context_ptr->parent_sq_pred_mode[sq_index] = candidate_buffer->candidate_ptr->pred_mode;
     }
     if (!context_ptr->skip_intra)
@@ -9037,6 +9048,7 @@ uint8_t update_skip_nsq_shapes(
 
     return skip_nsq;
 }
+
 #if TUNE_ADD_NEW_LEVELS
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
 void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level);
@@ -9047,8 +9059,7 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
 // Return 1 to skip, else 0
 //
 // Level 0 - skip
-// Level 1 - no adjustment
-// Level 2-5 - more aggressive settings
+// Level 1-4 - adjust certain settings
 EbBool udpate_md_settings(ModeDecisionContext *context_ptr, uint8_t level) {
 
     // Level 0 is skip
@@ -9083,6 +9094,41 @@ EbBool udpate_md_settings(ModeDecisionContext *context_ptr, uint8_t level) {
     return 0;
 }
 #endif
+
+#if FEATURE_NEW_CYCLES_ALLOC
+// Update MD settings or skip NSQ block based on the coeff-area of the parent SQ block
+// Returns 1 to skip the NSQ block; 0 otherwise
+uint8_t update_md_settings_based_on_sq_coeff_area(ModeDecisionContext *context_ptr) {
+    uint8_t skip_nsq = 0;
+    CycleAllocCtrls* cycles_alloc_ctrls = &context_ptr->cycles_allocation_ctrls;
+    if (cycles_alloc_ctrls->enabled) {
+        if (context_ptr->blk_geom->shape != PART_N) {
+            if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag) {
+                uint32_t count_non_zero_coeffs = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].count_non_zero_coeffs;
+                uint32_t total_samples = (context_ptr->blk_geom->sq_size * context_ptr->blk_geom->sq_size);
+
+                // High frequency band actions
+                if (count_non_zero_coeffs >= ((total_samples * cycles_alloc_ctrls->high_freq_band1_th) / 100))
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->high_freq_band1_level);
+                else if (count_non_zero_coeffs >= ((total_samples * cycles_alloc_ctrls->high_freq_band2_th) / 100))
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->high_freq_band2_level);
+                // Low frequency band actions
+                else if (cycles_alloc_ctrls->enable_zero_coeff_action && count_non_zero_coeffs == 0) {
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->zero_coeff_action);
+                    set_txt_controls(context_ptr, 0);
+                }
+                else if (cycles_alloc_ctrls->enable_one_coeff_action && count_non_zero_coeffs == 1)
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->one_coeff_action);
+                else if (count_non_zero_coeffs < ((total_samples * cycles_alloc_ctrls->low_freq_band1_th) / 100))
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->low_freq_band1_level);
+                else if (count_non_zero_coeffs < ((total_samples * cycles_alloc_ctrls->low_freq_band2_th) / 100))
+                    skip_nsq = udpate_md_settings(context_ptr, cycles_alloc_ctrls->low_freq_band2_level);
+            }
+        }
+    }
+    return skip_nsq;
+}
+#else
 /***********************************
 get the number of total block in a
 branch
@@ -9149,12 +9195,13 @@ uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
                         skip_nsq = 1;
 
                 }
-
             }
         }
     }
     return skip_nsq;
 }
+#endif
+
 #if !TUNE_ADD_NEW_LEVELS
 #if FEATURE_REMOVE_CIRCULAR
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
@@ -9188,6 +9235,7 @@ void udpate_md_settings(ModeDecisionContext *context_ptr, uint8_t level) {
 }
 #endif
 #endif
+
 #if FEATURE_REMOVE_CIRCULAR
 void update_md_settings_based_on_stats(ModeDecisionContext *context_ptr, int8_t pred_depth_refinement) {
 #else
@@ -9211,6 +9259,7 @@ void update_md_settings_based_on_stats(SequenceControlSet *scs_ptr, PictureContr
         }
     }
 }
+#if !FEATURE_NEW_CYCLES_ALLOC
 #if FEATURE_REMOVE_CIRCULAR
 uint8_t update_md_settings_based_on_sq_coeff(ModeDecisionContext *context_ptr) {
 #else
@@ -9249,6 +9298,7 @@ uint8_t update_md_settings_based_on_sq_coeff(SequenceControlSet *scs_ptr, Pictur
     }
     return zero_sq_coeff_skip_action;
 }
+#endif
 #if REFACTOR_MD_BLOCK_LOOP
 // Pad high bit depth pictures
 // Returns pointer to padded data
@@ -9569,7 +9619,9 @@ EbBool update_redundant(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         if (context_ptr->blk_geom->shape == PART_N) {
             uint8_t sq_index = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
             context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;
+#if !FEATURE_NEW_CYCLES_ALLOC
             context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
+#endif
             context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;
         }
         return 1;
@@ -9608,8 +9660,10 @@ void process_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
     update_md_settings_based_on_stats(context_ptr, context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement);
 
+#if !FEATURE_NEW_CYCLES_ALLOC
     // If SQ block has zero coeffs, use more aggressive settings (or skip) for NSQ blocks
     skip_processing_block |= update_md_settings_based_on_sq_coeff(context_ptr);
+#endif
 
     // Check current depth cost; if larger than parent, exit early
     check_curr_to_parent_cost(scs_ptr,
@@ -9624,7 +9678,11 @@ void process_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     if (!update_redundant(pcs_ptr, context_ptr)) {
         skip_processing_block |= (*md_early_exit_sq);
         skip_processing_block |= update_skip_nsq_shapes(context_ptr);
+#if FEATURE_NEW_CYCLES_ALLOC
+        skip_processing_block |= update_md_settings_based_on_sq_coeff_area(context_ptr);
+#else
         skip_processing_block |= get_allowed_block(context_ptr);
+#endif
 
         if (!skip_processing_block && pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {
 
@@ -10053,8 +10111,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
         update_md_settings_based_on_stats(context_ptr,
             context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement);
+#if !FEATURE_NEW_CYCLES_ALLOC
         // If SQ block has zero coeffs, use more aggressive settings (or skip) for NSQ blocks
         uint8_t zero_sq_coeff_skip_action = update_md_settings_based_on_sq_coeff(context_ptr);
+#endif
 #else
         // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
         update_md_settings_based_on_stats(scs_ptr, pcs_ptr, context_ptr,
@@ -10140,7 +10200,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             if (context_ptr->blk_geom->shape == PART_N) {
                 uint8_t sq_index = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
                 context_ptr->parent_sq_type[sq_index]      = src_cu->prediction_mode_flag;
+#if !FEATURE_NEW_CYCLES_ALLOC
                 context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
+#endif
                 context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;
             }
         } else {
@@ -10196,14 +10258,24 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
             uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
             skip_next_depth = context_ptr->blk_ptr->do_not_process_block;
+#if FEATURE_NEW_CYCLES_ALLOC
+            uint8_t coeff_area_based_nsq_skip = update_md_settings_based_on_sq_coeff_area(context_ptr);
+#else
             uint8_t skip_nsq = get_allowed_block(context_ptr);
+#endif
 
             if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
                 !skip_next_nsq && !skip_next_sq &&
                 !sq_weight_based_nsq_skip &&
+#if !FEATURE_NEW_CYCLES_ALLOC
                 !zero_sq_coeff_skip_action &&
+#endif
                 !skip_next_depth &&
+#if FEATURE_NEW_CYCLES_ALLOC
+                !coeff_area_based_nsq_skip) {
+#else
                 !skip_nsq) {
+#endif
                 if (use_output_stat(scs_ptr))
                     first_pass_md_encode_block(pcs_ptr,
                         context_ptr,
@@ -10211,7 +10283,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                         bestcandidate_buffers);
                 else
                 md_encode_block(pcs_ptr, context_ptr, input_picture_ptr, bestcandidate_buffers);
+#if FEATURE_NEW_CYCLES_ALLOC
+            } else if (sq_weight_based_nsq_skip || skip_next_depth || coeff_area_based_nsq_skip) {
+#else
             } else if (sq_weight_based_nsq_skip || skip_next_depth || zero_sq_coeff_skip_action) {
+#endif
                 if (context_ptr->blk_geom->shape != PART_N)
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                         (MAX_MODE_COST >> 4);

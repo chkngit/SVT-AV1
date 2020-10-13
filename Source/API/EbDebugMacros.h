@@ -136,6 +136,13 @@ extern "C" {
 #define TUNE_NEW_PRESETS                             1 // Preset tuning for M0-M7
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
 #define TUNE_ADD_NEW_LEVELS                          1 // Add new levels to be used by zero-coeff feature
+
+#define FIX_Y_COEFF_FLAG_UPDATE                      1 // Fix bug where y_has_coeff flag is overwritten by non-selected tx_types during tx_type_search
+#define FIX_REMOVE_UNUSED_SIGNALS                    1 // Remove mds3_intra_prune_th, and skip_cfl_cost_dev_th
+#define FEATURE_NEW_CYCLES_ALLOC                     1 // Replace old cycles allocation with a cycles allocation algorithm that
+                                                       // does not depend on stats.  Merge cycles allocation and zero-sq-coeff feature.
+#define FIX_ENC_MODE_CHECK                           1 // Make enc mode check conform to convention of using "<="
+
 // END  svt-03 /////////////////////////////////////////////////////////
 
 #define TUNE_PRESETS_CLEANUP                    1 // Tune and clean up presets
