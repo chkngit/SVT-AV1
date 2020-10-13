@@ -2073,17 +2073,29 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     case 0: coeffb_sw_md_ctrls->enabled = 0; break;
     case 1:
         coeffb_sw_md_ctrls->enabled = 1;
+#if FEATURE_REMOVE_CIRCULAR
+        coeffb_sw_md_ctrls->non_skip_level = 0;
+#else
         coeffb_sw_md_ctrls->mode_offset = 3;
+#endif
         coeffb_sw_md_ctrls->skip_block = 0;
         break;
     case 2:
         coeffb_sw_md_ctrls->enabled = 1;
+#if FEATURE_REMOVE_CIRCULAR
+        coeffb_sw_md_ctrls->non_skip_level = 1;
+#else
         coeffb_sw_md_ctrls->mode_offset = 4;
+#endif
         coeffb_sw_md_ctrls->skip_block = 0;
         break;
     case 3:
         coeffb_sw_md_ctrls->enabled = 1;
+#if FEATURE_REMOVE_CIRCULAR
+        coeffb_sw_md_ctrls->non_skip_level = 1;
+#else
         coeffb_sw_md_ctrls->mode_offset = 4;
+#endif
         coeffb_sw_md_ctrls->skip_block = 1;
         break;
     default: assert(0); break;
@@ -2114,6 +2126,92 @@ uint8_t nsq_cycles_reduction_th[19] = {
  2,//[3%;6%]
  1 //[0%;3%]
 };
+#if FEATURE_REMOVE_CIRCULAR
+void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode) {
+    AMdCycleRControls* adaptive_md_cycles_red_ctrls = &mdctxt->admd_cycles_red_ctrls;
+    switch (adaptive_md_cycles_red_mode)
+    {
+    case 0:
+        adaptive_md_cycles_red_ctrls->enabled = 0;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 0;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 1:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 25;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+#if TUNE_NEW_PRESETS
+    case 2:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 100;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 3:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 150;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 4:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 600;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+        break;
+    case 5:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 750;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+#else
+    case 2:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 75;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 3:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 100;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 4:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 5:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 200;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 500;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+        break;
+#endif
+    case 6:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 500;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 1000;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+        break;
+    case 7:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 750;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 1500;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode) {
     AMdCycleRControls* adaptive_md_cycles_red_ctrls = &mdctxt->admd_cycles_red_ctrls;
     switch (adaptive_md_cycles_red_mode)
@@ -2165,6 +2263,98 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         break;
     }
 }
+#endif
+#if TUNE_TX_TYPE_LEVELS
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
+
+    TxtControls * txt_ctrls = &mdctxt->txt_ctrls;
+
+    switch (txt_level)
+    {
+    case 0:
+        txt_ctrls->enabled = 0;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 1;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 1;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = 1;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 1:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 2:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 1;
+        txt_ctrls->intra_th = 5;
+        txt_ctrls->inter_th = 8;
+        break;
+    case 3:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 5;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 5;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 4:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 5;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 3;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    case 5:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 3;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 2;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode) {
 
     TxtCycleRControls* txt_cycle_red_ctrls = &mdctxt->txt_cycles_red_ctrls;
@@ -2206,6 +2396,7 @@ void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_c
         break;
     }
 }
+#endif
 void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_cycles_red_mode) {
 
     TxsCycleRControls* txs_cycle_red_ctrls = &mdctxt->txs_cycles_red_ctrls;
@@ -2376,6 +2567,13 @@ Output  : EncDec Kernel signal(s)
 EbErrorType signal_derivation_enc_dec_kernel_oq(
     SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet *pcs_ptr,
+#if FEATURE_REMOVE_CIRCULAR
+    ModeDecisionContext *context_ptr) {
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    EbEncMode enc_mode = pcs_ptr->enc_mode;
+#else
     ModeDecisionContext *context_ptr,
     EbEncMode mode_offset) {
     EbErrorType return_error = EB_ErrorNone;
@@ -2384,6 +2582,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         enc_mode = MIN(ENC_M8, pcs_ptr->enc_mode + mode_offset);
     else
         enc_mode = pcs_ptr->enc_mode;
+#endif
     uint8_t pd_pass = context_ptr->pd_pass;
 
     // sb_classifier levels
@@ -4695,8 +4894,12 @@ void *mode_decision_kernel(void *input_ptr) {
 
                         // [PD_PASS_0] Signal(s) derivation
                         context_ptr->md_context->pd_pass = PD_PASS_0;
+#if FEATURE_REMOVE_CIRCULAR
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                         signal_derivation_enc_dec_kernel_oq(
                             scs_ptr, pcs_ptr, context_ptr->md_context, 0);
+#endif
 
                         // [PD_PASS_0]
                         // Input : mdc_blk_ptr built @ mdc process (up to 4421)
@@ -4738,8 +4941,12 @@ void *mode_decision_kernel(void *input_ptr) {
                             pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_4) {
                             // [PD_PASS_1] Signal(s) derivation
                             context_ptr->md_context->pd_pass = PD_PASS_1;
+#if FEATURE_REMOVE_CIRCULAR
+                            signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                             signal_derivation_enc_dec_kernel_oq(
                                 scs_ptr, pcs_ptr, context_ptr->md_context,0);
+#endif
                             // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
                             build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 
@@ -4777,7 +4984,11 @@ void *mode_decision_kernel(void *input_ptr) {
                     if (use_output_stat(scs_ptr))
                         first_pass_signal_derivation_enc_dec_kernel(pcs_ptr, context_ptr->md_context);
                     else
+#if FEATURE_REMOVE_CIRCULAR
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context, 0);
+#endif
                     // Re-build mdc_blk_ptr for the 3rd PD Pass [PD_PASS_2]
                     if(pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_OFF)
                     build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
