@@ -130,7 +130,10 @@ extern EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr,
 
 extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda, EbBool use_ssd,
+                                    uint64_t chroma_distortion, uint64_t lambda,
+#if !FIX_REMOVE_UNUSED_CODE
+                                    EbBool use_ssd,
+#endif
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,
@@ -139,7 +142,10 @@ extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
 
 extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda, EbBool use_ssd,
+                                    uint64_t chroma_distortion, uint64_t lambda,
+#if !FIX_REMOVE_UNUSED_CODE
+                                    EbBool use_ssd,
+#endif
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,

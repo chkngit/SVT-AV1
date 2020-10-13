@@ -683,6 +683,7 @@ static INLINE void calculate_squared_errors_highbd(const uint16_t *s, int s_stri
     }
 }
 
+#if !FIX_REMOVE_UNUSED_CODE
 // Main function that applies filtering to a block according to the weights
 void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
                                int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
@@ -960,8 +961,13 @@ void svt_av1_apply_filtering_highbd_c(
     }
 }
 
+#endif
 // Apply filtering to the central picture
+#if FEATURE_OPT_TF
+static void apply_filtering_central(MeContext *context_ptr, EbByte *pred, uint32_t **accum, uint16_t **count,
+#else
 static void apply_filtering_central(EbByte *pred, uint32_t **accum, uint16_t **count,
+#endif
                                     uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
                                     uint32_t ss_y, int use_planewise_strategy) {
     uint16_t blk_height_y  = blk_height;

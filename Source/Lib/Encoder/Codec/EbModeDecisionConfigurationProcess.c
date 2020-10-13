@@ -903,9 +903,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if FIX_REMOVE_UNUSED_CODE
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
+    PictureControlSet *pcs_ptr);
+#else
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) ;
+#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -1175,10 +1180,17 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
+#if FIX_REMOVE_UNUSED_CODE
+        if (use_output_stat(scs_ptr))
+            first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
+        else
+            signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
+#else
         if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
@@ -1199,6 +1211,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         set_global_motion_field(pcs_ptr);
 
         eb_av1_qm_init(pcs_ptr->parent_pcs_ptr);
+#if !FIX_OPTIMIZE_BUILD_QUANTIZER
         Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
         Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
         eb_av1_set_quantizer(
@@ -1227,6 +1240,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             deq_8bit);
 
         // Hsan: collapse spare code
+#endif
         MdRateEstimationContext *md_rate_estimation_array;
 
         // QP
