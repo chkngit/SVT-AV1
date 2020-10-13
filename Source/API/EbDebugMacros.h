@@ -88,6 +88,7 @@ extern "C" {
 #define TUNE_TX_TYPE_LEVELS                      1 // Add Tx Type Grouping Levels
 #define TUNE_INIT_FAST_LOOP_OPT                  0 // Fast loop optimizations
 #define TUNE_REMOVE_UNUSED_NEIG_ARRAY            1 // Removes unused neighbor array
+#define INIT_BLOCK_OPT                           1 // optimize block initialization
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
