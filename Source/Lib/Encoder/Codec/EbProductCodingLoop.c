@@ -679,6 +679,7 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1012, 1013, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1029, 1030, 1031, 1036, 1037, 1038, 1039,
     1040, 1065, 1070, 1071, 1072, 1073, 1074, 1079, 1080, 1081, 1082, 1083, 1088, 1089, 1090, 1091,
     1092, 1097, 1098, 1099, 1100};
+#if !INIT_BLOCK_OPT
 void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t blk_idx = 0;
     do {
@@ -698,6 +699,7 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         ++blk_idx;
     } while (blk_idx < scs_ptr->max_block_cnt);
 }
+#endif
 void av1_perform_inverse_transform_recon_luma(ModeDecisionContext *        context_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer) {
     uint32_t tu_total_count;
@@ -9443,7 +9445,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                        uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
                                        ModeDecisionContext *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if !REFACTOR_MD_BLOCK_LOOP
     //printf("sb_origin_x = %d, sb_origin_y = %d\n", sb_origin_x, sb_origin_y);
 
     uint32_t                     blk_index;
@@ -9453,8 +9455,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     const EbMdcLeafData *const leaf_data_array = mdcResultTbPtr->leaf_data_array;
     const uint16_t             tile_idx        = context_ptr->tile_index;
     context_ptr->sb_ptr                        = sb_ptr;
+#endif
+#if !INIT_BLOCK_OPT
     init_sq_nsq_block(scs_ptr, context_ptr);
-
+#endif
+#if REFACTOR_MD_BLOCK_LOOP
+    update_neighbour_arrays(pcs_ptr, context_ptr);
+#else
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_sb_lambda_md[EB_8_BIT_MD];
@@ -9491,8 +9498,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         context_ptr->cr_recon_neighbor_array16bit =
             pcs_ptr->md_cr_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     }
+#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
     context_ptr->skip_coeff_neighbor_array =
         pcs_ptr->md_skip_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
+#endif
     context_ptr->luma_dc_sign_level_coeff_neighbor_array =
         pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     context_ptr->cb_dc_sign_level_coeff_neighbor_array =
@@ -9509,6 +9518,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         pcs_ptr->md_interpolation_type_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     uint32_t             d1_block_itr      = 0;
     uint32_t             d1_first_block    = 1;
+#endif
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #if FIX_10BIT
     if (context_ptr->hbd_mode_decision || (use_output_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth > EB_8BIT)) {
