@@ -3410,11 +3410,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if TUNE_NICS
 #if TUNE_NEW_PRESETS
-#if TUNE_PRESETS_CLEANUP
-        if (enc_mode <= ENC_MRS)
-#else
         if (enc_mode <= ENC_MR)
-#endif
 #else
         if (enc_mode <= ENC_M0)
 #endif
