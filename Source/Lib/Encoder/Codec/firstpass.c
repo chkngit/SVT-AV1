@@ -2021,6 +2021,9 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     // Set enable_inter_intra @ MD
     context_ptr->md_inter_intra_level = 0;
+#if FEATURE_INTER_INTRA_LEVELS
+    set_inter_intra_ctrls(context_ptr, context_ptr->md_inter_intra_level);
+#endif
 
     // Set enable_paeth @ MD
     context_ptr->md_enable_paeth = 0;

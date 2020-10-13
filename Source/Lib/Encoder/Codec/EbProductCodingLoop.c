@@ -1105,14 +1105,20 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         luma_fast_distortion,
         chroma_fast_distortion,
         use_ssd ? full_lambda : fast_lambda,
+#if !FIX_REMOVE_UNUSED_CODE
         use_ssd,
+#endif
         pcs_ptr,
         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
               .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
         context_ptr->blk_geom,
         context_ptr->blk_origin_y >> MI_SIZE_LOG2,
         context_ptr->blk_origin_x >> MI_SIZE_LOG2,
+#if FEATURE_INTER_INTRA_LEVELS
+        context_ptr->inter_intra_comp_ctrls.enabled,
+#else
         context_ptr->md_inter_intra_level,
+#endif
         1,
         context_ptr->intra_luma_left_mode,
         context_ptr->intra_luma_top_mode);
@@ -2229,20 +2235,39 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
         context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
         context_ptr->geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         context_ptr->geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
+#if ME_IDX_LUPT
+        context_ptr->me_block_offset = (uint32_t)
+            me_idx_128x128[((context_ptr->geom_offset_y / me_sb_size) * 2) +
+                           (context_ptr->geom_offset_x / me_sb_size)]
+                          [context_ptr->blk_geom->blkidx_mds];
+#if !FIX_ME_IDX_LUPT_ASSERT
+        assert(context_ptr->me_block_offset != (uint32_t)(-1));
+#endif
+    } else {
+        context_ptr->me_sb_addr      = context_ptr->sb_ptr->index;
+        context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];
+    }
+#else
     }
     else
         context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
+#endif
 
     if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
         context_ptr->me_block_offset = 0;
     }
+#if !ME_IDX_LUPT
     else {
-        context_ptr->me_block_offset =
-            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
-                sq_blk_geom,
-                context_ptr->geom_offset_x,
-                context_ptr->geom_offset_y);
+        context_ptr->me_block_offset = get_me_info_index(
+            pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+            sq_blk_geom,
+            context_ptr->geom_offset_x,
+            context_ptr->geom_offset_y);
     }
+#endif
+#if FIX_ME_IDX_LUPT_ASSERT
+    assert(context_ptr->me_block_offset != (uint32_t)(-1));
+#endif
     context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
 }
 #define MAX_MD_NSQ_SARCH_MVC_CNT 5
@@ -7651,14 +7676,20 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     0,
                     0,
                     0,
+#if !FIX_REMOVE_UNUSED_CODE
                     0,
+#endif
                     pcs_ptr,
                     &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                           .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
                     context_ptr->blk_geom,
                     context_ptr->blk_origin_y >> MI_SIZE_LOG2,
                     context_ptr->blk_origin_x >> MI_SIZE_LOG2,
+#if FEATURE_INTER_INTRA_LEVELS
+                    context_ptr->inter_intra_comp_ctrls.enabled,
+#else
                     context_ptr->md_inter_intra_level,
+#endif
                     1,
                     context_ptr->intra_luma_left_mode,
                     context_ptr->intra_luma_top_mode);
@@ -8277,20 +8308,46 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     perform_md_reference_pruning(
         pcs_ptr, context_ptr, input_picture_ptr);
     // Perform ME search around the best MVP
+#if FIX_MOVE_PME_RES_INIT_UNDER_PME
+    if (context_ptr->md_pme_ctrls.enabled) {
+        for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
+            for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
+                context_ptr->pme_res[li][ri].dist = 0xFFFFFFFF;
+                context_ptr->pme_res[li][ri].list_i = li;
+                context_ptr->pme_res[li][ri].ref_i = ri;
+            }
+        }
+        pme_search(
+            pcs_ptr, context_ptr, input_picture_ptr);
+    }
+
+    if (context_ptr->md_inter_intra_level) {
+        int allow_ii = is_interintra_allowed_bsize(context_ptr->blk_geom->bsize);
+        if (allow_ii)
+            precompute_intra_pred_for_inter_intra(pcs_ptr, context_ptr);
+    }
+#else
     if (context_ptr->md_pme_ctrls.enabled)
         pme_search(
             pcs_ptr, context_ptr, input_picture_ptr);
+#if FEATURE_INTER_INTRA_LEVELS
+    if (context_ptr->inter_intra_comp_ctrls.enabled && is_interintra_allowed_bsize(context_ptr->blk_geom->bsize))
+#else
     int allow_ii = is_interintra_allowed_bsize(context_ptr->blk_geom->bsize);
     if (context_ptr->md_inter_intra_level && allow_ii)
+#endif
         precompute_intra_pred_for_inter_intra(pcs_ptr, context_ptr);
+#endif
 
     generate_md_stage_0_cand(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
 
+#if !FIX_USE_MDS_CNT_INIT
     //MD Stages
     //The first stage(old fast loop) and the last stage(old full loop) should remain at their locations, new stages could be created between those two.
     //a bypass mechanism should be added to skip one or all of the intermediate stages, in a way to to be able to fall back to org design (FastLoop->FullLoop)
     set_md_stage_counts(pcs_ptr, context_ptr, fast_candidate_total_count);
+#endif
 
     CandClass cand_class_it;
     uint32_t  buffer_start_idx = 0;
@@ -8299,8 +8356,19 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->md_stage_1_total_count = 0;
     context_ptr->md_stage_2_total_count = 0;
     context_ptr->md_stage_3_total_count = 0;
+#if FIX_USE_MDS_CNT_INIT
+    // Derive NIC(s)
+#if FIX_NIC_1_CLEAN_UP
+    set_md_stage_counts(pcs_ptr, context_ptr);
+#else
+    set_md_stage_counts(pcs_ptr, context_ptr, fast_candidate_total_count);
+#endif
+#endif
     uint64_t best_md_stage_cost         = (uint64_t)~0;
     context_ptr->md_stage               = MD_STAGE_0;
+#if FEATURE_MDS0_ELIMINATE_CAND
+    uint8_t best_md_stage_pred_mode = 0;
+#endif
 
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         //number of next level candidates could not exceed number of curr level candidates
