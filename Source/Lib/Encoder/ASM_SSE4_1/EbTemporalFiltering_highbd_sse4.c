@@ -15,6 +15,7 @@
 #include "EbDefinitions.h"
 #include "EbTemporalFiltering_constants.h"
 
+#if !FIX_REMOVE_UNUSED_CODE
 // Compute (a-b)**2 for 8 pixels with size 16-bit
 static INLINE void highbd_store_dist_8(const uint16_t *a, const uint16_t *b, uint32_t *dst) {
     const __m128i zero  = _mm_setzero_si128();
@@ -37,6 +38,7 @@ static INLINE void highbd_store_dist_8(const uint16_t *a, const uint16_t *b, uin
     _mm_storeu_si128((__m128i *)(dst + 4), dist_second);
 }
 
+#endif
 // Sum up three neighboring distortions for the pixels
 static INLINE void highbd_get_sum_4(const uint32_t *dist, __m128i *sum) {
     __m128i dist_reg, dist_left, dist_right;
@@ -346,7 +348,7 @@ static void highbd_apply_temporal_filter_luma_8(
                      weight);
     highbd_accumulate_and_store_8(sum_row_first, sum_row_second, y_pre, y_count, y_accum);
 }
-
+#if !FIX_REMOVE_UNUSED_CODE
 // Perform temporal filter for the luma component.
 static void highbd_apply_temporal_filter_luma(
     const uint16_t *y_pre, int y_pre_stride,
@@ -452,7 +454,7 @@ static void highbd_apply_temporal_filter_luma(
                                         top_weight,
                                         bottom_weight);
 }
-
+#endif
 // Add a row of luma distortion that corresponds to 8 chroma mods. If we are
 // subsampling in x direction, then we have 16 lumas, else we have 8.
 static INLINE void highbd_add_luma_dist_to_8_chroma_mod(const uint32_t *y_dist, int ss_x, int ss_y,
@@ -741,6 +743,7 @@ static void highbd_apply_temporal_filter_chroma_8(
     highbd_accumulate_and_store_8(v_sum_row_fst, v_sum_row_snd, v_pre, v_count, v_accum);
 }
 
+#if !FIX_REMOVE_UNUSED_CODE
 // Perform temporal filter for the chroma components.
 static void highbd_apply_temporal_filter_chroma(
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -945,7 +948,6 @@ static void highbd_apply_temporal_filter_chroma(
                                           NULL);
 }
 
-#if !FIX_REMOVE_UNUSED_CODE
 void svt_av1_highbd_apply_temporal_filter_sse4_1(
     const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
