@@ -121,6 +121,12 @@ extern "C" {
 #define TUNE_TPL_OIS                             1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
 #define TUNE_TPL_RATE                            1 // remove  uncessary rate calculation
 #define FIX_NIC_1_CLEAN_UP                           1 // Code clean-up/unification; Use scale to signal all PD NIC(s) and 1 NIC @ mds3
+#define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
+#define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
+#define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
+#define FIX_ME_IDX_LUPT_ASSERT                       1 // change location of assert statement, code cleanup
+#define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
