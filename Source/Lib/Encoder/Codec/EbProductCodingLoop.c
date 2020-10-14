@@ -5233,7 +5233,20 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
-            const int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr])) * 2;
+
+#if FEATURE_RDOQ_OPT
+            const int32_t shift =
+                (MAX_TX_SCALE -
+                 av1_get_tx_scale_tab[context_ptr->blk_geom
+                                          ->txsize[context_ptr->tx_depth][context_ptr->txb_itr]]) *
+                2;
+#else
+            const int32_t shift =
+                (MAX_TX_SCALE -
+                 av1_get_tx_scale(
+                     context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr])) *
+                2;
+#endif
             txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL] =
                 RIGHT_SIGNED_SHIFT(txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL], shift);
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] =

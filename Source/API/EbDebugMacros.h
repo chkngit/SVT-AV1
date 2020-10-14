@@ -95,7 +95,16 @@ extern "C" {
 #define FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE         1 // Skip dc_sign derivation/update, and bypass useless mi_info updates
 #define FEATURE_OPT_RDOQ                             1 // Use default_quant for chroma and rdoq_bypass = f(satd)
 #define FEATURE_OPT_TF                               1 // Add the ability to perform luma only @ tf, control tf_16x16 using tf_32x32 pred error, apply tf @ base only
-
+#define TUNE_CFL_REF_ONLY                            1 // CFL only @ REF
+#define TUNE_ENABLE_GM_FOR_ALL_PRESETS               1 // GM @ REF, bipred only, rotzoom model omly
+#define FEATURE_GM_OPT                               1 // GM @ REF, bipred only, rotzoom model omly
+#define TUNE_HME_ME_TUNING                           1 // HME/ME:HME_L1=8x3 instead of 16x16, HME_L2=8x3 instead of 16x16, MAX_ME=64x32 instead 64x64
+#define FEATURE_RDOQ_OPT                             1 // lossless, early exit rdo, disables last md search tools (rdoq, txtype search, interpolation search)
+#define DC_ONLY_AT_NON_REF                       1 // use only intra dc at no reference frame
+#define TUNE_PALETTE_LEVEL                       1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
+#define TUNE_TPL_OIS                             1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
+#define TUNE_TPL_RATE                            1 // remove  uncessary rate calculation
+#define FIX_NIC_1_CLEAN_UP                           1 // Code clean-up/unification; Use scale to signal all PD NIC(s) and 1 NIC @ mds3
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 

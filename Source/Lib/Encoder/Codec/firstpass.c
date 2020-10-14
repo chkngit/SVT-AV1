@@ -1958,6 +1958,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
 
 
+#if !FIX_NIC_1_CLEAN_UP
     // Set md staging count level
     // Level 0              minimum count = 1
     // Level 1              set towards the best possible partitioning (to further optimize)
@@ -1971,6 +1972,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     else {
         context_ptr->md_staging_count_level = 2;
     }
+#endif
 
     // Derive Spatial SSE Flag
     context_ptr->spatial_sse_full_loop_level = EB_TRUE;
@@ -2214,6 +2216,9 @@ void* set_me_hme_params_oq(
 void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_context_ptr) ;
 void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) ;
 void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_level);
+#if FEATURE_GM_OPT
+void set_gm_controls(PictureParentControlSet *  pcs_ptr, uint8_t gm_level);
+#endif
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -2250,8 +2255,12 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 
     // ME Search Method
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-
+#if FEATURE_GM_OPT // GmControls
+    uint8_t gm_level = 0;
+    set_gm_controls(pcs_ptr, gm_level);
+#else
     context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#endif
 
     // Set hme/me based reference pruning level (0-4)
     set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);

@@ -2887,7 +2887,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
     }
+#if TUNE_NEW_PRESETS
+    else if (enc_mode <= ENC_M2) {
+#else
     else if (enc_mode <= ENC_M3) {
+#endif
         context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
         context_ptr->chroma_at_last_md_stage_intra_th = 130;
         context_ptr->chroma_at_last_md_stage_cfl_th = 130;
@@ -2901,9 +2905,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // Level                Settings
     // 0                    Allow cfl
     // 1                    Disable cfl
+#if TUNE_CFL_REF_ONLY
+#if TUNE_NEW_PRESETS
+    if (enc_mode <= ENC_M6)
+#else
+    if (enc_mode <= ENC_M7)
+#endif
+        context_ptr->md_disable_cfl = EB_FALSE;
+    else
+        context_ptr->md_disable_cfl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->md_disable_cfl = EB_FALSE;
+#endif
      // Set disallow_4x4
+#if TUNE_NEW_PRESETS
+    if (enc_mode <= ENC_M0)
+#else
      if (enc_mode <= ENC_M1)
+#endif
          context_ptr->disallow_4x4 = EB_FALSE;
      else
          context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
@@ -2926,10 +2945,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
 
 
+#if FEATURE_GM_OPT // GM ctrls
+     if (pd_pass == PD_PASS_0)
+         context_ptr->global_mv_injection = 0;
+     else if (pd_pass == PD_PASS_1)
+         context_ptr->global_mv_injection = 0;
+     else
+         context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->gm_ctrls.enabled;
+#else
     // Set global MV injection
     // Level                Settings
     // 0                    Injection off
     // 1                    On
+#if FEATURE_GM_OPT
+    // 2                   ON - inject bipred only
+#endif
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE) {
         if (pd_pass == PD_PASS_0)
             context_ptr->global_mv_injection = 0;
@@ -2938,11 +2968,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             if (enc_mode <= ENC_M6)
                 context_ptr->global_mv_injection = 1;
+#if TUNE_ENABLE_GM_FOR_ALL_PRESETS // GM
+            else if (enc_mode <= ENC_M8)
+#if FEATURE_GM_OPT
+                context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
+#else
+                context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
+#endif
             else
                 context_ptr->global_mv_injection = 0;
     }
     else
         context_ptr->global_mv_injection = 0;
+#endif
 
     if (pd_pass == PD_PASS_0)
         context_ptr->new_nearest_injection = 0;
