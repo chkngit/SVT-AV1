@@ -170,7 +170,7 @@ extern "C" {
 #define LOSSLESS_OPT 1
 #if LOSSLESS_OPT
 #define OPT_0  1 
-#define OPT_0_BIS 0
+#define OPT_0_BIS 1
 #define OPT_1  1 // under debugging
 
 #define OPT_2  0 // under debugging eb_av1_count_overlappable_neighbors

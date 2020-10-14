@@ -762,7 +762,11 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
             picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
         // model_rd_sse_fn[MODELRD_TYPE_MASKED_COMPOUND](cpi, x, bsize, 0, sse, N, &rate, &dist);
         // rate += x->wedge_idx_cost[bsize][wedge_index];
+#if OPT_0_BIS
+        rate += context_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[bsize][wedge_index];
+#else
         rate += candidate_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[bsize][wedge_index];
+#endif
         int64_t rd = RDCOST(full_lambda, rate, dist);
 
         if (rd < best_rd) {

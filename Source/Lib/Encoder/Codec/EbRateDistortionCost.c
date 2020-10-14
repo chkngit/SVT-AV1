@@ -123,7 +123,11 @@ void eb_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width, c
     }
 }
 
-int32_t av1_transform_type_rate_estimation(uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
+int32_t av1_transform_type_rate_estimation(
+#if OPT_0_BIS
+                                          struct ModeDecisionContext *context_ptr,
+#endif
+                                           uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
                                            struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                            EbBool is_inter, TxSize transform_size,
                                            TxType transform_type, EbBool reduced_tx_set_used) {
@@ -147,7 +151,7 @@ int32_t av1_transform_type_rate_estimation(uint8_t allow_update_cdf, FRAME_CONTE
                                av1_num_ext_tx_set[tx_set_type]);
                 }
 #if OPT_0_BIS
-                return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+                return context_ptr->md_rate_estimation_ptr
 #else
                 return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
 #endif
@@ -170,7 +174,11 @@ int32_t av1_transform_type_rate_estimation(uint8_t allow_update_cdf, FRAME_CONTE
                                av1_ext_tx_ind[tx_set_type][transform_type],
                                av1_num_ext_tx_set[tx_set_type]);
                 }
+#if OPT_0_BIS
+                return context_ptr->md_rate_estimation_ptr
+#else
                 return candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+#endif
                     ->intra_tx_type_fac_bits[ext_tx_set][square_tx_size][intra_dir][transform_type];
             }
         }
@@ -323,7 +331,11 @@ static int get_eob_cost(int eob, const LvMapEobCost *txb_eob_costs,
     }
     return eob_cost;
 }
-static INLINE int32_t av1_cost_skip_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+static INLINE int32_t av1_cost_skip_txb(
+#if OPT_0_BIS
+                                        struct ModeDecisionContext *context_ptr,
+#endif
+                                        uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                         TxSize transform_size, PlaneType plane_type,
                                         int16_t txb_skip_ctx) {
@@ -331,7 +343,11 @@ static INLINE int32_t av1_cost_skip_txb(uint8_t allow_update_cdf, FRAME_CONTEXT 
         (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs =
+#if OPT_0_BIS
+        &context_ptr->md_rate_estimation_ptr
+#else
         &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+#endif
              ->coeff_fac_bits[txs_ctx][plane_type];
     if (allow_update_cdf) update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
@@ -415,7 +431,11 @@ static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(uint16_t eob, const int1
 }
 
 // Note: don't call this function when eob is 0.
-uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+uint64_t eb_av1_cost_coeffs_txb(
+#if OPT_0_BIS
+                                struct ModeDecisionContext *context_ptr,
+#endif
+                                uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
                                 struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                 const TranLow *const qcoeff, uint16_t eob, PlaneType plane_type,
                                 TxSize transform_size, TxType transform_type, int16_t txb_skip_ctx,
@@ -446,12 +466,20 @@ uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
     DECLARE_ALIGNED(16, int8_t, coeff_contexts[MAX_TX_SQUARE]);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs =
+#if OPT_0_BIS
+        &context_ptr->md_rate_estimation_ptr
+#else
         &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+#endif
              ->coeff_fac_bits[txs_ctx][plane_type];
 
     const int32_t             eob_multi_size = txsize_log2_minus4[transform_size];
     const LvMapEobCost *const eob_bits =
+#if OPT_0_BIS
+        &context_ptr->md_rate_estimation_ptr
+#else
         &candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+#endif
              ->eob_frac_bits[eob_multi_size][plane_type];
     // eob must be greater than 0 here.
     assert(eob > 0);
@@ -468,6 +496,9 @@ uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
     cost += plane_type > PLANE_TYPE_Y
                 ? 0
                 : av1_transform_type_rate_estimation(
+#if OPT_0_BIS
+                      context_ptr,
+#endif
                       allow_update_cdf,
                       ec_ctx,
                       candidate_buffer_ptr,
@@ -678,18 +709,18 @@ uint64_t av1_intra_fast_cost(
         const int32_t left_ctx  = intra_mode_context[left_neighbor_mode];
         intra_mode_bits_num =
             pcs_ptr->slice_type != I_SLICE
-                ? (uint64_t)candidate_ptr->md_rate_estimation_ptr
+                ? (uint64_t)context_ptr->md_rate_estimation_ptr
                       ->mb_mode_fac_bits[size_group_lookup[blk_geom->bsize]][intra_mode]
                 : ZERO_COST;
         skip_mode_rate =
             pcs_ptr->slice_type != I_SLICE
                 ? (uint64_t)
-                      candidate_ptr->md_rate_estimation_ptr->skip_mode_fac_bits[skip_mode_ctx][0]
+            context_ptr->md_rate_estimation_ptr->skip_mode_fac_bits[skip_mode_ctx][0]
                 : ZERO_COST;
 
         // Estimate luma nominal intra mode bits
         intra_luma_mode_bits_num = pcs_ptr->slice_type == I_SLICE
-                                       ? (uint64_t)candidate_ptr->md_rate_estimation_ptr
+                                       ? (uint64_t)context_ptr->md_rate_estimation_ptr
                                              ->y_mode_fac_bits[above_ctx][left_ctx][intra_mode]
                                        : ZERO_COST;
         // Estimate luma angular mode bits
@@ -697,7 +728,7 @@ uint64_t av1_intra_fast_cost(
             assert((intra_mode - V_PRED) < 8);
             assert((intra_mode - V_PRED) >= 0);
             intra_luma_ang_mode_bits_num =
-                candidate_ptr->md_rate_estimation_ptr
+                context_ptr->md_rate_estimation_ptr
                     ->angle_delta_fac_bits[intra_mode - V_PRED]
                                           [MAX_ANGLE_DELTA +
                                            candidate_ptr->angle_delta[PLANE_TYPE_Y]];
@@ -710,7 +741,7 @@ uint64_t av1_intra_fast_cost(
             const int bsize_ctx   = av1_get_palette_bsize_ctx(blk_geom->bsize);
             const int mode_ctx    = av1_get_palette_mode_ctx(blk_ptr->av1xd);
             intra_luma_mode_bits_num +=
-                candidate_ptr->md_rate_estimation_ptr
+                context_ptr->md_rate_estimation_ptr
                     ->palette_ymode_fac_bits[bsize_ctx][mode_ctx][use_palette];
             if (use_palette) {
                 const uint8_t *const color_map = candidate_ptr->palette_info->color_idx_map;
@@ -719,7 +750,7 @@ uint64_t av1_intra_fast_cost(
                     blk_geom->bsize, 0, blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
                 const int plt_size = candidate_ptr->palette_info->pmi.palette_size[0];
                 int       palette_mode_cost =
-                    candidate_ptr->md_rate_estimation_ptr
+                    context_ptr->md_rate_estimation_ptr
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
                     write_uniform_cost(plt_size, color_map[0]);
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
@@ -728,7 +759,7 @@ uint64_t av1_intra_fast_cost(
                     &candidate_ptr->palette_info->pmi, color_cache, n_cache,
                     pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
                 palette_mode_cost += eb_av1_cost_color_map(candidate_ptr->palette_info,
-                                                        candidate_ptr->md_rate_estimation_ptr,
+                                                        context_ptr->md_rate_estimation_ptr,
                                                         blk_ptr,
                                                         0,
                                                         blk_geom->bsize,
@@ -743,7 +774,7 @@ uint64_t av1_intra_fast_cost(
                 candidate_ptr->palette_info ? candidate_ptr->palette_info->pmi.palette_size[0] : 0,
                 intra_mode)) {
             intra_filter_mode_bits_num =
-                candidate_ptr->md_rate_estimation_ptr
+                context_ptr->md_rate_estimation_ptr
                     ->filter_intra_fac_bits[blk_geom->bsize]
                                            [candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES];
             if (candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
@@ -1722,6 +1753,9 @@ int      get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_fr
 int      get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int      is_any_masked_compound_used(BlockSize sb_type);
 uint32_t get_compound_mode_rate(
+#if OPT_0_BIS
+                                struct ModeDecisionContext *context_ptr,
+#endif
 #if !OPT_0
     uint8_t md_pass, 
 #endif                  
@@ -1747,7 +1781,11 @@ uint32_t get_compound_mode_rate(
         if (masked_compound_used) {
             const int ctx_comp_group_idx = get_comp_group_idx_context_enc(blk_ptr->av1xd);
             comp_rate =
+#if OPT_0_BIS
+                context_ptr->md_rate_estimation_ptr
+#else
                 candidate_ptr->md_rate_estimation_ptr
+#endif
                     ->comp_group_idx_fac_bits[ctx_comp_group_idx][candidate_ptr->comp_group_idx];
         } else {
             assert(candidate_ptr->comp_group_idx == 0);
@@ -1764,7 +1802,11 @@ uint32_t get_compound_mode_rate(
                                                pcs_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],
                                                pcs_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],
                                                blk_ptr->av1xd);
+#if OPT_0_BIS
+                comp_rate += context_ptr->md_rate_estimation_ptr
+#else
                 comp_rate += candidate_ptr->md_rate_estimation_ptr
+#endif
                                  ->comp_idx_fac_bits[comp_index_ctx][candidate_ptr->compound_idx];
             } else {
                 assert(candidate_ptr->compound_idx == 1);
@@ -1779,14 +1821,22 @@ uint32_t get_compound_mode_rate(
 
             if (is_interinter_compound_used(COMPOUND_WEDGE, bsize))
                 comp_rate +=
-                    candidate_ptr->md_rate_estimation_ptr
+#if OPT_0_BIS
+                context_ptr->md_rate_estimation_ptr
+#else
+                candidate_ptr->md_rate_estimation_ptr
+#endif
                         ->compound_type_fac_bits[bsize][candidate_ptr->interinter_comp.type -
                                                         COMPOUND_WEDGE];
 
             if (candidate_ptr->interinter_comp.type == COMPOUND_WEDGE) {
                 assert(is_interinter_compound_used(COMPOUND_WEDGE, bsize));
                 comp_rate +=
+#if OPT_0_BIS
+                    context_ptr->md_rate_estimation_ptr
+#else
                     candidate_ptr->md_rate_estimation_ptr
+#endif
                         ->wedge_idx_fac_bits[bsize][candidate_ptr->interinter_comp.wedge_index];
                 comp_rate += av1_cost_literal(1);
             } else {
@@ -2574,7 +2624,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
             coeff_buffer =
                 (int32_t *)&coeff_buffer_sb->buffer_y[txb_origin_index * sizeof(int32_t)];
 
-            *y_txb_coeff_bits = eb_av1_cost_coeffs_txb(allow_update_cdf,
+            *y_txb_coeff_bits = eb_av1_cost_coeffs_txb(
+#if OPT_0_BIS
+                                                       md_context,
+#endif
+                                                       allow_update_cdf,
                                                        ec_ctx,
                                                        candidate_buffer_ptr,
                                                        coeff_buffer,
@@ -2586,7 +2640,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
                                                        luma_dc_sign_context,
                                                        reduced_transform_set_flag);
         } else {
-            *y_txb_coeff_bits = av1_cost_skip_txb(allow_update_cdf,
+            *y_txb_coeff_bits = av1_cost_skip_txb(
+#if OPT_0_BIS
+                                                  md_context,
+#endif
+                                                  allow_update_cdf,
                                                   ec_ctx,
                                                   candidate_buffer_ptr,
                                                   txsize,
@@ -2602,7 +2660,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
             coeff_buffer =
                 (int32_t *)&coeff_buffer_sb->buffer_cb[txb_chroma_origin_index * sizeof(int32_t)];
 
-            *cb_txb_coeff_bits = eb_av1_cost_coeffs_txb(allow_update_cdf,
+            *cb_txb_coeff_bits = eb_av1_cost_coeffs_txb(
+#if OPT_0_BIS
+                                                        md_context,
+#endif
+                                                        allow_update_cdf,
                                                         ec_ctx,
                                                         candidate_buffer_ptr,
                                                         coeff_buffer,
@@ -2614,7 +2676,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
                                                         cb_dc_sign_context,
                                                         reduced_transform_set_flag);
         } else {
-            *cb_txb_coeff_bits = av1_cost_skip_txb(allow_update_cdf,
+            *cb_txb_coeff_bits = av1_cost_skip_txb(
+#if OPT_0_BIS
+                                                   md_context,
+#endif
+                                                   allow_update_cdf,
                                                    ec_ctx,
                                                    candidate_buffer_ptr,
                                                    txsize_uv,
@@ -2630,7 +2696,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
             coeff_buffer =
                 (int32_t *)&coeff_buffer_sb->buffer_cr[txb_chroma_origin_index * sizeof(int32_t)];
 
-            *cr_txb_coeff_bits = eb_av1_cost_coeffs_txb(allow_update_cdf,
+            *cr_txb_coeff_bits = eb_av1_cost_coeffs_txb(
+#if OPT_0_BIS
+                                                        md_context,
+#endif
+                                                        allow_update_cdf,
                                                         ec_ctx,
                                                         candidate_buffer_ptr,
                                                         coeff_buffer,
@@ -2642,7 +2712,11 @@ EbErrorType av1_txb_estimate_coeff_bits(
                                                         cr_dc_sign_context,
                                                         reduced_transform_set_flag);
         } else {
-            *cr_txb_coeff_bits = av1_cost_skip_txb(allow_update_cdf,
+            *cr_txb_coeff_bits = av1_cost_skip_txb(              
+#if OPT_0_BIS
+                                                   md_context,
+#endif
+                                                   allow_update_cdf,
                                                    ec_ctx,
                                                    candidate_buffer_ptr,
                                                    txsize_uv,
@@ -3002,8 +3076,11 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // Luma and chroma transform size shift for the distortion
     uint64_t skip_luma_sse;
     uint64_t skip_chroma_sse;
-
+#if OPT_0_BIS
+    uint64_t skip_mode_rate = context_ptr->md_rate_estimation_ptr
+#else
     uint64_t skip_mode_rate = candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr
+#endif
                                   ->skip_mode_fac_bits[skip_mode_ctx][1];
 
     // Coeff rate

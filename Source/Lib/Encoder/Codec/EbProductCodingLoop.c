@@ -3597,13 +3597,21 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
+#if OPT_0_BIS
+    const int64_t mode_rd = RDCOST(
+        full_lambda,
+        (uint64_t)context_ptr->md_rate_estimation_ptr
+        ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
+        [UV_CFL_PRED],
+        0);
+#else
     const int64_t mode_rd = RDCOST(
          full_lambda,
         (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
             ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
                                     [UV_CFL_PRED],
         0);
-
+#endif
     int64_t best_rd_uv[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
     int32_t best_c[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
 
@@ -3636,8 +3644,11 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
 
                 if (coeff_bits == INT64_MAX) break;
             }
-
+#if OPT_0_BIS
+            const int32_t alpha_rate = context_ptr->md_rate_estimation_ptr
+#else
             const int32_t alpha_rate = candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                                            ->cfl_alpha_fac_bits[joint_sign][plane][0];
 
             best_rd_uv[joint_sign][plane] = RDCOST(full_lambda,
@@ -3680,7 +3691,11 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
                     }
 
                     const int32_t alpha_rate =
+#if OPT_0_BIS
+                        context_ptr->md_rate_estimation_ptr
+#else
                         candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                             ->cfl_alpha_fac_bits[joint_sign][plane][c];
 
                     int64_t this_rd = RDCOST(full_lambda,
@@ -3708,13 +3723,21 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
     candidate_buffer->candidate_ptr->cfl_alpha_idx   = 0;
     candidate_buffer->candidate_ptr->cfl_alpha_signs = 0;
 
+#if OPT_0_BIS
+    const int64_t dc_mode_rd = RDCOST(
+        full_lambda,
+        context_ptr->md_rate_estimation_ptr
+        ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
+        [UV_DC_PRED],
+        0);
+#else
     const int64_t dc_mode_rd = RDCOST(
         full_lambda,
         candidate_buffer->candidate_ptr->md_rate_estimation_ptr
             ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
                                     [UV_DC_PRED],
         0);
-
+#endif
     av1_cost_calc_cfl(pcs_ptr,
                       candidate_buffer,
                       sb_ptr,
@@ -3965,22 +3988,42 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
     uint64_t chroma_rate = 0;
     if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
         chroma_rate +=
+#if OPT_0_BIS
+            context_ptr->md_rate_estimation_ptr
+#else
             candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                 ->cfl_alpha_fac_bits[candidate_buffer->candidate_ptr->cfl_alpha_signs][CFL_PRED_U]
                                     [CFL_IDX_U(candidate_buffer->candidate_ptr->cfl_alpha_idx)] +
+#if OPT_0_BIS
+            context_ptr->md_rate_estimation_ptr
+#else
             candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                 ->cfl_alpha_fac_bits[candidate_buffer->candidate_ptr->cfl_alpha_signs][CFL_PRED_V]
                                     [CFL_IDX_V(candidate_buffer->candidate_ptr->cfl_alpha_idx)];
 
         chroma_rate +=
+#if OPT_0_BIS
+            (uint64_t)context_ptr->md_rate_estimation_ptr
+#else
             (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                 ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr
                                                           ->intra_luma_mode][UV_CFL_PRED];
+#if OPT_0_BIS
+        chroma_rate -= (uint64_t)context_ptr->md_rate_estimation_ptr
+#else
         chroma_rate -= (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                            ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr
                                                                      ->intra_luma_mode][UV_DC_PRED];
     } else
+#if OPT_0_BIS
+        chroma_rate = (uint64_t)context_ptr->md_rate_estimation_ptr
+#else
         chroma_rate = (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+#endif
                           ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr
                                                                     ->intra_luma_mode][UV_DC_PRED];
     int coeff_rate = (int)(*cb_coeff_bits + *cr_coeff_bits);
