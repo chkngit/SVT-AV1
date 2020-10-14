@@ -145,7 +145,7 @@ extern "C" {
 
 // END  svt-03 /////////////////////////////////////////////////////////
 #define SHUT_TF                                  0
-#define FEATURE_DCT_DCT_DEDICATED_BUFFER         1
+#define FEATURE_DCT_DCT_DEDICATED_BUFFER         0
 #define FEATURE_REMOVE_ISOLATED                  0
 #define REDUCE_NFL                               0
 #define PD0_PF_N2                                0
@@ -187,7 +187,7 @@ extern "C" {
 #define OPT_12 1 //  
 #define OPT_13 1 //
 
-#define OPT_14 1 //
+#define OPT_14 1 // rdoq
 #endif
 // END  svt-03 /////////////////////////////////////////////////////////
 

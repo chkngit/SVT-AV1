@@ -6707,10 +6707,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     y_coeff_bits                            = 0;
 
     candidate_ptr->full_distortion = 0;
-
+#if !OPT_14
     memset(candidate_ptr->eob[0], 0, sizeof(uint16_t));
     memset(candidate_ptr->eob[1], 0, sizeof(uint16_t));
     memset(candidate_ptr->eob[2], 0, sizeof(uint16_t));
+#endif
 #if !FIX_REMOVE_UNUSED_CODE
     candidate_ptr->chroma_distortion             = 0;
     candidate_ptr->chroma_distortion_inter_depth = 0;
@@ -6738,10 +6739,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     candidate_ptr->y_has_coeff = 0;
     candidate_ptr->u_has_coeff = 0;
     candidate_ptr->v_has_coeff = 0;
-
+#if !OPT_14
     // Initialize tx type
     for (int tu_index = 0; tu_index < MAX_TXB_COUNT; tu_index++)
         candidate_ptr->transform_type[tu_index] = DCT_DCT;
+#endif
     uint8_t start_tx_depth = 0;
     uint8_t end_tx_depth   = 0;
     if (context_ptr->md_tx_size_search_mode == 0) {

@@ -1730,7 +1730,10 @@ int32_t av1_quantize_inv_quantize(
     }
 
     *count_non_zero_coeffs = *eob;
-
+#if OPT_14
+    if (md_context->shut_skip_ctx_dc_sign_update)
+        return 0;
+#endif
     // Derive cul_level
     int32_t              cul_level = 0;
     const int16_t *const scan      = scan_order->scan;
