@@ -1742,6 +1742,12 @@ int32_t av1_quantize_inv_quantize(
         const int32_t v     = quant_coeff[pos];
         int32_t       level = ABS(v);
         cul_level += level;
+
+#if OPT_14
+        // Early exit the loop if cul_level reaches COEFF_CONTEXT_MASK
+        if (cul_level >= COEFF_CONTEXT_MASK)
+            break;
+#endif
     }
 
     cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
