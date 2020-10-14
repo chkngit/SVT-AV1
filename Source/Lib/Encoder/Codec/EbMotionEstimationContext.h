@@ -362,7 +362,9 @@ typedef struct MeContext {
     EbBool enable_hme_level0_flag;
     EbBool enable_hme_level1_flag;
     EbBool enable_hme_level2_flag;
+#if !FEATURE_GM_OPT // GmControls
     EbBool compute_global_motion;
+#endif
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls me_sr_adjustment_ctrls;
     uint8_t max_hme_sr_area_multipler;

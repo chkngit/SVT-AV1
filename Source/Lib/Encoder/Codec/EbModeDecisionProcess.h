@@ -512,7 +512,9 @@ typedef struct ModeDecisionContext {
     MdStage md_stage;
     uint32_t     cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t      md_staging_mode;
+#if !FIX_NIC_1_CLEAN_UP
     uint8_t      md_staging_count_level;
+#endif
     uint8_t      bypass_md_stage_1[CAND_CLASS_TOTAL];
     uint8_t bypass_md_stage_2[CAND_CLASS_TOTAL];
     uint32_t md_stage_0_count[CAND_CLASS_TOTAL];
