@@ -51,11 +51,13 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
+#if !FEATURE_OPT_TF
 typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;
     uint8_t noise_based_window_adjust;
 }TfControls;
+#endif
 
 /**************************************
  * Context

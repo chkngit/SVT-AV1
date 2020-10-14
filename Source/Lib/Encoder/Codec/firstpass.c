@@ -1662,7 +1662,11 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
 
+#if FEATURE_OPT_TF
+void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
+#else
 void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level);
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for first pass
 Input   : encoder mode and tune
@@ -1796,7 +1800,11 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 
 
     context_ptr->tf_level = 0;
+#if FEATURE_OPT_TF
+    set_tf_controls(pcs_ptr, context_ptr->tf_level);
+#else
     set_tf_controls(context_ptr, context_ptr->tf_level);
+#endif
     // MRP control
     // 0: OFF (1,1)  ; override features
     // 1: FULL (4,3) ; override features
