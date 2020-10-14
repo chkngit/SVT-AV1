@@ -162,8 +162,10 @@ static void apply_temporal_filter_planewise(
     const double n_decay                = (double)decay_control * (0.7 + log1p(sigma));
     const double n_decay_qr_inv         = 1.0 / (2 * n_decay * n_decay);
     const double block_balacne_inv      = 1.0 / (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
     const double distance_threshold_inv = 1.0 /
         (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+
 
     uint16_t *frame_sse =
         (plane == PLANE_TYPE_Y) ? luma_sq_error : chroma_sq_error;
@@ -511,8 +513,10 @@ static void apply_temporal_filter_planewise_hbd(
     const double n_decay                = (double)decay_control * (0.7 + log1p((double)sigma));
     const double n_decay_qr_inv         = 1.0 / (2 * n_decay * n_decay);
     const double block_balacne_inv      = 1.0 / (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
     const double distance_threshold_inv = 1.0 /
         (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+
     uint32_t *   frame_sse = (plane == PLANE_TYPE_Y) ? luma_sq_error : chroma_sq_error;
 
     if (block_width == 32) {

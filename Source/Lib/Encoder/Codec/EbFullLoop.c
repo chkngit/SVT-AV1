@@ -1189,6 +1189,13 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
     *eob = eob_out;
 }
 
+#if FEATURE_OPT_RDOQ
+// look-up table for sqrt of number of pixels in a transform block
+// rounded up to the nearest integer.
+static const int sqrt_tx_pixels_2d[TX_SIZES_ALL] = { 4,  8,  16, 32, 32, 6,  6,
+                                                     12, 12, 23, 23, 32, 32, 8,
+                                                     8,  16, 16, 23, 23 };
+#endif
 void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context,
                        int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
                        intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
@@ -1202,8 +1209,16 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     (void)sc;
     (void)qparam;
     int                    sharpness       = 0; // No Sharpness
+#if FEATURE_OPT_RDOQ
+    int fast_mode =
+        (md_context->rdoq_ctrls.eob_fast_l_inter && !is_inter && !plane) ||
+        (md_context->rdoq_ctrls.eob_fast_l_intra && !is_inter && !plane) ||
+        (md_context->rdoq_ctrls.eob_fast_c_inter &&  is_inter &&  plane) ||
+        (md_context->rdoq_ctrls.eob_fast_c_intra &&  is_inter &&  plane) ? 1 : 0;
+#else
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
+#endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
     const int              shift           = av1_get_tx_scale(tx_size);
@@ -1718,6 +1733,9 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
             pcs_ptr->parent_pcs_ptr->aligned_height - (context_ptr->sb_origin_y + tx_org_y));
     context_ptr->luma_txb_skip_context = 0;
     context_ptr->luma_dc_sign_context  = 0;
+#if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
+    if (!context_ptr->shut_skip_ctx_dc_sign_update)
+#endif
     get_txb_ctx(pcs_ptr,
                 COMPONENT_LUMA,
                 context_ptr->full_loop_luma_dc_sign_level_coeff_neighbor_array,
@@ -1981,6 +1999,9 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
 
         context_ptr->cb_txb_skip_context = 0;
         context_ptr->cb_dc_sign_context  = 0;
+#if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
+        if (!context_ptr->shut_skip_ctx_dc_sign_update)
+#endif
         get_txb_ctx(pcs_ptr,
                     COMPONENT_CHROMA,
                     context_ptr->cb_dc_sign_level_coeff_neighbor_array,
@@ -1993,6 +2014,9 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
 
         context_ptr->cr_txb_skip_context = 0;
         context_ptr->cr_dc_sign_context  = 0;
+#if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
+        if (!context_ptr->shut_skip_ctx_dc_sign_update)
+#endif
         get_txb_ctx(pcs_ptr,
                     COMPONENT_CHROMA,
                     context_ptr->cr_dc_sign_level_coeff_neighbor_array,
