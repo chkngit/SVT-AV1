@@ -4918,22 +4918,22 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
 }
 #if TUNE_TX_TYPE_LEVELS
 uint8_t get_tx_type_group(ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer, EbBool only_dct_dct) {
-    int tx_type_group = 1;
+    int tx_group = 1;
     if (!only_dct_dct) {
         if (candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_0 || candidate_buffer->candidate_ptr->cand_class == CAND_CLASS_3) {
-            tx_type_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+            tx_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                 ? context_ptr->txt_ctrls.txt_group_intra_lt_16x16
                 : context_ptr->txt_ctrls.txt_group_intra_gt_eq_16x16;
         }
         else {
-            tx_type_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
+            tx_group = (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] < 16 ||
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] < 16)
                 ? context_ptr->txt_ctrls.txt_group_inter_lt_16x16
                 : context_ptr->txt_ctrls.txt_group_inter_gt_eq_16x16;
         }
     }
-    return tx_type_group;
+    return tx_group;
 }
 #endif
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

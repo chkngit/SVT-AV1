@@ -754,13 +754,14 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
 
     return t;
 }
-
+#if !FEATURE_RDOQ_OPT
 static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
     return (TxSize)((txsize_sqr_map[txsize] + txsize_sqr_up_map[txsize] + 1) >> 1);
 }
 static INLINE PlaneType get_plane_type(int plane) {
     return (plane == 0) ? PLANE_TYPE_Y : PLANE_TYPE_UV;
 }
+#endif
 // Transform end of block bit estimation
 static int get_eob_cost(int eob, const LvMapEobCost *txb_eob_costs,
     const LvMapCoeffCost *txb_costs, TxClass tx_class) {
@@ -1468,7 +1469,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = scs_ptr->deq_8bit.y_dequant_qtx[q_index];
         }
 
-        if (component_type == COMPONENT_CHROMA_CB) {
+        else if (component_type == COMPONENT_CHROMA_CB) {
             candidate_plane.quant_qtx = scs_ptr->quants_8bit.u_quant[q_index];
             candidate_plane.quant_fp_qtx = scs_ptr->quants_8bit.u_quant_fp[q_index];
             candidate_plane.round_fp_qtx = scs_ptr->quants_8bit.u_round_fp[q_index];
@@ -1478,7 +1479,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = scs_ptr->deq_8bit.u_dequant_qtx[q_index];
         }
 
-        if (component_type == COMPONENT_CHROMA_CR) {
+        else {
             candidate_plane.quant_qtx = scs_ptr->quants_8bit.v_quant[q_index];
             candidate_plane.quant_fp_qtx = scs_ptr->quants_8bit.v_quant_fp[q_index];
             candidate_plane.round_fp_qtx = scs_ptr->quants_8bit.v_round_fp[q_index];
@@ -1499,7 +1500,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = scs_ptr->deq_bd.y_dequant_qtx[q_index];
         }
 
-        if (component_type == COMPONENT_CHROMA_CB) {
+        else if (component_type == COMPONENT_CHROMA_CB) {
             candidate_plane.quant_qtx = scs_ptr->quants_bd.u_quant[q_index];
             candidate_plane.quant_fp_qtx = scs_ptr->quants_bd.u_quant_fp[q_index];
             candidate_plane.round_fp_qtx = scs_ptr->quants_bd.u_round_fp[q_index];
@@ -1509,7 +1510,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = scs_ptr->deq_bd.u_dequant_qtx[q_index];
         }
 
-        if (component_type == COMPONENT_CHROMA_CR) {
+        else  {
             candidate_plane.quant_qtx = scs_ptr->quants_bd.v_quant[q_index];
             candidate_plane.quant_fp_qtx = scs_ptr->quants_bd.v_quant_fp[q_index];
             candidate_plane.round_fp_qtx = scs_ptr->quants_bd.v_round_fp[q_index];
