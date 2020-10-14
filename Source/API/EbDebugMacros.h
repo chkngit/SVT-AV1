@@ -110,6 +110,7 @@ extern "C" {
 #define FEATURE_PD0_CUT_DEPTH                        1 // Shut 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
 #define FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE         1 // Skip dc_sign derivation/update, and bypass useless mi_info updates
 #define FEATURE_OPT_RDOQ                             1 // Use default_quant for chroma and rdoq_bypass = f(satd)
+#define FEATURE_OPT_TF                               1 // Add the ability to perform luma only @ tf, control tf_16x16 using tf_32x32 pred error, apply tf @ base only
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
