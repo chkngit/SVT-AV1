@@ -4327,6 +4327,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
 #endif
+#if SHUT_SKIP_CTX_DC_SIGN_UPDATE
+    context_ptr->shut_skip_ctx_dc_sign_update = EB_TRUE;
+#endif
     // Use coeff rate and slit flag rate only (i.e. no fast rate)
     if (pd_pass == PD_PASS_0)
         context_ptr->shut_fast_rate = EB_TRUE;
