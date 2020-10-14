@@ -3420,8 +3420,7 @@ static EbErrorType av1_estimate_transform_ONLY_DC(int16_t *residual_buffer,
                                              PlaneType component_type)
 
 {
-    EbErrorType return_error = EB_ErrorNone;
-    return_error = av1_estimate_transform_N4(residual_buffer,
+    EbErrorType return_error = av1_estimate_transform_N4(residual_buffer,
                                              residual_stride,
                                              coeff_buffer,
                                              coeff_stride,
