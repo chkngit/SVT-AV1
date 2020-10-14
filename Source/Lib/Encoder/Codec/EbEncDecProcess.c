@@ -3974,7 +3974,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
             set_child_to_be_considered(pcs_ptr, context_ptr, results_ptr, child_block_idx_4, sb_index, sb_size, pred_depth, pred_sq_idx , depth_step > 1 ? depth_step - 1 : 1);
     }
 }
-#if INIT_BLOCK_OPT
+#if INIT_BLOCK_OPT//
 void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_ptr,
                                 uint32_t blk_index, uint32_t tot_d1_blocks) {
     for (uint32_t d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
