@@ -5362,7 +5362,13 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] =
                 RIGHT_SIGNED_SHIFT(txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION], shift);
         }
-
+#if OPT_15
+        uint64_t early_cost = RDCOST(
+            full_lambda, 0, txb_full_distortion_txt[tx_type][DIST_CALC_RESIDUAL]);
+        if (early_cost > best_cost_tx_search) {
+            continue;
+        }
+#endif
         //LUMA-ONLY
         if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;

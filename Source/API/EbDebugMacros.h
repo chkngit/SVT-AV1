@@ -190,6 +190,7 @@ extern "C" {
 #define OPT_13 1 //
 
 #define OPT_14 1 // rdoq
+#define OPT_15 0 // txt - under debugging
 #endif
 // END  svt-03 /////////////////////////////////////////////////////////
 
