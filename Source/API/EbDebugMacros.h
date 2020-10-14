@@ -185,7 +185,9 @@ extern "C" {
 #define OPT_11 0 // under debugging
 
 #define OPT_12 1 //  
-#define OPT_13 1 //  
+#define OPT_13 1 //
+
+#define OPT_14 1 //
 #endif
 // END  svt-03 /////////////////////////////////////////////////////////
 
