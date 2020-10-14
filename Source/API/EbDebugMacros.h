@@ -171,7 +171,7 @@ extern "C" {
 #if LOSSLESS_OPT
 #define OPT_0  1 
 #define OPT_0_BIS 1
-#define OPT_1  1 // under debugging
+#define OPT_1  1
 
 #define OPT_2  0 // under debugging eb_av1_count_overlappable_neighbors
 
@@ -184,6 +184,8 @@ extern "C" {
 
 #define OPT_11 0 // under debugging
 
+#define OPT_12 1 //  
+#define OPT_13 1 //  
 #endif
 // END  svt-03 /////////////////////////////////////////////////////////
 

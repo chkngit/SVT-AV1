@@ -3181,9 +3181,9 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
 }
 EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t inter_cand_group, uint8_t list_idx, uint8_t ref_idx);
 void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
-
+#if !OPT_12
     memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-
+#endif
     uint8_t hbd_mode_decision = ctx->hbd_mode_decision == EB_DUAL_BIT_MD
         ? EB_8_BIT_MD
         : ctx->hbd_mode_decision;
@@ -3213,6 +3213,9 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
 
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
+#if OPT_12
+            ctx->valid_pme_mv[list_idx][ref_idx] = 0;
+#endif
             EbReferenceObject *ref_obj =
                 pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
             EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
@@ -3379,18 +3382,23 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                 post_subpel_pme_mv_cost;
         }
     }
-
-    uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
-    RefResults *res_p = ctx->pme_res[0];
-    for (uint32_t i = 0; i < num_of_cand_to_sort - 1; ++i) {
-        for (uint32_t j = i + 1; j < num_of_cand_to_sort; ++j) {
-            if (res_p[j].dist < res_p[i].dist) {
-                RefResults temp = res_p[i];
-                res_p[i] = res_p[j];
-                res_p[j] = temp;
+#if OPT_12 
+    if (ctx->obmc_ctrls.enabled) {
+#endif
+        uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
+        RefResults *res_p = ctx->pme_res[0];
+        for (uint32_t i = 0; i < num_of_cand_to_sort - 1; ++i) {
+            for (uint32_t j = i + 1; j < num_of_cand_to_sort; ++j) {
+                if (res_p[j].dist < res_p[i].dist) {
+                    RefResults temp = res_p[i];
+                    res_p[i] = res_p[j];
+                    res_p[j] = temp;
+                }
             }
         }
+#if OPT_12 
     }
+#endif
 }
 void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                        SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
@@ -8736,6 +8744,10 @@ ModeDecisionCandidateBuffer *bestcandidate_buffers[5]) {
     // Perform ME search around the best MVP
 #if FIX_MOVE_PME_RES_INIT_UNDER_PME
     if (context_ptr->md_pme_ctrls.enabled) {
+
+#if OPT_12 
+        if (context_ptr->obmc_ctrls.enabled)
+#endif
         for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
             for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
                 context_ptr->pme_res[li][ri].dist = 0xFFFFFFFF;
