@@ -150,7 +150,8 @@ extern "C" {
 #define REDUCE_NFL                               0
 #define PD0_PF_N2                                0
 #define CLEAN_UP_ISOLATED_COEFF                  0
-#define SHUT_SKIP_CTX_DC_SIGN_UPDATE             1
+#define SHUT_SKIP_CTX_DC_SIGN_UPDATE             0
+#define FASTER_DEPTH_REF                         1
 
 #define FEATURE_NIC_CTRL                         0 // Improve NIC ctrl
 #if FEATURE_NIC_CTRL
