@@ -35,9 +35,9 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
+#if !FIX_REMOVE_UNUSED_CODE
 static unsigned int index_mult[14] = {
     0, 0, 0, 0, 49152, 39322, 32768, 28087, 24576, 21846, 19661, 17874, 0, 15124};
-
 static int64_t index_mult_highbd[14] = {0U,
                                         0U,
                                         0U,
@@ -52,6 +52,7 @@ static int64_t index_mult_highbd[14] = {0U,
                                         1171354718U,
                                         0U,
                                         991146300U};
+#endif
 static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
                                                               {0, 1},
                                                               {0, 2},
