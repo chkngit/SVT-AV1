@@ -5082,7 +5082,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if !TUNE_TX_TYPE_LEVELS
     uint8_t default_md_staging_skip_rdoq = context_ptr->md_staging_skip_rdoq;
 #endif
+#if !OPT_14
     uint8_t default_md_staging_spatial_sse_full_loop = context_ptr->md_staging_spatial_sse_full_loop_level;
+#endif
 #if !TUNE_TX_TYPE_LEVELS
     if (scs_ptr->static_config.spatial_sse_full_loop_level == 1 && context_ptr->pd_pass == PD_PASS_2)
         context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
@@ -5417,7 +5419,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #if !TUNE_TX_TYPE_LEVELS
     context_ptr->md_staging_skip_rdoq = default_md_staging_skip_rdoq;
 #endif
+#if !OPT_14
     context_ptr->md_staging_spatial_sse_full_loop_level = default_md_staging_spatial_sse_full_loop;
+#endif
     //  Best Tx Type Pass
     candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr] = best_tx_type;
     // update with best_tx_type data
