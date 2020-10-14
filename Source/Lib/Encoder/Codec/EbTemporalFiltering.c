@@ -551,6 +551,7 @@ static void create_me_context_and_picture_control_inl(
     }
 }
 #endif
+#if !FIX_REMOVE_UNUSED_CODE
 // Get sub-block filter weights for the 16 subblocks case
 static INLINE int get_subblock_filter_weight_16subblocks(unsigned int y, unsigned int x,
                                                          unsigned int block_height,
@@ -600,7 +601,6 @@ static INLINE int get_subblock_filter_weight_16subblocks(unsigned int y, unsigne
 
     return filter_weight;
 }
-
 // Get sub-block filter weights for the 4 subblocks case
 static INLINE int get_subblock_filter_weight_4subblocks(unsigned int y, unsigned int x,
                                                         unsigned int block_height,
@@ -661,6 +661,7 @@ static INLINE int adjust_modifier_highbd(int64_t sum_dist, int index, int roundi
     return mod;
 }
 
+#endif
 static INLINE void calculate_squared_errors(const uint8_t *s, int s_stride, const uint8_t *p,
                                             int p_stride, uint16_t *diff_sse, unsigned int w,
                                             unsigned int h) {
