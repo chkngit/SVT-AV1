@@ -148,10 +148,10 @@ extern "C" {
 #define FEATURE_DCT_DCT_DEDICATED_BUFFER         0
 #define FEATURE_REMOVE_ISOLATED                  0
 #define REDUCE_NFL                               0
-#define PD0_PF_N2                                0
+#define PD0_PF_N2                                1
 #define CLEAN_UP_ISOLATED_COEFF                  0
 #define SHUT_SKIP_CTX_DC_SIGN_UPDATE             0
-#define FASTER_DEPTH_REF                         1
+#define FASTER_DEPTH_REF                         0
 
 #define FEATURE_NIC_CTRL                         0 // Improve NIC ctrl
 #if FEATURE_NIC_CTRL

@@ -4196,7 +4196,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PD0_PF_N2
             context_ptr->pf_level = (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < ((4 * 64 * 64) / 4))
                 ? 3 
-                : (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < ((4 * 64 * 64) / 4)) 
+                : (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < ((8 * 64 * 64) / 4)) 
                    ? 2 
                    : 1;
 #else 
