@@ -90,7 +90,7 @@ extern "C" {
 #define TUNE_REMOVE_UNUSED_NEIG_ARRAY            1 // Removes unused neighbor array
 #define INIT_BLOCK_OPT                           1 // optimize block initialization
 #define ME_IDX_LUPT                              1 // get index using lookuptable
-#define REFACTOR_MD_BLOCK_LOOP                   0 // Refactor the loop that iterates over all blocks at MD
+////#define REFACTOR_MD_BLOCK_LOOP                   0 // Refactor the loop that iterates over all blocks at MD
 #define FEATURE_INTER_INTRA_LEVELS               1 // Cleanup and modify inter-intra levels
 #define TUNE_QPS_QPM                             1 // Improve the QPS settings for Keyframe. Improve QPM for nonI base frames
 #define TUNE_CDEF_FILTER                         1 // Added new fast search for CDEF
@@ -98,7 +98,7 @@ extern "C" {
 #define FIX_OPTIMIZE_BUILD_QUANTIZER                 1 // Optimize eb_av1_build_quantizer():  called for each single frame (while the generated data does not change per frame). Moved buffer to sps, and performed 1 @ 1st frame only.
 #define FIX_REMOVE_UNUSED_CODE                       1 // Remove unused code
 #define FEATURE_OPT_IFS                              1 // Reverse IFS search order; regular to be performed last since the most probable then bypass the last evaluation if regular is the winner. 1 chroma compensation could be avoided if we add the ability to do chroma only when calling inter_comp.
-#define FIX_BYPASS_USELESS_OPERATIONS                1 // Bypass useless operations when fast rate is OFF
+#define FIX_BYPASS_USELESS_OPERATIONS                0 // Bypass useless operations when fast rate is OFF
 #define FIX_USE_MDS_CNT_INIT                         1 // Use the actual number of candidates @ the init of cand_buff_indices
 #define FIX_MOVE_PME_RES_INIT_UNDER_PME              1 // Bypass useless pme_res init
 #define FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY          1 // Remove MD skip_coeff_context circuitery
@@ -116,10 +116,10 @@ extern "C" {
 #define FEATURE_GM_OPT                               1 // GM @ REF, bipred only, rotzoom model omly
 #define TUNE_HME_ME_TUNING                           1 // HME/ME:HME_L1=8x3 instead of 16x16, HME_L2=8x3 instead of 16x16, MAX_ME=64x32 instead 64x64
 #define FEATURE_RDOQ_OPT                             1 // lossless, early exit rdo, disables last md search tools (rdoq, txtype search, interpolation search)
-#define DC_ONLY_AT_NON_REF                       1 // use only intra dc at no reference frame
-#define TUNE_PALETTE_LEVEL                       1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
-#define TUNE_TPL_OIS                             1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
-#define TUNE_TPL_RATE                            1 // remove  uncessary rate calculation
+#define DC_ONLY_AT_NON_REF                           1 // use only intra dc at no reference frame
+#define TUNE_PALETTE_LEVEL                           1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
+#define TUNE_TPL_OIS                                 1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
+#define TUNE_TPL_RATE                                1 // remove  uncessary rate calculation
 #define FIX_NIC_1_CLEAN_UP                           1 // Code clean-up/unification; Use scale to signal all PD NIC(s) and 1 NIC @ mds3
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
