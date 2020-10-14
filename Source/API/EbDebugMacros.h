@@ -145,7 +145,7 @@ extern "C" {
 
 // END  svt-03 /////////////////////////////////////////////////////////
 #define SHUT_TF                                  0
-#define FEATURE_DCT_DCT_DEDICATED_BUFFER         0
+#define FEATURE_DCT_DCT_DEDICATED_BUFFER         1
 #define FEATURE_REMOVE_ISOLATED                  0
 #define REDUCE_NFL                               0
 #define PD0_PF_N2                                0
