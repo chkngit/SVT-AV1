@@ -7980,7 +7980,6 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
                 class_pruning(pcs_ptr, context_ptr, best_md_stage_cost, class_best_cost, cand_class_it);
 
                 // intra class pruning
-                uint32_t cand_count = 1;
                 uint64_t md_stage_2_cand_prune_th = context_ptr->md_stage_2_cand_prune_th;
                 md_stage_2_cand_prune_th = (cand_class_it == CAND_CLASS_0 ||
                     cand_class_it == CAND_CLASS_3) ?
@@ -7989,6 +7988,7 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
 
                 // candidate pruning
                 if (context_ptr->md_stage_2_count[cand_class_it] > 0) {
+                uint32_t cand_count = 1;
 
                     if (class_best_cost)
                         while (
