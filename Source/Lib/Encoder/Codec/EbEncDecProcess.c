@@ -2205,6 +2205,72 @@ void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_
     default: assert(0); break;
     }
 }
+#if FEATURE_OPT_RDOQ
+/*
+ * Control RDOQ
+ */
+void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
+    RdoqCtrls *rdoq_ctrls = &mdctxt->rdoq_ctrls;
+
+    switch (rdoq_level) {
+    case 0:
+        rdoq_ctrls->enabled = 0;
+        break;
+    case 1:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->eob_fast_l_inter = 0;
+        rdoq_ctrls->eob_fast_l_intra = 0;
+#if TUNE_CHROMA_SSIM
+        rdoq_ctrls->eob_fast_c_inter = 0;
+#else
+        rdoq_ctrls->eob_fast_c_inter = 1;
+#endif
+        rdoq_ctrls->eob_fast_c_intra = 0;
+        rdoq_ctrls->fp_q_l = 1;
+        rdoq_ctrls->fp_q_c = 1;
+        rdoq_ctrls->satd_factor = (uint8_t)~0;
+#if FEATURE_RDOQ_OPT
+        rdoq_ctrls->early_exit_th = 0;
+#endif
+        break;
+    case 2:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->eob_fast_l_inter = 0;
+        rdoq_ctrls->eob_fast_l_intra = 0;
+#if TUNE_CHROMA_SSIM
+        rdoq_ctrls->eob_fast_c_inter = 0;
+#else
+        rdoq_ctrls->eob_fast_c_inter = 1;
+#endif
+        rdoq_ctrls->eob_fast_c_intra = 0;
+        rdoq_ctrls->fp_q_l = 1;
+        rdoq_ctrls->fp_q_c = 0;
+        rdoq_ctrls->satd_factor = 128;
+#if FEATURE_RDOQ_OPT
+        rdoq_ctrls->early_exit_th = 5;
+#endif
+        break;
+    case 3:
+        rdoq_ctrls->enabled = 1;
+        rdoq_ctrls->eob_fast_l_inter = 0;
+        rdoq_ctrls->eob_fast_l_intra = 0;
+#if TUNE_CHROMA_SSIM
+        rdoq_ctrls->eob_fast_c_inter = 0;
+#else
+        rdoq_ctrls->eob_fast_c_inter = 1;
+#endif
+        rdoq_ctrls->eob_fast_c_intra = 0;
+        rdoq_ctrls->fp_q_l = 1;
+        rdoq_ctrls->fp_q_c = 0;
+        rdoq_ctrls->satd_factor = 64;
+#if FEATURE_RDOQ_OPT
+        rdoq_ctrls->early_exit_th = 5;
+#endif
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
 /******************************************************
 * Derive SB classifier thresholds
 ******************************************************/
@@ -4551,11 +4617,38 @@ static uint8_t determine_sb_class(
         sb_class = SB_CLASS_18;
     return sb_class;
 }
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+void update_pred_th_offset(ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, int8_t *s_depth, int8_t *e_depth, int64_t *th_offset) {
+
+    uint32_t full_lambda = mdctxt->hbd_mode_decision ?
+        mdctxt->full_lambda_md[EB_10_BIT_MD] :
+        mdctxt->full_lambda_md[EB_8_BIT_MD];
+
+    uint64_t cost_th_0 = RDCOST(full_lambda, 16, 200 * blk_geom->bwidth * blk_geom->bheight);
+    uint64_t cost_th_1 = RDCOST(full_lambda, 16, 300 * blk_geom->bwidth * blk_geom->bheight);
+    uint64_t cost_th_2 = RDCOST(full_lambda, 16, 400 * blk_geom->bwidth * blk_geom->bheight);
+
+    if (mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_0) {
+        *s_depth = 0;
+        *e_depth = 0;
+    }
+    else if (mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_1) {
+        *th_offset = -10;
+    }
+    else if (mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost < cost_th_2) {
+        *th_offset = -5;
+    }
+}
+
+uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
+    ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, int64_t th_offset) {
+#else
 #define DEPTH_MAX_PROB 300 // max probabilty value for depth 100 -> 10%
 // Depth probabilies per sq_size, pedicted depth and frequency band
 // for sc content
 uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *mdctxt, const BlockGeom *blk_geom) {
+#endif
 
     int64_t parent_to_current_deviation = MIN_SIGNED_VALUE;
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
@@ -4571,14 +4664,23 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
     }
 
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+    if (parent_to_current_deviation <= (mdctxt->depth_refinement_ctrls.parent_to_current_th + th_offset))
+#else
     if (parent_to_current_deviation <= mdctxt->depth_refinement_ctrls.parent_to_current_th)
+#endif
         return EB_TRUE;
 
     return EB_FALSE;
 }
 
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
+    ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, uint32_t blk_index, int64_t th_offset) {
+#else
 uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, uint32_t blk_index) {
+#endif
 
     int64_t child_to_current_deviation = MIN_SIGNED_VALUE;
 
@@ -4615,7 +4717,11 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     }
 
 
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+    if (child_to_current_deviation <= (mdctxt->depth_refinement_ctrls.sub_to_current_th + th_offset))
+#else
     if (child_to_current_deviation <= mdctxt->depth_refinement_ctrls.sub_to_current_th)
+#endif
         return EB_TRUE;
 
     return EB_FALSE;
@@ -4680,11 +4786,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             }
                         }
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
+#if TUNE_NEW_PRESETS
+                            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
                             else {
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+                                s_depth = -1;
+                                e_depth = 1;
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M9) {
                                     s_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? -1 : 0;
                                     e_depth = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
@@ -4693,6 +4807,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
                                 }
+#endif
                             }
                         }
                         else {
@@ -4735,6 +4850,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 : (blk_geom->sq_size == 32) ? MIN(2, e_depth)
                                 : e_depth;
                     }
+#if FEATURE_PD0_CUT_DEPTH
+                    if (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16) {
+                        e_depth = (blk_geom->sq_size <= 16) ? 0
+                                : (blk_geom->sq_size ==  32) ? MIN(1, e_depth)
+                                : (blk_geom->sq_size ==  64) ? MIN(2, e_depth)
+                                : (blk_geom->sq_size == 128) ? MIN(3, e_depth) : e_depth;
+                    }
+#endif
                     // Add current pred depth block(s)
                     for (unsigned block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block = 1;
@@ -4745,12 +4868,24 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     }
 
                     uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)blk_geom->sq_size);
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+                    // Update pred and generate an offset to be used @ sub_to_current_th and parent_to_current_th derivation based on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) or Pred only for low cost(s)
+                    int64_t th_offset = 0;
+                    if (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.use_pred_block_cost && (s_depth != 0 || e_depth != 0)) {
+                        update_pred_th_offset(context_ptr, blk_geom, &s_depth, &e_depth, &th_offset);
+                    }
+#endif
                     // Add block indices of upper depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_parent_depth = 1;
                     if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+                        add_parent_depth = is_parent_to_current_deviation_small(
+                            scs_ptr, context_ptr, blk_geom, th_offset);
+#else
                         add_parent_depth = is_parent_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom);
+#endif
                     }
                     if (add_parent_depth)
                     if (s_depth != 0)
@@ -4759,9 +4894,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     // Add block indices of lower depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_sub_depth = 1;
+#if FEATURE_COST_BASED_PRED_REFINEMENT
+                    if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size > 4) {
+                        add_sub_depth = is_child_to_current_deviation_small(
+                            scs_ptr, context_ptr, blk_geom, blk_index, th_offset);
+#else
                     if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index]) {
                         add_sub_depth = is_child_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom, blk_index);
+#endif
                     }
                     if (add_sub_depth)
                     if (e_depth != 0)
@@ -4799,6 +4940,12 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
     int32_t force_blk_size = FORCED_BLK_SIZE;
+#if FEATURE_PD0_CUT_DEPTH
+    int32_t min_sq_size =
+        (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16)
+            ? 16
+            : context_ptr->disallow_4x4 ? 8 : 4;
+#endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
         if (use_output_stat(scs_ptr) && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
@@ -4816,6 +4963,14 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     FORCED_BLK_SIZE;
             }
         }
+#if FEATURE_PD0_CUT_DEPTH
+        // SQ/NSQ block(s) filter based on the SQ size
+        uint8_t is_block_tagged =
+            (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
+            (blk_geom->sq_size < min_sq_size)
+            ? 0
+            : 1;
+#else
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
             (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
@@ -4825,6 +4980,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
         // split_flag is f(min_sq_size)
         int32_t min_sq_size = (context_ptr->disallow_4x4) ? 8 : 4;
+#endif
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
@@ -5048,8 +5204,13 @@ void *mode_decision_kernel(void *input_ptr) {
                     uint16_t tile_group_x_sb_start =
                         pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
                             .tile_group_sb_start_x;
+#if FEATURE_PD0_CUT_DEPTH
+                    sb_index = context_ptr->md_context->sb_index =(uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
+                        x_sb_index + tile_group_x_sb_start);
+#else
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
+#endif
                     if (use_output_stat(scs_ptr) && sb_index == 0)
                         setup_firstpass_data(pcs_ptr->parent_pcs_ptr);
                     sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];

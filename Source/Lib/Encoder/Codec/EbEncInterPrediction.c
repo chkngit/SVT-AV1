@@ -3211,7 +3211,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 };
 
 void interpolation_filter_search(PictureControlSet *          picture_control_set_ptr,
+#if !FIX_IFS
                                  EbPictureBufferDesc *        prediction_ptr,
+#endif
                                  ModeDecisionContext *        md_context_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer_ptr, MvUnit mv_unit,
                                  EbPictureBufferDesc *ref_pic_list0,
@@ -3228,6 +3230,21 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
         md_context_ptr->full_lambda_md[EB_8_BIT_MD];
 
     InterpFilter assign_filter = SWITCHABLE;
+#if FIX_IFS
+    NeighborArrayUnit *luma_recon_neighbor_array;
+    NeighborArrayUnit *cb_recon_neighbor_array;
+    NeighborArrayUnit *cr_recon_neighbor_array;
+    if (!hbd_mode_decision) {
+        luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array;
+        cb_recon_neighbor_array = md_context_ptr->cb_recon_neighbor_array;
+        cr_recon_neighbor_array = md_context_ptr->cr_recon_neighbor_array;
+    }
+    else {
+        luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array16bit;
+        cb_recon_neighbor_array = md_context_ptr->cb_recon_neighbor_array16bit;
+        cr_recon_neighbor_array = md_context_ptr->cr_recon_neighbor_array16bit;
+    }
+#endif
 
     if (cm->interp_filter != SWITCHABLE) assign_filter = cm->interp_filter;
 
@@ -3497,7 +3514,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 #endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
