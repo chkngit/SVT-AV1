@@ -16,6 +16,7 @@
 #include "EbTemporalFiltering_constants.h"
 
 #if !FIX_REMOVE_UNUSED_CODE
+#if !FIX_REMOVE_UNUSED_CODE
 // Compute (a-b)**2 for 8 pixels with size 16-bit
 static INLINE void highbd_store_dist_8(const uint16_t *a, const uint16_t *b, uint32_t *dst) {
     const __m128i zero  = _mm_setzero_si128();
@@ -348,7 +349,6 @@ static void highbd_apply_temporal_filter_luma_8(
                      weight);
     highbd_accumulate_and_store_8(sum_row_first, sum_row_second, y_pre, y_count, y_accum);
 }
-#if !FIX_REMOVE_UNUSED_CODE
 // Perform temporal filter for the luma component.
 static void highbd_apply_temporal_filter_luma(
     const uint16_t *y_pre, int y_pre_stride,
@@ -454,7 +454,7 @@ static void highbd_apply_temporal_filter_luma(
                                         top_weight,
                                         bottom_weight);
 }
-#endif
+
 // Add a row of luma distortion that corresponds to 8 chroma mods. If we are
 // subsampling in x direction, then we have 16 lumas, else we have 8.
 static INLINE void highbd_add_luma_dist_to_8_chroma_mod(const uint32_t *y_dist, int ss_x, int ss_y,
@@ -1045,4 +1045,5 @@ void svt_av1_highbd_apply_temporal_filter_sse4_1(
                                         u_dist_ptr,
                                         v_dist_ptr);
 }
+#endif
 #endif
