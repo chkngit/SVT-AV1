@@ -460,7 +460,6 @@ void tpl_mc_flow_dispenser(
                     }
                     else { // ois
                         // always process as block16x16 even bsize or tx_size is 8x8
-                        TxSize tx_size = TX_16X16;
                         bsize = 16;
 
                         above0_row = above0_data + 16;
@@ -662,11 +661,6 @@ void tpl_mc_flow_dispenser(
                     }
                     else {
                         // intra recon
-                        uint8_t *above_row;
-                        uint8_t *left_col;
-                        DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
-                        DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
-
                         above_row = above_data + 16;
                         left_col = left_data + 16;
                         uint8_t *recon_buffer =
