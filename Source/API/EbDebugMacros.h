@@ -124,7 +124,7 @@ extern "C" {
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
-#define FIX_ME_IDX_LUPT_ASSERT                       1 // change location of assert statement, code cleanup
+#define FIX_ME_IDX_LUPT_ASSERT                       1 // change location of assert statement,  code cleanup
 #define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
 
 //FOR DEBUGGING - Do not remove
