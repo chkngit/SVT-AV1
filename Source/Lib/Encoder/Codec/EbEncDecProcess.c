@@ -1848,11 +1848,11 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
     case 6:
         depth_refinement_ctrls->enabled = 1;
         depth_refinement_ctrls->parent_to_current_th = -10;
-        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = -10;// 5;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         depth_refinement_ctrls->disallow_below_16x16 =
             (pcs_ptr->slice_type != I_SLICE && scs_ptr->static_config.super_block_size == 64 && sb_width % 16 == 0 && sb_height % 16 == 0)
-            ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((8 * 64 * 64) / 4)) : 0;
+            ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((5 * 64 * 64) / 4)) : 0; //((8 * 64 * 64) / 4)) : 0;
         break;
 #endif
     default:
