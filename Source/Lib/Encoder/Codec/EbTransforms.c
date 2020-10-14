@@ -3629,8 +3629,9 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
 {
     (void)trans_coeff_shape;
+#if !PARTIAL_FREQUENCY
     EbErrorType return_error = EB_ErrorNone;
-
+#endif
     (void)coeff_stride;
     (void)component_type;
 #if PARTIAL_FREQUENCY
