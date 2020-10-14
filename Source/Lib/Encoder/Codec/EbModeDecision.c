@@ -165,6 +165,24 @@ const uint32_t parent_index[85] = {
 */
 #define INVALID_REF 0xF
 
+
+#if OPT_13
+uint8_t ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0,0,0,0,0,1,1,1};
+uint8_t get_list_idx(uint8_t ref_type) {
+    return ref_type_to_list_idx[ref_type];
+}
+uint8_t ref_type_to_ref_idx[REFS_PER_FRAME + 1] = { 0,0,1,2,3,0,1,2 };
+uint8_t get_ref_frame_idx(uint8_t ref_type) {
+    return ref_type_to_ref_idx[ref_type];
+};
+MvReferenceFrame to_ref_frame[2][4] = {
+{ LAST_FRAME  , LAST2_FRAME  ,LAST3_FRAME , GOLDEN_FRAME },
+{ BWDREF_FRAME, ALTREF2_FRAME,ALTREF_FRAME, INVALID_REF  } };
+
+MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
+     return to_ref_frame[list][ref_idx];
+};
+#else
 uint8_t get_list_idx(uint8_t ref_type) {
     if (ref_type == LAST_FRAME || ref_type == LAST2_FRAME || ref_type == LAST3_FRAME ||
         ref_type == GOLDEN_FRAME)
@@ -173,6 +191,7 @@ uint8_t get_list_idx(uint8_t ref_type) {
         return 1;
     else
         return (0);
+
 };
 
 uint8_t get_ref_frame_idx(uint8_t ref_type) {
@@ -191,17 +210,19 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
     switch (list) {
     case 0:
         return (ref_idx == 0
-                    ? LAST_FRAME
-                    : ref_idx == 1
-                          ? LAST2_FRAME
-                          : ref_idx == 2 ? LAST3_FRAME : ref_idx == 3 ? GOLDEN_FRAME : INVALID_REF);
+            ? LAST_FRAME
+            : ref_idx == 1
+            ? LAST2_FRAME
+            : ref_idx == 2 ? LAST3_FRAME : ref_idx == 3 ? GOLDEN_FRAME : INVALID_REF);
     case 1:
         return (ref_idx == 0
-                    ? BWDREF_FRAME
-                    : ref_idx == 1 ? ALTREF2_FRAME : ref_idx == 2 ? ALTREF_FRAME : INVALID_REF);
+            ? BWDREF_FRAME
+            : ref_idx == 1 ? ALTREF2_FRAME : ref_idx == 2 ? ALTREF_FRAME : INVALID_REF);
     default: return (INVALID_REF);
     }
 };
+#endif
+
 extern uint32_t stage1ModesArray[];
 
 uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
