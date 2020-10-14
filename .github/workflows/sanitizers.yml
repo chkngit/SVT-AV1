@@ -26,9 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - sanitizer: address
-            allows-failure: false
-            ASAN_OPTIONS: detect_leaks=1
 
           - sanitizer: memory
             allows-failure: false
@@ -36,8 +33,7 @@ jobs:
             CXXFLAGS: -fno-omit-frame-pointer
             svt-args: --asm 0
 
-          - sanitizer: thread
-            allows-failure: true
+
     env:
       CFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CFLAGS }}
       CXXFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CXXFLAGS }}
