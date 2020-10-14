@@ -3301,7 +3301,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     int64_t rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
 #endif
     if (assign_filter == SWITCHABLE) {
-#if FEATURE_OPT_IFS      
+#if FEATURE_OPT_IFS
     int32_t switchable_rate = 0;
     uint64_t rd = (uint64_t)~0;
 #endif
