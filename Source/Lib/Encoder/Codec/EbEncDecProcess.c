@@ -4192,8 +4192,8 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                     }
                 }
             }
-#endif
             d1_blocks_accumlated = 0;
+#endif
 
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++)
                 d1_blocks_accumlated +=
