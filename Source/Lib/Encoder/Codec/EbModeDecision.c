@@ -5638,9 +5638,7 @@ uint32_t product_full_mode_decision(
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost - buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
 #endif
     }
-#if FIX_BYPASS_USELESS_OPERATIONS
-    if (!context_ptr->shut_fast_rate) {
-#endif
+
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_skip_ptr;
 
@@ -5782,9 +5780,7 @@ uint32_t product_full_mode_decision(
             eb_memcpy(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1, &candidate_ptr->wm_params_l1, sizeof(EbWarpedMotionParams));
         }
     }
-#if FIX_BYPASS_USELESS_OPERATIONS
-    }
-#endif
+
     uint32_t txb_itr;
     uint32_t txb_index;
     uint32_t tu_total_count;
