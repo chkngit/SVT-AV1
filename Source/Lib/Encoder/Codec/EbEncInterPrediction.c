@@ -3249,10 +3249,8 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     if (cm->interp_filter != SWITCHABLE) assign_filter = cm->interp_filter;
 
 
-#if FEATURE_OPT_IFS
-    uint64_t rd = (uint64_t)~0;
-    int32_t switchable_rate = 0;
-#else
+#if !FEATURE_OPT_IFS
+
     //set_default_interp_filters(mbmi, assign_filter);
     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = //EIGHTTAP_REGULAR ;
                      av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
@@ -3303,6 +3301,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     int64_t rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
 #endif
     if (assign_filter == SWITCHABLE) {
+#if FEATURE_OPT_IFS      
+    int32_t switchable_rate = 0;
+    uint64_t rd = (uint64_t)~0;
+#endif
         // do interp_filter search
         if (av1_is_interp_needed(
                 candidate_buffer_ptr,
