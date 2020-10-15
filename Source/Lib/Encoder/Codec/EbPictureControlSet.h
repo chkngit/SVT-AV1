@@ -954,7 +954,9 @@ typedef struct PictureParentControlSet {
     uint16_t    first_pass_seg_acc;
     EbHandle    first_pass_done_semaphore;
     EbHandle    first_pass_mutex;
-
+    struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
+    uint8_t     first_pass_ref_count;
+    uint8_t     first_pass_done;
 #endif
 } PictureParentControlSet;
 

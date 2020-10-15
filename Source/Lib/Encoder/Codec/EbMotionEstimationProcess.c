@@ -1488,14 +1488,10 @@ void *motion_estimation_kernel(void *input_ptr) {
             // ME Kernel Signal(s) derivation
             first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
 
-            // temporal filtering start
-#if !FEATURE_INL_ME
-            context_ptr->me_context_ptr->me_alt_ref = EB_TRUE;
-#else
+            // first pass start
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
-#endif
             open_loop_first_pass(
-                pcs_ptr->temp_filt_pcs_list, pcs_ptr, context_ptr, in_results_ptr->segment_index);
+                pcs_ptr, context_ptr, in_results_ptr->segment_index);
 
             // Release the Input Results
             eb_release_object(in_results_wrapper_ptr);

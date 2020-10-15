@@ -49,7 +49,7 @@ extern "C" {
 #define FEATURE_NEW_DELAY             1 // Change delay some sorts of I in PicDecision
 #if FEATURE_NEW_DELAY
 #define FIX_LAD_DEADLOCK              1 // Fix deadlock when lad>0 + iperiod>0
-#define FEATURE_NEW_DELAY_DBG_MSG        1 // Turn off debug message
+#define FEATURE_NEW_DELAY_DBG_MSG        0 // Turn off debug message
 #define SCD_LAD            6  //number of future frames
 #define PD_WINDOW_SIZE     (SCD_LAD +2) //adding previous+current to future
 #define MAX_TPL_GROUP_SIZE 64 //enough to cover 6L gop
