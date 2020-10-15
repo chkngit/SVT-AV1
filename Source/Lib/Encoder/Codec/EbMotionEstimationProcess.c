@@ -142,10 +142,12 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
     }
+#if !TUNE_PRESETS_CLEANUP
     else if (pcs_ptr->enc_mode <= ENC_M1) {
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
     }
+#endif
 #if TUNE_NEW_PRESETS
     else if (pcs_ptr->enc_mode <= ENC_M2) {
 #else
@@ -187,7 +189,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
     }
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+    if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M1) {
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M2) {
 #endif
@@ -461,7 +467,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M1)
+#endif
             gm_level = 2;
         else if (enc_mode <= ENC_M6)
             gm_level = 3;

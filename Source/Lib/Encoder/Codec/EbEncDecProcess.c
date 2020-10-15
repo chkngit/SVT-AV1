@@ -3182,7 +3182,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->interpolation_search_level = IFS_OFF;
     else
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M2)
+#endif
 #else
         if (enc_mode <= ENC_M6)
 #endif
@@ -3395,7 +3399,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else if (sequence_control_set_ptr->static_config.bipred_3x3_inject == DEFAULT) {
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M1)
+#endif
 #else
         if (enc_mode <= ENC_M2)
 #endif
@@ -3940,7 +3948,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (pd_pass == PD_PASS_1)
             context_ptr->md_inter_intra_level = 0;
 #if TUNE_NEW_PRESETS
+#if TUNE_PRESETS_CLEANUP
+        else if (enc_mode <= ENC_M0)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             context_ptr->md_inter_intra_level = 2;
         else if (enc_mode <= ENC_M2)
             context_ptr->md_inter_intra_level = 3;
@@ -4212,7 +4224,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_nsq_mv_search_level = 0;
     else
 #if TUNE_PRESETS_CLEANUP
-        if (enc_mode <= ENC_M1)
+        if (enc_mode <= ENC_M0)
 #else
         if (enc_mode <= ENC_MRS)
             context_ptr->md_nsq_mv_search_level = 1;
