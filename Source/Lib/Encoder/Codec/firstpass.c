@@ -33,7 +33,7 @@
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
 
-#define OUTPUT_FPF 0
+#define OUTPUT_FPF 1
 
 #define INTRA_MODE_PENALTY 1024
 #define NEW_MV_MODE_PENALTY 32
@@ -2278,8 +2278,400 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 };
 
 #if FIRST_PASS_RESTRUCTURE
-#define BW 64
-#define BH 64 //anaghdin to rename?
+/***************************************************************************
+* Computes and returns the intra pred error of a block.
+* intra pred error: sum of squared error of the intra predicted residual.
+* Modifies:
+*   stats->intra_skip_count
+*   stats->image_data_start_row
+*   stats->intra_factor
+*   stats->brightness_factor
+*   stats->intra_error
+*   stats->frame_avg_wavelet_energy
+* Returns:
+*   this_intra_error.
+***************************************************************************/
+static int open_firstpass_intra_prediction(PictureControlSet *pcs_ptr,
+    ModeDecisionContext *        context_ptr,
+    ModeDecisionCandidateBuffer *candidate_buffer,
+    ModeDecisionCandidate *      candidate_ptr,
+    EbPictureBufferDesc *        input_picture_ptr,
+    uint32_t input_origin_index, uint32_t blk_origin_index,
+    FRAME_STATS *const stats) {
+    int32_t         mb_row = context_ptr->blk_origin_y >> 4;
+    int32_t         mb_col = context_ptr->blk_origin_x >> 4;
+    const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
+    const BlockSize bsize = context_ptr->blk_geom->bsize;
+
+    // Initialize tx_depth
+    candidate_buffer->candidate_ptr->tx_depth =
+        use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
+    candidate_buffer->candidate_ptr->fast_luma_rate = 0;
+    candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
+    context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
+    context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
+    context_ptr->md_staging_tx_size_mode = 0;
+    context_ptr->md_staging_skip_full_chroma = EB_FALSE;
+    context_ptr->md_staging_skip_rdoq = EB_TRUE;
+    context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
+
+    first_pass_loop_core(pcs_ptr,
+        context_ptr,
+        candidate_buffer,
+        candidate_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        blk_origin_index);
+
+    EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+        ? full_distortion_kernel16_bits
+        : spatial_full_distortion_kernel;
+
+    int this_intra_error =
+        (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+            input_origin_index,
+            input_picture_ptr->stride_y,
+            candidate_buffer->prediction_ptr->buffer_y,
+            blk_origin_index,
+            candidate_buffer->prediction_ptr->stride_y,
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight));
+
+    if (this_intra_error < UL_INTRA_THRESH) {
+        ++stats->intra_skip_count;
+    }
+    else if ((mb_col > 0) && (stats->image_data_start_row == INVALID_ROW)) {
+        stats->image_data_start_row = mb_row;
+    }
+
+    if (context_ptr->hbd_mode_decision) {
+        switch (pcs_ptr->parent_pcs_ptr->av1_cm->bit_depth) {
+        case AOM_BITS_8: break;
+        case AOM_BITS_10: this_intra_error >>= 4; break;
+        case AOM_BITS_12: this_intra_error >>= 8; break;
+        default:
+            assert(0 &&
+                "seq_params->bit_depth should be AOM_BITS_8, "
+                "AOM_BITS_10 or AOM_BITS_12");
+            return -1;
+        }
+    }
+
+    // aom_clear_system_state();
+    double log_intra = log1p((double)this_intra_error);
+    if (log_intra < 10.0)
+        stats->intra_factor += 1.0 + ((10.0 - log_intra) * 0.05);
+    else
+        stats->intra_factor += 1.0;
+
+    int level_sample;
+    if (context_ptr->hbd_mode_decision)
+        level_sample = ((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
+    else
+        level_sample = input_picture_ptr->buffer_y[input_origin_index];
+
+    if ((level_sample < DARK_THRESH) && (log_intra < 9.0))
+        stats->brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
+    else
+        stats->brightness_factor += 1.0;
+    // Intrapenalty below deals with situations where the intra and inter
+    // error scores are very low (e.g. a plain black frame).
+    // We do not have special cases in first pass for 0,0 and nearest etc so
+    // all inter modes carry an overhead cost estimate for the mv.
+    // When the error score is very low this causes us to pick all or lots of
+    // INTRA modes and throw lots of key frames.
+    // This penalty adds a cost matching that of a 0,0 mv to the intra case.
+    this_intra_error += INTRA_MODE_PENALTY;
+
+    const int hbd = context_ptr->hbd_mode_decision;
+    const int stride = input_picture_ptr->stride_y;
+    if (hbd) {
+        uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
+        for (int r8 = 0; r8 < 2; ++r8) {
+            for (int c8 = 0; c8 < 2; ++c8) {
+                stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
+                    CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
+            }
+        }
+    }
+    else {
+        uint8_t *buf = &(input_picture_ptr->buffer_y)[input_origin_index];
+        for (int r8 = 0; r8 < 2; ++r8) {
+            for (int c8 = 0; c8 < 2; ++c8) {
+                stats->frame_avg_wavelet_energy +=
+                    eb_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
+            }
+        }
+    }
+    // Accumulate the intra error.
+    stats->intra_error += (int64_t)this_intra_error;
+    return this_intra_error;
+}
+/***************************************************************************
+* Computes and returns the inter prediction error from the last frame.
+* Computes inter prediction errors from the golden and alt ref frames and
+* Updates stats accordingly.
+* Modifies:
+*    stats: many member params in it.
+*  Returns:
+*    this_inter_error
+***************************************************************************/
+static int open_loop_firstpass_inter_prediction(
+    PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+   // ModeDecisionCandidateBuffer *candidate_buffer, ModeDecisionCandidate *candidate_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index, uint32_t blk_origin_index,
+    uint32_t fast_candidate_total_count, const int this_intra_error,
+    /*int *raw_motion_err_list, */ FRAME_STATS *stats) {
+
+    int32_t        mb_row = context_ptr->blk_origin_y >> 4;
+    int32_t        mb_col = context_ptr->blk_origin_x >> 4;
+    const uint32_t mb_cols =
+        (pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+    const uint32_t mb_rows =
+        (pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+    int this_inter_error = this_intra_error;
+    FULLPEL_MV mv = kZeroFullMv;
+    MV last_mv;
+
+    uint32_t full_lambda = context_ptr->hbd_mode_decision
+        ? context_ptr->full_lambda_md[EB_10_BIT_MD]
+        : context_ptr->full_lambda_md[EB_8_BIT_MD];
+    int errorperbit = full_lambda >> RD_EPB_SHIFT;
+    errorperbit += (errorperbit == 0);
+    EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+        ? full_distortion_kernel16_bits
+        : spatial_full_distortion_kernel;
+
+    int motion_error = 0;
+    // TODO(pengchong): Replace the hard-coded threshold
+    // anaghdin: to add support
+    if (1) //(raw_motion_error > LOW_MOTION_ERROR_THRESH)
+    {
+#if 0
+        uint32_t                      cand_index = 1;
+        ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
+            context_ptr->candidate_buffer_ptr_array;
+        ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
+            &(candidate_buffer_ptr_array_base[0]);
+
+        candidate_buffer = candidate_buffer_ptr_array[cand_index];
+        candidate_ptr = candidate_buffer->candidate_ptr =
+            &context_ptr->fast_candidate_array[cand_index];
+        context_ptr->best_candidate_index_array[cand_index] = cand_index;
+        // Initialize tx_depth
+        candidate_buffer->candidate_ptr->tx_depth = 0;
+        candidate_buffer->candidate_ptr->fast_luma_rate = 0;
+        candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
+        candidate_buffer->candidate_ptr->interp_filters = 0;
+        svt_product_prediction_fun_table[candidate_ptr->type](
+            context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+        *(candidate_buffer->full_cost_ptr) = 0;
+        // To convert full-pel MV
+        mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;
+        mv.row = candidate_buffer->candidate_ptr->motion_vector_yl0 >> 3;
+
+        last_mv.col = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.col;
+        last_mv.row = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.row;
+
+        motion_error =
+            (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                input_origin_index,
+                input_picture_ptr->stride_y,
+                candidate_buffer->prediction_ptr->buffer_y,
+                blk_origin_index,
+                candidate_buffer->prediction_ptr->stride_y,
+                context_ptr->blk_geom->bwidth,
+                context_ptr->blk_geom->bheight));
+
+        // Assume 0,0 motion with no mv overhead.
+        if (mv.col != 0 && mv.row != 0) {
+            const MV temp_full_mv = get_mv_from_fullmv(&mv);
+            motion_error += mv_err_cost(&temp_full_mv,
+                &last_mv,
+                context_ptr->md_rate_estimation_ptr->nmv_vec_cost,
+                context_ptr->md_rate_estimation_ptr->nmvcoststack,
+                errorperbit) +
+                NEW_MV_MODE_PENALTY;
+        }
+
+        // Motion search in 2nd reference frame.
+        int gf_motion_error = motion_error;
+        if (fast_candidate_total_count > 2) {
+            cand_index++;
+            candidate_buffer = candidate_buffer_ptr_array[cand_index];
+            candidate_ptr = candidate_buffer->candidate_ptr =
+                &context_ptr->fast_candidate_array[cand_index];
+            context_ptr->best_candidate_index_array[cand_index] = cand_index;
+            // Initialize tx_depth
+            candidate_buffer->candidate_ptr->tx_depth = 0;
+            candidate_buffer->candidate_ptr->interp_filters = 0;
+            svt_product_prediction_fun_table[candidate_ptr->type](
+                context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+
+            gf_motion_error =
+                (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                    input_origin_index,
+                    input_picture_ptr->stride_y,
+                    candidate_buffer->prediction_ptr->buffer_y,
+                    blk_origin_index,
+                    candidate_buffer->prediction_ptr->stride_y,
+                    context_ptr->blk_geom->bwidth,
+                    context_ptr->blk_geom->bheight));
+            // To convert full-pel MV
+            FULLPEL_MV gf_mv;
+            gf_mv.col = candidate_buffer->candidate_ptr->motion_vector_xl1 >> 3;
+            gf_mv.row = candidate_buffer->candidate_ptr->motion_vector_yl1 >> 3;
+
+            // Assume 0,0 motion with no mv overhead.
+            if (gf_mv.col != 0 && gf_mv.row != 0) {
+                const MV temp_full_mv = get_mv_from_fullmv(&gf_mv);
+                gf_motion_error += mv_err_cost(&temp_full_mv,
+                    &kZeroMv,
+                    context_ptr->md_rate_estimation_ptr->nmv_vec_cost,
+                    context_ptr->md_rate_estimation_ptr->nmvcoststack,
+                    errorperbit) +
+                    NEW_MV_MODE_PENALTY;
+            }
+        }
+
+        if (gf_motion_error < motion_error && gf_motion_error < this_intra_error) {
+            ++stats->second_ref_count;
+        }
+        // In accumulating a score for the 2nd reference frame take the
+        // best of the motion predicted score and the intra coded error
+        // (just as will be done for) accumulation of "coded_error" for
+        // the last frame.
+        if (fast_candidate_total_count > 2) {
+            stats->sr_coded_error += AOMMIN(gf_motion_error, this_intra_error);
+        }
+        else {
+            stats->sr_coded_error += motion_error;
+        }
+
+        // Motion search in 3rd reference frame.
+        int alt_motion_error = motion_error;
+        if (alt_motion_error < motion_error && alt_motion_error < gf_motion_error &&
+            alt_motion_error < this_intra_error) {
+            ++stats->third_ref_count;
+        }
+        // In accumulating a score for the 3rd reference frame take the
+        // best of the motion predicted score and the intra coded error
+        // (just as will be done for) accumulation of "coded_error" for
+        // the last frame.
+        // alt_ref_frame is not supported yet
+        if (0 /*alt_ref_frame != NULL*/) {
+            stats->tr_coded_error += AOMMIN(alt_motion_error, this_intra_error);
+        }
+        else {
+            stats->tr_coded_error += motion_error;
+        }
+#endif
+    }
+    else {
+        stats->sr_coded_error += motion_error;
+        stats->tr_coded_error += motion_error;
+    }
+
+    // Start by assuming that intra mode is best.
+    if (motion_error <= this_intra_error) {
+#ifdef ARCH_X86
+        aom_clear_system_state();
+#endif
+        // Keep a count of cases where the inter and intra were very close
+        // and very low. This helps with scene cut detection for example in
+        // cropped clips with black bars at the sides or top and bottom.
+        if (((this_intra_error - INTRA_MODE_PENALTY) * 9 <= motion_error * 10) &&
+            (this_intra_error < (2 * INTRA_MODE_PENALTY))) {
+            stats->neutral_count += 1.0;
+            // Also track cases where the intra is not much worse than the inter
+            // and use this in limiting the GF/arf group length.
+        }
+        else if ((this_intra_error > NCOUNT_INTRA_THRESH) &&
+            (this_intra_error < (NCOUNT_INTRA_FACTOR * motion_error))) {
+            stats->neutral_count +=
+                (double)motion_error / DOUBLE_DIVIDE_CHECK((double)this_intra_error);
+        }
+        const MV best_mv = get_mv_from_fullmv(&mv);
+        this_inter_error = motion_error;
+        stats->sum_mvr += best_mv.row;
+        stats->sum_mvr_abs += abs(best_mv.row);
+        stats->sum_mvc += best_mv.col;
+        stats->sum_mvc_abs += abs(best_mv.col);
+        stats->sum_mvrs += best_mv.row * best_mv.row;
+        stats->sum_mvcs += best_mv.col * best_mv.col;
+        ++stats->inter_count;
+        accumulate_mv_stats(best_mv, mv, mb_row, mb_col, mb_rows, mb_cols, &last_mv, stats);
+    }
+
+    return this_inter_error;
+}
+// Perform the processing for first pass
+// anaghdin add descriptions
+static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
+    MotionEstimationContext_t *me_context_ptr,
+    EbBool is_highbd) {
+
+    //anaghdin: check if input_picture_ptr->width, scs_ptr->seq_header.max_frame_width and ppcs_ptr->aligned_width are the same
+    EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
+    
+    const uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_width
+        FORCED_BLK_SIZE;
+    const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_height
+        FORCED_BLK_SIZE;
+    uint32_t stride = input_picture_ptr->stride_y;
+
+    MeContext *context_ptr = me_context_ptr->me_context_ptr;
+
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+   
+    uint32_t blk_width;
+    uint32_t blk_height;
+    uint32_t blk_origin_x;
+    uint32_t blk_origin_y;
+
+    uint32_t input_origin_index;
+
+    EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
+
+    for (uint32_t blk_index_y = 0; blk_index_y < blk_rows; ++blk_index_y) {
+        for (uint32_t blk_index_x = 0; blk_index_x < blk_cols; ++blk_index_x) {
+            blk_origin_x = blk_index_x * FORCED_BLK_SIZE;
+            blk_origin_y = blk_index_y * FORCED_BLK_SIZE;
+
+            blk_width =
+                (ppcs_ptr->aligned_width - blk_origin_x) < FORCED_BLK_SIZE
+                ? ppcs_ptr->aligned_width - blk_origin_x
+                : FORCED_BLK_SIZE;
+            blk_height =
+                (ppcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
+                ? ppcs_ptr->aligned_height - blk_origin_y
+                : FORCED_BLK_SIZE;
+
+            input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
+                input_picture_ptr->stride_y +
+                (input_picture_ptr->origin_x + blk_origin_x);
+
+            FRAME_STATS *mb_stats =
+                ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
+
+            if (ppcs_ptr->first_pass_ref_count) {
+                ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x]
+                    = (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                        input_origin_index,
+                        input_picture_ptr->stride_y,
+                        last_input_picture_ptr->buffer_y,
+                        input_origin_index,
+                        input_picture_ptr->stride_y,
+                        blk_width,
+                        blk_height));
+            }
+        }
+    }
+    
+    return EB_ErrorNone;
+}
+
 static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
                                         PictureParentControlSet *  ppcs_ptr,
                                         EbPictureBufferDesc *input_picture_ptr, int blk_row,
@@ -2316,8 +2708,8 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     EbPictureBufferDesc *sixteenth_pic_ptr = src_ds_object->sixteenth_picture_ptr;
 
     // Parts from MotionEstimationKernel()
-    uint32_t sb_origin_x = (uint32_t)(blk_col * BW);
-    uint32_t sb_origin_y = (uint32_t)(blk_row * BH);
+    uint32_t sb_origin_x = (uint32_t)(blk_col * BLOCK_SIZE_64);
+    uint32_t sb_origin_y = (uint32_t)(blk_row * BLOCK_SIZE_64);
 
     uint32_t sb_width  = (input_picture_ptr->width - sb_origin_x) < BLOCK_SIZE_64
          ? input_picture_ptr->width - sb_origin_x
@@ -2384,19 +2776,19 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
         }
     }
 }
-// Perform the first pass
+// Perform the motion estimation for first pass
 // anaghdin add descriptions
-static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
+static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t segment_index, EbBool is_highbd) {
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
 
     int encoder_bit_depth = (int)ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
 
-    uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + BW - 1) /
-        BW; // I think only the part of the picture
-    uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + BH - 1) /
-        BH; // that fits to the 32x32 blocks are actually filtered
+    uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) /
+        BLOCK_SIZE_64; // I think only the part of the picture
+    uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + BLOCK_SIZE_64 - 1) /
+        BLOCK_SIZE_64; // that fits to the 32x32 blocks are actually filtered
     uint32_t ss_x   = ppcs_ptr->scs_ptr->subsampling_x;
     uint32_t ss_y   = ppcs_ptr->scs_ptr->subsampling_y;
     uint32_t stride = input_picture_ptr->stride_y;
@@ -2420,10 +2812,10 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
 
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
-            int blk_y_src_offset = (blk_col * BW) + (blk_row * BH) * stride;
+            int blk_y_src_offset = (blk_col * BLOCK_SIZE_64) + (blk_row * BLOCK_SIZE_64) * stride;
 
             // ------------
-            // Step 1: motion estimation + compensation
+            // motion estimation
             // ------------
             // Initialize ME context
             first_pass_setup_me_context(
@@ -2433,20 +2825,11 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
             // Block-based MC using open-loop HME + refinement
             motion_estimate_sb(ppcs_ptr, // source picture control set -> references come from here
                                (uint32_t)blk_row * blk_cols + blk_col,
-                               (uint32_t)blk_col * BW, // x block
-                               (uint32_t)blk_row * BH, // y block
+                               (uint32_t)blk_col * BLOCK_SIZE_64, // x block
+                               (uint32_t)blk_row * BLOCK_SIZE_64, // y block
                                context_ptr,
                                input_picture_ptr); // source picture
 
-#if 0
-            // split filtering function into 32x32 blocks
-            // TODO: implement a 64x64 SIMD version
-            for (int block_row = 0; block_row < 2; block_row++) {
-                for (int block_col = 0; block_col < 2; block_col++) {
-
-                }
-            }
-#endif
         }
     }
     return EB_ErrorNone;
@@ -2458,17 +2841,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
 EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
     
-    uint8_t              index_center;
-    EbPictureBufferDesc *central_picture_ptr;
-#if FEATURE_OPT_TF
-    me_context_ptr->me_context_ptr->tf_hp = ppcs_ptr->tf_ctrls.hp;
-#endif
-
-    // index of the central source frame
-    index_center = ppcs_ptr->past_altref_nframes;
-    // source central frame picture buffer
-    central_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
-
+    EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     uint32_t encoder_bit_depth = ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
     EbBool   is_highbd         = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
@@ -2478,7 +2851,7 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     if (ppcs_ptr->temp_filt_prep_done == 0) {
         ppcs_ptr->temp_filt_prep_done = 1;
 
-#if 0
+#if 1
         // Pad chroma reference samples - once only per picture
 #if !FIX_10BIT_CRASH
 #if FEATURE_OPT_TF
@@ -2493,7 +2866,7 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                 generate_padding_pic(pic_ptr_ref, ss_x, ss_y, is_highbd);
                 //10bit: for all the reference pictures do the packing once at the beggining.
                 if (is_highbd && i != ppcs_ptr->past_altref_nframes) {
-                    EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y], central_picture_ptr->luma_size);
+                    EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y], input_picture_ptr->luma_size);
                     // pack byte buffers to 16 bit buffer
                     pack_highbd_pic(pic_ptr_ref, list_picture_control_set_ptr[i]->altref_buffer_highbd, ss_x, ss_y, EB_TRUE);
                 }
@@ -2505,16 +2878,20 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     eb_release_mutex(ppcs_ptr->first_pass_mutex);
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
-
-    first_pass_frame(ppcs_ptr, me_context_ptr, segment_index, is_highbd);
+    // Perform the me for the first pass for each segment
+    first_pass_me(ppcs_ptr, me_context_ptr, segment_index, is_highbd);
 
     eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {
+        setup_firstpass_data(ppcs_ptr);
+        // Perform the processing of the frame for each frame after me is done for all blocks
+        first_pass_frame(ppcs_ptr, me_context_ptr, is_highbd);
+
 #if 0
         if (is_highbd) {
             unpack_highbd_pic(ppcs_ptr->altref_buffer_highbd,
-                central_picture_ptr,
+                input_picture_ptr,
                 ss_x,
                 ss_y,
                 EB_TRUE);

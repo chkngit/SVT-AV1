@@ -3928,7 +3928,6 @@ void process_first_pass_frame(
         eb_get_empty_object(context_ptr->me_fifo_ptr, &me_wrapper);
         pcs_ptr->me_data_wrapper_ptr = me_wrapper;
         pcs_ptr->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
-        //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
     }
 
     for (seg_idx = 0; seg_idx < pcs_ptr->first_pass_seg_total_count; ++seg_idx) {
@@ -3950,7 +3949,7 @@ void process_first_pass_frame(
 
     eb_release_object(pcs_ptr->me_data_wrapper_ptr);
     pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
-    // anaghdin piture_number not set yet
+    // anaghdin piture_number not set yet to remove?
     if (pcs_ptr->picture_number > 0)
         memcpy(context_ptr->first_pass_golden_frame->buffer_y,
             context_ptr->first_pass_last_frame->buffer_y,
@@ -4853,11 +4852,12 @@ void* picture_decision_kernel(void *input_ptr)
             if (use_output_stat(scs_ptr)) {
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);
-                    if (encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr == NULL) {
+                    PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
+                    if (first_pass_queue_entry->parent_pcs_wrapper_ptr == NULL) {
                         break;
                     }
                     else {
-                        PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
+                        
                         PictureParentControlSet *first_pass_pcs_ptr = (PictureParentControlSet*)first_pass_queue_entry->parent_pcs_wrapper_ptr->object_ptr;
                         if (!first_pass_pcs_ptr->first_pass_done) {
                             SVT_LOG("First Pass: POC:%lld\n", first_pass_queue_entry->picture_number);
