@@ -482,7 +482,20 @@ typedef struct MotionEstimationData {
     MeSbResults **me_results;
     uint16_t sb_total_count_unscaled;
 } MotionEstimationData;
+#if TUNE_TPL_OPT
+typedef struct TplControls {
+    uint8_t tpl_opt_flag;               // 0:OFF 1:ON - TPL optimizations : no rate, only DC
+    uint8_t enable_tpl_qps;             // 0:OFF 1:ON - QPS in TPL
+    uint8_t disable_intra_pred_nref;    // 0:OFF 1:ON - Disable intra prediction in NREF
+    uint8_t disable_intra_pred_nbase;   // 0:OFF 1:ON - Disable intra prediction in NBASE
+    uint8_t disable_tpl_nref;           // 0:OFF 1:ON - Disable tpl in NREF
+    uint8_t disable_tpl_pic_dist;       // 16: OFF - 0: ON
+    uint8_t get_best_ref;               // Reference pruning, get best reference
 
+}TplControls;
+
+
+#endif
 /*!
  * \brief Refresh frame flags for different type of frames.
  *
@@ -507,8 +520,11 @@ typedef struct {
     EbBool      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbBool      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if FIX_TPL_TRAILING_FRAME_BUG
+#if FIX_TPL_TRAILING_FRAME_BUG && !TUNE_TPL_OPT
     uint8_t       tpl_opt_flag;
+#endif
+#if TUNE_TPL_OPT
+    TplControls  tpl_ctrls;
 #endif
 } TPLData;
 #endif
@@ -517,7 +533,7 @@ typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;                 // 3, 5, 7
     uint8_t noise_based_window_adjust;   // add an offset to default window_size based on the noise level; higher the noise, smaller is the offset
-    uint8_t hp;                          // w/o 1/16 pel MV refinement 
+    uint8_t hp;                          // w/o 1/16 pel MV refinement
     uint8_t chroma;                      // use chroma
 #if FEATURE_OPT_TF
     uint64_t block_32x32_16x16_th;       // control tf_16x16 using tf_32x32 pred error

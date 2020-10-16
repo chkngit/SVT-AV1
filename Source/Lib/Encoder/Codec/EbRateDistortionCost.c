@@ -569,7 +569,7 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
 #if !FIX_REMOVE_UNUSED_CODE
                              EbBool use_ssd,
-#endif 
+#endif
                              PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
@@ -1353,7 +1353,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
 #if !FIX_REMOVE_UNUSED_CODE
                             EbBool use_ssd,
-#endif 
+#endif
                              PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,

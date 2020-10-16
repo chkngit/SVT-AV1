@@ -142,6 +142,8 @@ extern "C" {
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define TUNE_CHROMA_SSIM  0 // Enable better Chroma/SSIM
+#define TUNE_TPL_OPT           1  // Tune TPL for better BDR/speed , added signals
+#define TUNE_TPL_LOSSLESS      1  // Algorithmic  TPL clean up
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -4552,6 +4552,47 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 
     return NULL;
 }
+
+#if TUNE_TPL_OPT
+extern void set_tpl_controls(
+    PictureParentControlSet       *pcs_ptr, uint8_t tpl_level) {
+    TplControls *tpl_ctrls = &pcs_ptr->tpl_data.tpl_ctrls;
+
+    switch (tpl_level) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        tpl_ctrls->tpl_opt_flag = 0;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 5:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 6:
+    case 7:
+    case 8:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        break;
+    }
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -5740,10 +5781,14 @@ void* picture_decision_kernel(void *input_ptr)
                             mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
 
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+                            set_tpl_controls(pcs_ptr,pcs_ptr->enc_mode);
+#else
                             if (pcs_ptr->enc_mode <= ENC_M4)
                                 pcs_ptr->tpl_data.tpl_opt_flag = 0;
                             else
                                 pcs_ptr->tpl_data.tpl_opt_flag = 1;
+#endif
 #endif
                         }
 

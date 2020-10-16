@@ -1668,7 +1668,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
 #endif
-#if !FIX_NIC_1_CLEAN_UP    
+#if !FIX_NIC_1_CLEAN_UP
     }
 
     uint8_t use_nic_1_last_stage;
@@ -1934,7 +1934,7 @@ void sort_full_cost_based_candidates(struct ModeDecisionContext *context_ptr,
     }
 }
 #if FIX_TUNIFY_SORTING_ARRAY
-#if !FIX_TUNIFY_SORTING_ARRAY 
+#if !FIX_TUNIFY_SORTING_ARRAY
 void construct_best_sorted_arrays_md_stage_1(struct ModeDecisionContext *  context_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t *best_candidate_index_array) {//best = union from all classes
@@ -2329,14 +2329,16 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
 #if ME_IDX_LUPT
         context_ptr->me_block_offset = (uint32_t)
             me_idx_128x128[((context_ptr->geom_offset_y / me_sb_size) * 2) +
-                           (context_ptr->geom_offset_x / me_sb_size)]
-                          [context_ptr->blk_geom->blkidx_mds];
-    } else {
-        context_ptr->me_sb_addr      = context_ptr->sb_ptr->index;
+            (context_ptr->geom_offset_x / me_sb_size)]
+            [context_ptr->blk_geom->blkidx_mds];
+    }
+    else {
+        context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
         context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];
     }
+
 #else
-    else
+    }else
         context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
 #endif
     if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
@@ -8554,7 +8556,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #else
     interintra_class_pruning_1(context_ptr, best_md_stage_cost);
 #endif
-#if !FIX_TUNIFY_SORTING_ARRAY 
+#if !FIX_TUNIFY_SORTING_ARRAY
     memset(context_ptr->best_candidate_index_array, 0xFF, MAX_NFL_BUFF * sizeof(uint32_t));
     memset(context_ptr->sorted_candidate_index_array, 0xFF, MAX_NFL * sizeof(uint32_t));
     construct_best_sorted_arrays_md_stage_1(context_ptr,

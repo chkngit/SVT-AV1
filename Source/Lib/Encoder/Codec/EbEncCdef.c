@@ -1206,7 +1206,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t       end_gi;
 #if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
-                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2 
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 
     const int fast = (pick_method >= CDEF_FAST_SEARCH_LVL1 &&

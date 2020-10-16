@@ -1839,7 +1839,7 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
         depth_refinement_ctrls->sub_to_current_th = 5;
         depth_refinement_ctrls->use_pred_block_cost = 1;
 #if FEATURE_PD0_CUT_DEPTH
-        depth_refinement_ctrls->disallow_below_16x16 = 
+        depth_refinement_ctrls->disallow_below_16x16 =
             (pcs_ptr->slice_type != I_SLICE && scs_ptr->static_config.super_block_size == 64 && sb_width % 16 == 0 && sb_height % 16 == 0)
                 ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((5 * 64 * 64) / 4)) : 0;
 #endif
@@ -4965,8 +4965,8 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
 #if FEATURE_PD0_CUT_DEPTH
     int32_t min_sq_size =
-        (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16) 
-            ? 16 
+        (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16)
+            ? 16
             : context_ptr->disallow_4x4 ? 8 : 4;
 #endif
     while (blk_index < scs_ptr->max_block_cnt) {
