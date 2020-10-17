@@ -5267,8 +5267,10 @@ void *mode_decision_kernel(void *input_ptr) {
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
 #endif
+#if !FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr) && sb_index == 0)
                         setup_firstpass_data(pcs_ptr->parent_pcs_ptr);
+#endif
                     sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
                     sb_origin_x = (x_sb_index + tile_group_x_sb_start) << sb_size_log2;
                     sb_origin_y = (y_sb_index + tile_group_y_sb_start) << sb_size_log2;
