@@ -1622,7 +1622,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                     reference_object->quarter_reference_picture,
                     reference_object->sixteenth_reference_picture);
         }
-#if TUNE_INL_ME_RECON_INPUT
+#if TUNE_INL_ME_RECON_INPUT && !FASTER_MULTI_THREAD_TPL
         // Copy original input to reference->input_picture
         EbPictureBufferDesc *src_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
         uint16_t luma_height = (uint16_t)(src_ptr->height - scs_ptr->max_input_pad_bottom);

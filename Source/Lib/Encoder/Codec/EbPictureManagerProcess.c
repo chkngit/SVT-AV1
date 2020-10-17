@@ -544,8 +544,13 @@ static EbErrorType tpl_get_open_loop_me(
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
 #endif
                     // Initialize Segments
+#if FASTER_MULTI_THREAD_TPL
+                    pcs_tpl_group_frame_ptr->tpl_me_segments_column_count = scs_ptr->me_segment_column_count_array[0];//1;//scs_ptr->tf_segment_column_count;
+                    pcs_tpl_group_frame_ptr->tpl_me_segments_row_count = scs_ptr->me_segment_row_count_array[0] ; //1;//scs_ptr->tf_segment_row_count;
+#else
                     pcs_tpl_group_frame_ptr->tpl_me_segments_column_count = 1;//scs_ptr->tf_segment_column_count;
                     pcs_tpl_group_frame_ptr->tpl_me_segments_row_count = 1;//scs_ptr->tf_segment_row_count;
+#endif
                     pcs_tpl_group_frame_ptr->tpl_me_segments_total_count =
                         (uint16_t)(pcs_tpl_group_frame_ptr->tpl_me_segments_column_count *
                                    pcs_tpl_group_frame_ptr->tpl_me_segments_row_count);

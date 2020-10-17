@@ -68,8 +68,6 @@ typedef struct MdBlkStruct {
     unsigned             count_non_zero_coeffs : 12;
 #else
     unsigned             count_non_zero_coeffs : 11;
-    unsigned             top_neighbor_depth : 8;
-    unsigned             left_neighbor_depth : 8;
 #endif
     unsigned             top_neighbor_depth : 8;
     unsigned             left_neighbor_depth : 8;

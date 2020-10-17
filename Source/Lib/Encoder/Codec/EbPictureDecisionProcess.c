@@ -4102,6 +4102,47 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
         // Give the new Reference a nominal live_count of 1
         eb_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+
+
+
+#if TUNE_INL_ME_RECON_INPUT && FASTER_MULTI_THREAD_TPL
+        if (pcs->is_used_as_reference_flag) {
+            EbReferenceObject *reference_object =
+        (EbReferenceObject *)pcs->reference_picture_wrapper_ptr->object_ptr;
+            // Copy original input to reference->input_picture
+            EbPictureBufferDesc *src_ptr = pcs->enhanced_picture_ptr;
+            uint16_t luma_height = (uint16_t)(src_ptr->height - scs->max_input_pad_bottom);
+            uint32_t src_offset = (src_ptr->stride_y*src_ptr->origin_y + src_ptr->origin_x);
+            uint16_t src_stride = src_ptr->stride_y;
+            uint8_t *src = src_ptr->buffer_y + src_offset;
+
+            EbPictureBufferDesc *dst_ptr = reference_object->input_picture;
+            uint32_t dst_offset = (dst_ptr->stride_y*dst_ptr->origin_y + dst_ptr->origin_x);
+            uint16_t dst_stride = dst_ptr->stride_y;
+            uint8_t *dst = dst_ptr->buffer_y + dst_offset;
+            for (int i = 0; i < luma_height; i++) {
+                EB_MEMCPY(dst, src, src_stride);
+                src += src_stride;
+                dst += dst_stride;
+            }
+            pad_input_pictures(scs, dst_ptr);
+            // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
+            if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                downsample_filtering_input_picture(
+                    pcs,
+                    reference_object->input_picture,
+                    reference_object->quarter_input_picture,
+                    reference_object->sixteenth_input_picture);
+            }
+            else {
+                downsample_decimation_input_picture(
+                    pcs,
+                    reference_object->input_picture,
+                    reference_object->quarter_input_picture,
+                    reference_object->sixteenth_input_picture);
+            }
+        }
+#endif
     }
     //get a new ME data buffer
 #if FEATURE_INL_ME
