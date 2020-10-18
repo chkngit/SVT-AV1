@@ -1430,7 +1430,11 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->under_shoot_pct     = 25;
     config_ptr->over_shoot_pct      = 25;
     config_ptr->intra_period                              = -2;
+ #if  FASTER_MULTI_THREAD_TPL
+    config_ptr->intra_refresh_type                        = 2;
+#else
     config_ptr->intra_refresh_type                        = 1;
+#endif
     config_ptr->hierarchical_levels                       = 4;
     config_ptr->pred_structure                            = 2;
     config_ptr->enable_global_motion                      = EB_TRUE;
