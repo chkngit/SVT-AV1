@@ -1691,6 +1691,11 @@ void *inloop_me_kernel(void *input_ptr) {
 #if TUNE_SIGNAL_TPL_ME_OQ
                 signal_tpl_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 #else
+#if 1 //FIRST_PASS_RESTRUCTURE
+                if (use_output_stat(scs_ptr))
+                    first_pass_signal_derivation_me_kernel(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
+                else
+#endif
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 #endif
 
@@ -1719,6 +1724,11 @@ void *inloop_me_kernel(void *input_ptr) {
 #endif
             } else if (ppcs_ptr->slice_type != I_SLICE) {
                 // ME Kernel Signal(s) derivation
+#if 1 //FIRST_PASS_RESTRUCTURE
+                if (use_output_stat(scs_ptr))
+                    first_pass_signal_derivation_me_kernel(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
+                else
+#endif
                 signal_derivation_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 
                 context_ptr->me_context_ptr->me_type = ME_CLOSE_LOOP;

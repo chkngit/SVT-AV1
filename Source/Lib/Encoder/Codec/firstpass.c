@@ -597,8 +597,12 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
     const BlockSize bsize       = context_ptr->blk_geom->bsize;
 
     // Initialize tx_depth
+#if FIRST_PASS_RESTRUCTURE
+    candidate_buffer->candidate_ptr->tx_depth = 0;
+#else
     candidate_buffer->candidate_ptr->tx_depth =
         use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
+#endif
     candidate_buffer->candidate_ptr->fast_luma_rate   = 0;
     candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
     context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
@@ -629,7 +633,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
                                               candidate_buffer->prediction_ptr->stride_y,
                                               context_ptr->blk_geom->bwidth,
                                               context_ptr->blk_geom->bheight));
-
+#if !FIRST_PASS_RESTRUCTURE
     if (this_intra_error < UL_INTRA_THRESH) {
         ++stats->intra_skip_count;
     } else if ((mb_col > 0) && (stats->image_data_start_row == INVALID_ROW)) {
@@ -696,6 +700,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
     }
     // Accumulate the intra error.
     stats->intra_error += (int64_t)this_intra_error;
+#endif
     return this_intra_error;
 }
 /***************************************************************************
@@ -2293,51 +2298,116 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 * Returns:
 *   this_intra_error.
 ***************************************************************************/
-static int open_firstpass_intra_prediction(PictureControlSet *pcs_ptr,
-    ModeDecisionContext *        context_ptr,
-    ModeDecisionCandidateBuffer *candidate_buffer,
-    ModeDecisionCandidate *      candidate_ptr,
-    EbPictureBufferDesc *        input_picture_ptr,
-    uint32_t input_origin_index, uint32_t blk_origin_index,
+static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
+    uint32_t me_sb_addr, uint32_t blk_origin_x,
+    uint32_t             blk_origin_y,
+    EbPictureBufferDesc *input_picture_ptr,
+    uint32_t             input_origin_index,
     FRAME_STATS *const stats) {
-    int32_t         mb_row = context_ptr->blk_origin_y >> 4;
-    int32_t         mb_col = context_ptr->blk_origin_x >> 4;
+
+    int32_t        mb_row = blk_origin_y >> 4;
+    int32_t        mb_col = blk_origin_x >> 4;
+    const uint32_t mb_cols =
+        (ppcs_ptr->scs_ptr->seq_header.max_frame_width + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
+    const uint32_t mb_rows =
+        (ppcs_ptr->scs_ptr->seq_header.max_frame_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
+
     const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
-    const BlockSize bsize = context_ptr->blk_geom->bsize;
+   // const BlockSize bsize = context_ptr->blk_geom->bsize;
 
     // Initialize tx_depth
-    candidate_buffer->candidate_ptr->tx_depth =
-        use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
-    candidate_buffer->candidate_ptr->fast_luma_rate = 0;
-    candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
-    context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
-    context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
-    context_ptr->md_staging_tx_size_mode = 0;
-    context_ptr->md_staging_skip_full_chroma = EB_FALSE;
-    context_ptr->md_staging_skip_rdoq = EB_TRUE;
-    context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
+    //candidate_buffer->candidate_ptr->tx_depth =
+    //    use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
+    //context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
+#if 1
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
 
-    first_pass_loop_core(pcs_ptr,
-        context_ptr,
-        candidate_buffer,
-        candidate_ptr,
-        input_picture_ptr,
-        input_origin_index,
-        blk_origin_index);
+    uint32_t cu_origin_x;
+    uint32_t cu_origin_y;
+    OisMbResults *ois_mb_results_ptr;
+    uint8_t *above_row;
+    uint8_t *left_col;
+    uint32_t mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
 
-    EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
+    uint8_t *predictor = predictor8;
+
+    uint8_t bwidth = FORCED_BLK_SIZE;
+    uint8_t bheight = FORCED_BLK_SIZE;
+    
+    uint8_t sub_blk_rows = use_dc_pred ? 1 : bheight / 4;
+    uint8_t sub_blk_cols = use_dc_pred ? 1 : bwidth / 4;
+
+    for (uint32_t sub_blk_index_y = 0; sub_blk_index_y < sub_blk_rows; ++sub_blk_index_y) {
+        for (uint32_t sub_blk_index_x = 0; sub_blk_index_x < sub_blk_cols; ++sub_blk_index_x) {
+            TxSize tx_size = sub_blk_rows == 1 ? TX_16X16 : TX_4X4;
+            //uint8_t bsize = 16;
+            cu_origin_x = blk_origin_x + sub_blk_index_x * bwidth / sub_blk_cols;
+            cu_origin_y = blk_origin_y + sub_blk_index_y* bheight/ sub_blk_rows;
+            above_row = above_data + 16;
+            left_col = left_data + 16;
+            uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
+                (ppcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_picture_ptr->stride_y;
+
+            // Fill Neighbor Arrays
+            update_neighbor_samples_array_open_loop_mb(above_row - 1, left_col - 1,
+                input_picture_ptr, input_picture_ptr->stride_y, cu_origin_x, cu_origin_y, bwidth / sub_blk_cols, bheight / sub_blk_rows);
+            // PRED
+            predictor = &predictor8[(cu_origin_x - blk_origin_x) + (cu_origin_y - blk_origin_y)*FORCED_BLK_SIZE];
+            intra_prediction_open_loop_mb(0, DC_PRED, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, FORCED_BLK_SIZE);
+        }
+    }
+#if 0
+    // always process as block16x16 even bsize or tx_size is 8x8
+    TxSize tx_size = TX_16X16;
+    uint8_t bsize = 16;
+    cu_origin_x = blk_origin_x;
+    cu_origin_y = blk_origin_y;
+    above0_row = above0_data + 16;
+    left0_col = left0_data + 16;
+    above_row = above_data + 16;
+    left_col = left_data + 16;
+    uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
+        (ppcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_picture_ptr->stride_y;
+
+    // Fill Neighbor Arrays
+    update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
+        input_picture_ptr, input_picture_ptr->stride_y, cu_origin_x, cu_origin_y, bwidth, bheight);
+    uint8_t ois_intra_mode = DC_PRED;
+
+    int32_t p_angle = 0;
+    above_row = above0_row;
+    left_col = left0_col;
+    // PRED
+    intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, FORCED_BLK_SIZE);
+
+#endif
+
+
+#endif
+    //first_pass_loop_core(pcs_ptr,
+    //    context_ptr,
+    //    candidate_buffer,
+    //    candidate_ptr,
+    //    input_picture_ptr,
+    //    input_origin_index,
+    //    blk_origin_index);
+
+    EbSpatialFullDistType spatial_full_dist_type_fun = /*context_ptr->hbd_mode_decision
         ? full_distortion_kernel16_bits
-        : spatial_full_distortion_kernel;
+        : */spatial_full_distortion_kernel;
 
     int this_intra_error =
         (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
             input_origin_index,
             input_picture_ptr->stride_y,
-            candidate_buffer->prediction_ptr->buffer_y,
-            blk_origin_index,
-            candidate_buffer->prediction_ptr->stride_y,
-            context_ptr->blk_geom->bwidth,
-            context_ptr->blk_geom->bheight));
+            predictor8,
+            0,//blk_origin_index,
+            FORCED_BLK_SIZE,
+            bwidth,
+            bheight));
 
     if (this_intra_error < UL_INTRA_THRESH) {
         ++stats->intra_skip_count;
@@ -2346,18 +2416,18 @@ static int open_firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         stats->image_data_start_row = mb_row;
     }
 
-    if (context_ptr->hbd_mode_decision) {
-        switch (pcs_ptr->parent_pcs_ptr->av1_cm->bit_depth) {
-        case AOM_BITS_8: break;
-        case AOM_BITS_10: this_intra_error >>= 4; break;
-        case AOM_BITS_12: this_intra_error >>= 8; break;
-        default:
-            assert(0 &&
-                "seq_params->bit_depth should be AOM_BITS_8, "
-                "AOM_BITS_10 or AOM_BITS_12");
-            return -1;
-        }
-    }
+    //if (context_ptr->hbd_mode_decision) {
+    //    switch (ppcs_ptr->av1_cm->bit_depth) {
+    //    case AOM_BITS_8: break;
+    //    case AOM_BITS_10: this_intra_error >>= 4; break;
+    //    case AOM_BITS_12: this_intra_error >>= 8; break;
+    //    default:
+    //        assert(0 &&
+    //            "seq_params->bit_depth should be AOM_BITS_8, "
+    //            "AOM_BITS_10 or AOM_BITS_12");
+    //        return -1;
+    //    }
+    //}
 
     // aom_clear_system_state();
     double log_intra = log1p((double)this_intra_error);
@@ -2367,9 +2437,9 @@ static int open_firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         stats->intra_factor += 1.0;
 
     int level_sample;
-    if (context_ptr->hbd_mode_decision)
-        level_sample = ((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
-    else
+    //if (context_ptr->hbd_mode_decision)
+    //    level_sample = ((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
+    //else
         level_sample = input_picture_ptr->buffer_y[input_origin_index];
 
     if ((level_sample < DARK_THRESH) && (log_intra < 9.0))
@@ -2385,7 +2455,7 @@ static int open_firstpass_intra_prediction(PictureControlSet *pcs_ptr,
     // This penalty adds a cost matching that of a 0,0 mv to the intra case.
     this_intra_error += INTRA_MODE_PENALTY;
 
-    const int hbd = context_ptr->hbd_mode_decision;
+    const int hbd = 0;// context_ptr->hbd_mode_decision;
     const int stride = input_picture_ptr->stride_y;
     if (hbd) {
         uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
@@ -2423,7 +2493,7 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
                                                 uint32_t             blk_origin_y,
                                                 EbPictureBufferDesc *input_picture_ptr,
                                                 uint32_t             input_origin_index,
-                                                const int            this_intra_error,
+                                                const int            this_intra_error, MV *last_mv,
                                                 /*int *raw_motion_err_list, */ FRAME_STATS *stats) {
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
@@ -2433,7 +2503,7 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
         (ppcs_ptr->scs_ptr->seq_header.max_frame_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
     int this_inter_error = this_intra_error;
     FULLPEL_MV mv = kZeroFullMv;
-    MV last_mv;
+    //MV last_mv;
 
    // uint32_t full_lambda = context_ptr->hbd_mode_decision
    //     ? context_ptr->full_lambda_md[EB_10_BIT_MD]
@@ -2601,7 +2671,7 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
         stats->sum_mvrs += best_mv.row * best_mv.row;
         stats->sum_mvcs += best_mv.col * best_mv.col;
         ++stats->inter_count;
-        accumulate_mv_stats(best_mv, mv, mb_row, mb_col, mb_rows, mb_cols, &last_mv, stats);
+        accumulate_mv_stats(best_mv, mv, mb_row, mb_col, mb_rows, mb_cols, last_mv, stats);
     }
 
     return this_inter_error;
@@ -2636,34 +2706,16 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
     uint32_t blk_height;
     uint32_t blk_origin_x;
     uint32_t blk_origin_y;
+    MV first_top_mv = kZeroMv;
+    MV last_mv;
 
     uint32_t input_origin_index;
 
     EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
 
 
-
-
     for (uint32_t blk_index_y = 0; blk_index_y < blk_rows; ++blk_index_y) {
         for (uint32_t blk_index_x = 0; blk_index_x < blk_cols; ++blk_index_x) {
-
-#if 0
-            first_pass_signal_derivation_block(context_ptr);
-
-            blk_ptr->av1xd->tile.mi_col_start = context_ptr->sb_ptr->tile_info.mi_col_start;
-            blk_ptr->av1xd->tile.mi_col_end = context_ptr->sb_ptr->tile_info.mi_col_end;
-            blk_ptr->av1xd->tile.mi_row_start = context_ptr->sb_ptr->tile_info.mi_row_start;
-            blk_ptr->av1xd->tile.mi_row_end = context_ptr->sb_ptr->tile_info.mi_row_end;
-
-            int32_t        mb_row = context_ptr->blk_origin_y >> 4;
-            int32_t        mb_col = context_ptr->blk_origin_x >> 4;
-            const uint32_t mb_cols =
-                (pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-            FRAME_STATS *mb_stats =
-                pcs_ptr->parent_pcs_ptr->firstpass_data.mb_stats + mb_row * mb_cols + mb_col;
-            //int *raw_motion_err_list = pcs_ptr->parent_pcs_ptr->firstpass_data.raw_motion_err_list +
-            //    mb_row * mb_cols + mb_col;
-#endif
 
             blk_origin_x = blk_index_x * FORCED_BLK_SIZE;
             blk_origin_y = blk_index_y * FORCED_BLK_SIZE;
@@ -2690,18 +2742,16 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
             FRAME_STATS *mb_stats =
                 ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
 
-
-            int this_intra_error = 1000000;
-            /*firstpass_intra_prediction(pcs_ptr,
-                context_ptr,
-                candidate_buffer,
-                candidate_ptr,
-                input_picture_ptr,
-                input_origin_index,
-                blk_origin_index,
-                mb_stats);*/
+            int this_intra_error = 
+                open_firstpass_intra_prediction(
+                    ppcs_ptr,
+                    me_sb_addr, blk_origin_x, blk_origin_y, input_picture_ptr, input_origin_index,
+                    mb_stats);
 
             int this_inter_error = this_intra_error;
+
+            if (blk_origin_x == 0)
+                last_mv = first_top_mv;
 
             if (ppcs_ptr->first_pass_ref_count) {
                 ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x]
@@ -2718,7 +2768,10 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
                 this_inter_error = open_loop_firstpass_inter_prediction(ppcs_ptr,
                     me_sb_addr, blk_origin_x, blk_origin_y, input_picture_ptr, input_origin_index,
                     this_intra_error,
-                    /*int *raw_motion_err_list, */ mb_stats);
+                    /*int *raw_motion_err_list, */&last_mv,  mb_stats);
+
+                if (blk_origin_x == 0)
+                    first_top_mv = last_mv;
 
                 mb_stats->coded_error += this_inter_error;
             }
@@ -2986,6 +3039,10 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
             }
         }
 #endif
+
+        first_pass_frame_end(ppcs_ptr, ppcs_ptr->ts_duration);
+        if (ppcs_ptr->end_of_sequence_flag)
+            svt_av1_end_first_pass(ppcs_ptr);
         // signal that first pass is done
         eb_post_semaphore(ppcs_ptr->first_pass_done_semaphore);
     }

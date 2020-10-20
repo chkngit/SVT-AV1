@@ -5190,7 +5190,24 @@ void *mode_decision_kernel(void *input_ptr) {
                                               .tile_group_width_in_sb;
         uint32_t sb_row_index_start = 0, sb_row_index_count = 0;
         context_ptr->tot_intra_coded_area       = 0;
+#if  FIRST_PASS_RESTRUCTURE
+        if (use_output_stat(scs_ptr)) {
 
+            eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
+            // Get Empty EncDec Results
+            eb_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
+            enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
+            enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+            //CHKN these are not needed for DLF
+            enc_dec_results_ptr->completed_sb_row_index_start = 0;
+            enc_dec_results_ptr->completed_sb_row_count =
+                ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
+            // Post EncDec Results
+            eb_post_full_object(enc_dec_results_wrapper_ptr);
+        }
+        else{
+#endif
         memset(context_ptr->md_context->part_cnt, 0, sizeof(uint32_t) * SSEG_NUM * (NUMBER_OF_SHAPES-1) * FB_NUM);
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
@@ -5587,11 +5604,13 @@ void *mode_decision_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->av1x->rdmult =
                 context_ptr->pic_full_lambda[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD
                                                                                   : EB_8_BIT_MD];
+#if  !FIRST_PASS_RESTRUCTURE
             if (use_output_stat(scs_ptr)) {
                 first_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
                 if(pcs_ptr->parent_pcs_ptr->end_of_sequence_flag)
                     svt_av1_end_first_pass(pcs_ptr->parent_pcs_ptr);
             }
+#endif
             eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
             // Get Empty EncDec Results
@@ -5605,6 +5624,9 @@ void *mode_decision_kernel(void *input_ptr) {
             // Post EncDec Results
             eb_post_full_object(enc_dec_results_wrapper_ptr);
         }
+#if  FIRST_PASS_RESTRUCTURE
+        }
+#endif
         // Release Mode Decision Results
         eb_release_object(enc_dec_tasks_wrapper_ptr);
     }

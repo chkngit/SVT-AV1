@@ -4948,14 +4948,6 @@ void* picture_decision_kernel(void *input_ptr)
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
 
-#if 0//FIRST_PASS_RESTRUCTURE
-            pcs_ptr->first_pass_ref_ppcs_ptr[0] = queue_entry_ptr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
-            int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(previous_entry_index);
-            pcs_ptr->first_pass_ref_ppcs_ptr[1] = queue_entry_ptr->picture_number > 1 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
-            pcs_ptr->first_pass_ref_count = queue_entry_ptr->picture_number > 1 ? 2 : queue_entry_ptr->picture_number > 0 ? 1 : 0;
-
-            process_first_pass_frame(scs_ptr, pcs_ptr, context_ptr);
-#endif
             pcs_ptr->fade_out_from_black = 0;
 
             pcs_ptr->fade_in_to_black = 0;
