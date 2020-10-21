@@ -83,6 +83,7 @@ extern "C" {
 #define ENABLE_TPL_ZERO_LAD 1 // Enable TPL in loop to work with zero LAD
 #define TUNE_TPL 1   // Tuning TPL algorithm for QP assignment
 #define ENABLE_TPL_TRAILING 1 //enable trailing pictures for TPL
+#define TUNE_TPL_CRA  1 // Tune TPL for CRA pictures
 #endif
 
 #define FEATURE_NIC_SCALING_PER_STAGE            1 // Add ability to scale NICs per stage; improve current trade-offs

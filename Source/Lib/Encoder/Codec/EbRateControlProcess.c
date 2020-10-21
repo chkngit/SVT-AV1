@@ -5901,6 +5901,18 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         double q_val;
         rc->worst_quality   = MAXQ;
         rc->best_quality    = MINQ;
+#if TUNE_TPL_CRA
+        // The new tpl only looks at pictures in tpl group, which is fewer than before,
+        // As a results, we defined a factor to adjust r0
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
+             double factor;
+             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                 factor = 1.5;
+             else
+                 factor = 1;
+             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
+         }
+#endif
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
@@ -6382,6 +6394,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 min_boost_factor, MAX_BOOST_COMBINE_FACTOR, rc->gfu_boost,
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
+
 #if TUNE_TPL
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
@@ -6409,6 +6422,16 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
+#if TUNE_TPL_CRA
+        else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
+            double factor;
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
+        }
+#endif
 #endif
         rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
                                                   MAX_GFUBOOST_FACTOR,
