@@ -1827,7 +1827,11 @@ void *inloop_me_kernel(void *input_ptr) {
 #endif
                 }
 #if FIX_GM_PARAMS_UPDATE
+#if FIX_GM_MULTI
+                else if (!ppcs_ptr->gm_ctrls.enabled && segment_index== 0){
+#else
                 else if (!ppcs_ptr->gm_ctrls.enabled){
+#endif
                     // Initilize global motion to be OFF for all references frames.
                     memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                 }
@@ -1871,7 +1875,10 @@ void *inloop_me_kernel(void *input_ptr) {
 #endif
                 eb_block_on_mutex(ppcs_ptr->tpl_me_mutex);
                 ppcs_ptr->tpl_me_seg_acc++;
-
+#if OMARK//TUNE_INL_TPL_ME_DBG_MSG
+                if (segment_index== 0)
+                    printf("\t Picture %lu TPL ME WORKING %i \n", ppcs_ptr->picture_number, segment_index);
+#endif
                 if (ppcs_ptr->tpl_me_seg_acc ==
                         ppcs_ptr->tpl_me_segments_total_count) {
 

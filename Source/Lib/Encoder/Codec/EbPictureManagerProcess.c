@@ -537,7 +537,7 @@ static EbErrorType tpl_get_open_loop_me(
                     pcs_tpl_group_frame_ptr != pcs_tpl_base_ptr*/) {
 #endif
 #endif
-#if TUNE_INL_TPL_ME_DBG_MSG
+#if OMARK //TUNE_INL_TPL_ME_DBG_MSG
                 printf("[%ld]: Setup TPL ME refs for frame %lu\n",
                         pcs_tpl_base_ptr->picture_number,
                         pcs_tpl_group_frame_ptr->picture_number);
@@ -551,7 +551,7 @@ static EbErrorType tpl_get_open_loop_me(
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
 #endif
                     // Initialize Segments
-#if FASTER_MULTI_THREAD_TPL
+#if TPL_ME_PARRALEL
                     pcs_tpl_group_frame_ptr->tpl_me_segments_column_count = scs_ptr->me_segment_column_count_array[0];//1;//scs_ptr->tf_segment_column_count;
                     pcs_tpl_group_frame_ptr->tpl_me_segments_row_count = scs_ptr->me_segment_row_count_array[0] ; //1;//scs_ptr->tf_segment_row_count;
 #else
@@ -580,7 +580,7 @@ static EbErrorType tpl_get_open_loop_me(
                         out_results_ptr->is_used_as_reference_flag = is_trailing_tpl_frame ? 0 : pcs_tpl_group_frame_ptr->is_used_as_reference_flag;
                         eb_post_full_object(out_results_wrapper_ptr);
                     }
-
+#if !TPL_ME_PARRALEL
                     eb_block_on_semaphore(pcs_tpl_group_frame_ptr->tpl_me_done_semaphore); //chkn we can do all in // ?
 
                     // When TPL16, flag tpl_me_done of 17/18/19 will be set done during TPL32
@@ -590,9 +590,34 @@ static EbErrorType tpl_get_open_loop_me(
                         printf("\t Picture %lu TPL ME done\n", pcs_tpl_group_frame_ptr->picture_number);
 #endif
                     }
+#endif
                 }
             }
         }
+
+ #if TPL_ME_PARRALEL
+            for (uint32_t i = 0; i < pcs_tpl_base_ptr->tpl_group_size; i++) {
+                PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_tpl_base_ptr->tpl_group[i];
+                if (pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type != I_SLICE) {
+                    if (!pcs_tpl_group_frame_ptr->tpl_me_done) {
+                        eb_block_on_semaphore(pcs_tpl_group_frame_ptr->tpl_me_done_semaphore);
+
+                        uint64_t curr_poc = pcs_tpl_group_frame_ptr->picture_number;
+                        uint64_t base_poc = pcs_tpl_base_ptr->picture_number;
+
+                        // 17/18/19, which is out side of the minigop
+                        EbBool is_trailing_tpl_frame = (!pcs_tpl_base_ptr->idr_flag) && (curr_poc > base_poc);
+
+                        if (!is_trailing_tpl_frame) {
+                            pcs_tpl_group_frame_ptr->tpl_me_done = 1;
+#if OMARK //TUNE_INL_TPL_ME_DBG_MSG
+                            printf("\t Picture %lu TPL ME done\n", pcs_tpl_group_frame_ptr->picture_number);
+#endif
+                        }
+                    }
+                }
+            }
+#endif
     }
     // Release pa reference
     if (scs_ptr->in_loop_me)

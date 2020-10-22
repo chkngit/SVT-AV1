@@ -625,7 +625,11 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->picture_decision_fifo_init_count            = 300;
     scs_ptr->initial_rate_control_fifo_init_count        = 300;
 #if FEATURE_INL_ME
+#if BUF_TUNE
+    scs_ptr->in_loop_me_fifo_init_count                  = 300*10;
+#else
     scs_ptr->in_loop_me_fifo_init_count                  = 300;
+#endif
 #endif
     scs_ptr->picture_demux_fifo_init_count               = 300;
     scs_ptr->rate_control_tasks_fifo_init_count          = 300;
@@ -646,7 +650,11 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count     = MAX(MIN(3, core_count >> 1), core_count / 12));
 #if FEATURE_INL_ME
         // TODO: Tune the count here
+#if BUF_TUNE
+        scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = core_count);//MAX(MIN(20, core_count >> 1), core_count / 3));
+#else
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
+#endif
 #endif
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
         scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = MAX(MIN(40, core_count >> 1), core_count));

@@ -36,7 +36,13 @@ extern "C" {
 #endif
 
 
-#define FASTER_MULTI_THREAD_TPL    1
+#define TPL_ME_PARRALEL                             1 //----------------------
+#define FASTER_MULTI_THREAD_TPL                     1 //----------------------
+#define BUF_TUNE                                    1 //----------------------
+#define TPL_DISP_OFF                                0 //     ---------------
+#define FIX_GM_MULTI                                1
+
+
 // START  svt-03 /////////////////////////////////////////////////////////
 #define FEATURE_MDS2 1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2
 #define PR1481       1 //Fix memory leaks from valgrind

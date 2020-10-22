@@ -1252,7 +1252,9 @@ EbErrorType tpl_mc_flow(
             }
             if (tpl_on)
 #endif
+#if !TPL_DISP_OFF
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
+#endif
         }
 
         // synthesizer
@@ -7617,7 +7619,11 @@ void *rate_control_kernel(void *input_ptr) {
 #if !ENABLE_TPL_ZERO_LAD
                                  scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
+#if TPL_DISP_OFF
+                                 /*scs_ptr->static_config.enable_tpl_la*/0)
+#else
                                  scs_ptr->static_config.enable_tpl_la)
+#endif
                             new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
                         else
                         if (use_input_stat(scs_ptr)
@@ -7628,7 +7634,11 @@ void *rate_control_kernel(void *input_ptr) {
                             ) {
                             int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                             frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
+#if TPL_DISP_OFF
+                            if (/*scs_ptr->static_config.enable_tpl_la*/0 && pcs_ptr->parent_pcs_ptr->r0 != 0 &&
+#else
                             if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->parent_pcs_ptr->r0 != 0 &&
+#endif
                                 (update_type == KF_UPDATE || update_type == GF_UPDATE || update_type == ARF_UPDATE)) {
                                 process_tpl_stats_frame_kf_gfu_boost(pcs_ptr);
                             }
@@ -7766,7 +7776,11 @@ void *rate_control_kernel(void *input_ptr) {
 #if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
+#if TPL_DISP_OFF
+                0/*scs_ptr->static_config.enable_tpl_la*/ &&
+#else
                 scs_ptr->static_config.enable_tpl_la &&
+#endif
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
             else
@@ -7777,7 +7791,11 @@ void *rate_control_kernel(void *input_ptr) {
 #if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
+#if TPL_DISP_OFF
+                0/*scs_ptr->static_config.enable_tpl_la */&&
+#else
                 scs_ptr->static_config.enable_tpl_la &&
+#endif
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
             else
