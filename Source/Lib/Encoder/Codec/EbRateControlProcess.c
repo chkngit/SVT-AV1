@@ -283,7 +283,62 @@ static uint8_t is_me_data_valid(
     }
     return 0;
 }
+#if TUNE_TPL_OPT
+// Reference pruning, Loop over all available references and get the best reference idx based on SAD
+void get_best_reference(
+    PictureParentControlSet *pcs_ptr,
+    uint32_t sb_index,
+    uint32_t   me_mb_offset,
+    uint32_t mb_origin_x,
+    uint32_t mb_origin_y,
+    uint32_t *best_reference )
+{
+    EbPictureBufferDesc *input_ptr =  pcs_ptr->enhanced_picture_ptr;
+    uint32_t max_inter_ref = MAX_PA_ME_MV;
+    EbPictureBufferDesc  *ref_pic_ptr;
+    int16_t     x_curr_mv = 0;
+    int16_t     y_curr_mv = 0;
+    uint32_t best_reference_sad = UINT32_MAX;
+    uint32_t reference_sad ;
+    uint8_t *src_mb = input_ptr->buffer_y + input_ptr->origin_x + mb_origin_x +
+                        (input_ptr->origin_y + mb_origin_y) * input_ptr->stride_y;
 
+    for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
+        uint32_t list_index = rf_idx < 4 ? 0 : 1;
+        uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
+        if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
+            (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
+            continue;
+        if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
+            continue;
+        ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
+
+        const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
+        x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
+        y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
+
+        MV best_mv = { y_curr_mv, x_curr_mv };
+        int32_t ref_origin_index = ref_pic_ptr->origin_x +
+            (mb_origin_x + (best_mv.col >> 3)) +
+            (mb_origin_y + (best_mv.row >> 3) +
+                ref_pic_ptr->origin_y) *
+            ref_pic_ptr->stride_y;
+        reference_sad =
+            nxm_sad_kernel_sub_sampled(
+                src_mb,
+                input_ptr->stride_y,
+                ref_pic_ptr->buffer_y + ref_origin_index,
+                ref_pic_ptr->stride_y,
+                16,
+                16);
+        if (reference_sad < best_reference_sad) {
+            best_reference_sad = reference_sad;
+            *best_reference = rf_idx;
+        }
+    }
+    return;
+}
+#endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
@@ -294,17 +349,25 @@ void tpl_mc_flow_dispenser(
     PictureParentControlSet         *pcs_ptr,
     int32_t                          frame_idx)
 {
+#if !TUNE_TPL_LOSSLESS
     uint32_t    picture_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+#endif
     uint32_t    picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
+#if !TUNE_TPL_LOSSLESS
     uint32_t    picture_height_in_sb = (pcs_ptr->enhanced_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+#endif
     int16_t     x_curr_mv = 0;
     int16_t     y_curr_mv = 0;
     uint32_t    me_mb_offset = 0;
     TxSize      tx_size = TX_16X16;
     EbPictureBufferDesc  *ref_pic_ptr;
+#if !TUNE_TPL_LOSSLESS
     struct      ScaleFactors sf;
+#endif
     BlockGeom   blk_geom;
+#if !TUNE_TPL_LOSSLESS
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
+#endif
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *recon_picture_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
     TplStats  tpl_stats;
@@ -320,15 +383,18 @@ void tpl_mc_flow_dispenser(
     blk_geom.bwidth = 16;
     blk_geom.bheight = 16;
 
+#if !TUNE_TPL_LOSSLESS
     eb_av1_setup_scale_factors_for_frame(
         &sf, picture_width_in_sb * BLOCK_SIZE_64,
         picture_height_in_sb * BLOCK_SIZE_64,
         picture_width_in_sb * BLOCK_SIZE_64,
         picture_height_in_sb * BLOCK_SIZE_64);
-
+#endif
     MacroblockPlane mb_plane;
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-
+#if TUNE_TPL_OPT
+    if (pcs_ptr->tpl_data.tpl_ctrls.enable_tpl_qps){
+#endif
     const  double delta_rate_new[7][6] =
     {
         { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
@@ -362,6 +428,9 @@ void tpl_mc_flow_dispenser(
             8);
     qIndex =
         (qIndex + delta_qindex);
+#if TUNE_TPL_OPT
+    }
+#endif
 #if FIX_OPTIMIZE_BUILD_QUANTIZER
     mb_plane.quant_qtx = scs_ptr->quants_8bit.y_quant[qIndex];
     mb_plane.quant_fp_qtx = scs_ptr->quants_8bit.y_quant_fp[qIndex];
@@ -451,6 +520,14 @@ void tpl_mc_flow_dispenser(
 
                     PredictionMode best_intra_mode = DC_PRED;
                     int64_t        best_intra_cost = INT64_MAX;
+#if TUNE_TPL_OPT
+                    // Disable intra prediction
+                    uint8_t disable_intra_pred  = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
+                        pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
+                    if (!disable_intra_pred ||
+                        (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref && pcs_ptr->tpl_data.is_used_as_reference_flag) ||
+                        (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase && pcs_ptr->tpl_data.tpl_temporal_layer_index == 0)){
+#endif
                     if (scs_ptr->in_loop_ois == 0) {
                         OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
                         best_intra_mode       = ois_mb_results_ptr->intra_mode;
@@ -480,7 +557,12 @@ void tpl_mc_flow_dispenser(
                         EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
                         uint8_t intra_mode_end =
 #if FIX_TPL_TRAILING_FRAME_BUG
+
+#if TUNE_TPL_OPT
+                            pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
+#else
                             pcs_ptr->tpl_data.tpl_opt_flag
+#endif
 #else
                             pcs_ptr->tpl_opt_flag
 #endif
@@ -514,6 +596,9 @@ void tpl_mc_flow_dispenser(
                             }
                         }
                 }
+#if TUNE_TPL_OPT
+                    }
+#endif
 #endif
 
                     uint8_t best_mode = DC_PRED;
@@ -523,7 +608,29 @@ void tpl_mc_flow_dispenser(
                     blk_geom.origin_x = blk_stats_ptr->origin_x;
                     blk_geom.origin_y = blk_stats_ptr->origin_y;
                     me_mb_offset = get_me_info_index(pcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
+
+
+#if TUNE_TPL_OPT
+                    uint32_t best_reference = 0;
+                    if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
+                        // Reference pruning
+                        get_best_reference(
+                            pcs_ptr,
+                            sb_index,
+                            me_mb_offset,
+                            mb_origin_x,
+                            mb_origin_y,
+                            &best_reference );
+
+#endif
+
                     for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
+
+#if TUNE_TPL_OPT
+                        if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
+                            if (rf_idx != best_reference)
+                                continue;
+#endif
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
 #if TUNE_INL_TPL_ENHANCEMENT
@@ -543,6 +650,7 @@ void tpl_mc_flow_dispenser(
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #endif
 
+#if !TUNE_TPL_LOSSLESS
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
                         uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
@@ -550,17 +658,20 @@ void tpl_mc_flow_dispenser(
                         struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
                                                   ref_pic_ptr->width, ref_pic_ptr->height,
                                                   ref_pic_ptr->stride_y };
+#endif
                         const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
                         x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
                         y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
+#if !TUNE_TPL_LOSSLESS
                         InterPredParams inter_pred_params;
                         svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                             mb_origin_x, 0, 0, 8, 0, 0,
                             &sf, &ref_buf, kernel);
 
                         inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
-
+#endif
                         MV best_mv = { y_curr_mv, x_curr_mv };
+#if !TUNE_TPL_LOSSLESS
                         av1_build_inter_predictor(pcs_ptr->av1_cm,
                             ref_mb,
                             ref_pic_ptr->stride_y,
@@ -570,8 +681,18 @@ void tpl_mc_flow_dispenser(
                             mb_origin_x,
                             mb_origin_y,
                             &inter_pred_params);
-                        eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
+#endif
+#if TUNE_TPL_LOSSLESS
+                        int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                        (mb_origin_x + (best_mv.col >> 3)) +
+                        (mb_origin_y + (best_mv.row >> 3) +
+                         ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
 
+                        eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y,
+                            ref_pic_ptr->buffer_y + ref_origin_index, ref_pic_ptr->stride_y);
+#else
+                        eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
+#endif
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                         inter_cost = svt_aom_satd(coeff, 256);
@@ -590,16 +711,26 @@ void tpl_mc_flow_dispenser(
                             if (best_inter_cost < best_intra_cost) best_mode = NEWMV;
                         }
                     } // rf_idx
+
+#if TUNE_TPL_LOSSLESS
+                   if ( best_mode == NEWMV) {
+#else
                     if (best_inter_cost < INT64_MAX) {
+#endif
                         uint16_t eob = 0;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+                        int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+#else
                         int rate_cost = pcs_ptr->tpl_data.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+#endif
 #else
                         int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
 #endif
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
+#if !TUNE_TPL_LOSSLESS
                     best_intra_cost = AOMMAX(best_intra_cost, 1);
 #if ENABLE_TPL_TRAILING
                     if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
@@ -609,7 +740,7 @@ void tpl_mc_flow_dispenser(
                         best_inter_cost = 0;
                     else
                         best_inter_cost = AOMMIN(best_intra_cost, best_inter_cost);
-
+#endif
                     tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
 
                     if (best_mode == NEWMV) {
@@ -634,6 +765,7 @@ void tpl_mc_flow_dispenser(
 #else
                             ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 #endif
+#if !TUNE_TPL_LOSSLESS
 
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
@@ -658,6 +790,17 @@ void tpl_mc_flow_dispenser(
                             mb_origin_x,
                             mb_origin_y,
                             &inter_pred_params);
+#else
+                        int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                        (mb_origin_x + (final_best_mv.col >> 3)) +
+                        (mb_origin_y + (final_best_mv.row >> 3) +
+                         ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+                        for (int i = 0 ; i <16 ;++i)
+                            EB_MEMCPY(
+                                dst_buffer+ i * dst_buffer_stride,
+                                ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
+                                sizeof(uint8_t)*(16));
+#endif
                     }
                     else {
                         // intra recon
@@ -709,11 +852,22 @@ void tpl_mc_flow_dispenser(
                     get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+                    int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+#else
                     int rate_cost = pcs_ptr->tpl_data.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+#endif
 #else
                     int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
 #endif
 
+#if TUNE_TPL_OPT
+                    // Disable intra prediction
+                    disable_intra_pred  = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
+                        pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
+                    if (!disable_intra_pred ||
+                        (disable_intra_pred && pcs_ptr->tpl_data.is_used_as_reference_flag))
+#endif
                     if (eob) {
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
@@ -854,7 +1008,11 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
             tpl_stats_ptr->recrf_dist));
     int64_t delta_rate = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
 #if TUNE_TPL_RATE
+#if TUNE_TPL_OPT
+    int64_t mc_dep_rate = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 :
+#else
     int64_t mc_dep_rate = pcs_ptr->tpl_data.tpl_opt_flag ? 0 :
+#endif
         delta_rate_cost(tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->recrf_dist,
             tpl_stats_ptr->srcrf_dist, pix_num);
 #else
@@ -1068,7 +1226,9 @@ EbErrorType tpl_mc_flow(
         encode_context_ptr,
         pcs_ptr,
         pcs_array);
-
+#if TUNE_TPL_OPT
+    uint8_t tpl_on ;
+#endif
 #if TUNE_INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 #else
@@ -1080,12 +1240,44 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
+#if TUNE_TPL_OPT
+            tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
+            tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
+            if (tpl_on == 0)
+            {
+                tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
+                    (ABS((int64_t)pcs_array[0]->picture_number -
+                    (int64_t)pcs_array[frame_idx]->picture_number )
+                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+            }
+            if (tpl_on)
+#endif
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
         }
 
         // synthesizer
         for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--)
+#if TUNE_TPL_OPT
+        {
+            tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
+            tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
+            if (tpl_on == 0)
+            {
+                tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
+                    (ABS((int64_t)pcs_array[0]->picture_number -
+                    (int64_t)pcs_array[frame_idx]->picture_number )
+                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+            }
+            if (tpl_on)
+#endif
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
+
+#if TUNE_TPL_OPT
+            }
+
+        // generate tpl stats
+#endif
+
         generate_r0beta(pcs_array[0]);
 
 #if 0 //AMIR_PRINTS

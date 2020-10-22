@@ -444,7 +444,10 @@ static uint8_t tpl_setup_me_refs(
 #endif
     return 0;
 }
-
+#if TUNE_TPL_OPT
+void set_tpl_controls(
+    PictureParentControlSet       *pcs_ptr, uint8_t tpl_level);
+#endif
 #if TUNE_INL_TPL_ENHANCEMENT
 static EbErrorType tpl_init_pcs_tpl_data(
     PictureParentControlSet         *pcs_tpl_group_frame_ptr,
@@ -483,10 +486,14 @@ static EbErrorType tpl_init_pcs_tpl_data(
     }
 
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+    set_tpl_controls(pcs_tpl_group_frame_ptr,pcs_tpl_group_frame_ptr->enc_mode);
+#else
     if (pcs_tpl_group_frame_ptr->enc_mode <= ENC_M4)
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 0;
     else
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 1;
+#endif
 #endif
     return 0;
 }
