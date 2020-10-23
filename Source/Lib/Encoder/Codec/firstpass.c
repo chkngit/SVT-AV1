@@ -2301,99 +2301,51 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
     uint32_t me_sb_addr, uint32_t blk_origin_x,
     uint32_t             blk_origin_y,
+    uint8_t bwidth,
+    uint8_t bheight,
     EbPictureBufferDesc *input_picture_ptr,
     uint32_t             input_origin_index,
     FRAME_STATS *const stats) {
 
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
-    const uint32_t mb_cols =
-        (ppcs_ptr->scs_ptr->seq_header.max_frame_width + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
-    const uint32_t mb_rows =
-        (ppcs_ptr->scs_ptr->seq_header.max_frame_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
 
     const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
-   // const BlockSize bsize = context_ptr->blk_geom->bsize;
 
-    // Initialize tx_depth
-    //candidate_buffer->candidate_ptr->tx_depth =
-    //    use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
-    //context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
-#if 1
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
-
-    uint32_t cu_origin_x;
-    uint32_t cu_origin_y;
-    OisMbResults *ois_mb_results_ptr;
+    uint32_t sub_blk_origin_x;
+    uint32_t sub_blk_origin_y;
     uint8_t *above_row;
     uint8_t *left_col;
-    uint32_t mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
 
     DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
     uint8_t *predictor = predictor8;
 
-    uint8_t bwidth = FORCED_BLK_SIZE;
-    uint8_t bheight = FORCED_BLK_SIZE;
-    
-    uint8_t sub_blk_rows = use_dc_pred ? 1 : bheight / 4;
-    uint8_t sub_blk_cols = use_dc_pred ? 1 : bwidth / 4;
+    uint8_t sub_blk_rows = use_dc_pred ? (bheight == FORCED_BLK_SIZE) ? 1 : bheight / 8
+        : bheight / 4;
+    uint8_t sub_blk_cols = use_dc_pred ? (bwidth == FORCED_BLK_SIZE) ? 1 : bheight / 8
+        : bwidth / 4;
 
     for (uint32_t sub_blk_index_y = 0; sub_blk_index_y < sub_blk_rows; ++sub_blk_index_y) {
         for (uint32_t sub_blk_index_x = 0; sub_blk_index_x < sub_blk_cols; ++sub_blk_index_x) {
-            TxSize tx_size = sub_blk_rows == 1 ? TX_16X16 : TX_4X4;
-            //uint8_t bsize = 16;
-            cu_origin_x = blk_origin_x + sub_blk_index_x * bwidth / sub_blk_cols;
-            cu_origin_y = blk_origin_y + sub_blk_index_y* bheight/ sub_blk_rows;
+           // TxSize tx_size = sub_blk_rows == 1 ? TX_16X16 : TX_4X4;
+            TxSize tx_size = use_dc_pred ? ((bheight == FORCED_BLK_SIZE && bwidth == FORCED_BLK_SIZE) ? TX_16X16 : TX_8X8) : TX_4X4;
+            sub_blk_origin_x = blk_origin_x + sub_blk_index_x * bwidth / sub_blk_cols;
+            sub_blk_origin_y = blk_origin_y + sub_blk_index_y* bheight/ sub_blk_rows;
             above_row = above_data + 16;
             left_col = left_data + 16;
-            uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
-                (ppcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_picture_ptr->stride_y;
+            uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + sub_blk_origin_x +
+                (ppcs_ptr->enhanced_picture_ptr->origin_y + sub_blk_origin_y) * input_picture_ptr->stride_y;
 
             // Fill Neighbor Arrays
             update_neighbor_samples_array_open_loop_mb(above_row - 1, left_col - 1,
-                input_picture_ptr, input_picture_ptr->stride_y, cu_origin_x, cu_origin_y, bwidth / sub_blk_cols, bheight / sub_blk_rows);
+                input_picture_ptr, input_picture_ptr->stride_y, sub_blk_origin_x, sub_blk_origin_y, bwidth / sub_blk_cols, bheight / sub_blk_rows);
             // PRED
-            predictor = &predictor8[(cu_origin_x - blk_origin_x) + (cu_origin_y - blk_origin_y)*FORCED_BLK_SIZE];
-            intra_prediction_open_loop_mb(0, DC_PRED, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, FORCED_BLK_SIZE);
+            predictor = &predictor8[(sub_blk_origin_x - blk_origin_x) + (sub_blk_origin_y - blk_origin_y)*FORCED_BLK_SIZE];
+            intra_prediction_open_loop_mb(0, DC_PRED, sub_blk_origin_x, sub_blk_origin_y, tx_size, above_row, left_col, predictor, FORCED_BLK_SIZE);
         }
     }
-#if 0
-    // always process as block16x16 even bsize or tx_size is 8x8
-    TxSize tx_size = TX_16X16;
-    uint8_t bsize = 16;
-    cu_origin_x = blk_origin_x;
-    cu_origin_y = blk_origin_y;
-    above0_row = above0_data + 16;
-    left0_col = left0_data + 16;
-    above_row = above_data + 16;
-    left_col = left_data + 16;
-    uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
-        (ppcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_picture_ptr->stride_y;
-
-    // Fill Neighbor Arrays
-    update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
-        input_picture_ptr, input_picture_ptr->stride_y, cu_origin_x, cu_origin_y, bwidth, bheight);
-    uint8_t ois_intra_mode = DC_PRED;
-
-    int32_t p_angle = 0;
-    above_row = above0_row;
-    left_col = left0_col;
-    // PRED
-    intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, FORCED_BLK_SIZE);
-
-#endif
-
-
-#endif
-    //first_pass_loop_core(pcs_ptr,
-    //    context_ptr,
-    //    candidate_buffer,
-    //    candidate_ptr,
-    //    input_picture_ptr,
-    //    input_origin_index,
-    //    blk_origin_index);
 
     EbSpatialFullDistType spatial_full_dist_type_fun = /*context_ptr->hbd_mode_decision
         ? full_distortion_kernel16_bits
@@ -2488,13 +2440,11 @@ static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
 *  Returns:
 *    this_inter_error
 ***************************************************************************/
-static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_ptr,
-                                                uint32_t me_sb_addr, uint32_t blk_origin_x,
-                                                uint32_t             blk_origin_y,
-                                                EbPictureBufferDesc *input_picture_ptr,
-                                                uint32_t             input_origin_index,
-                                                const int            this_intra_error, MV *last_mv,
-                                                /*int *raw_motion_err_list, */ FRAME_STATS *stats) {
+static int open_loop_firstpass_inter_prediction(
+    PictureParentControlSet *ppcs_ptr, uint32_t me_sb_addr, uint32_t blk_origin_x,
+    uint32_t blk_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_picture_ptr,
+    uint32_t input_origin_index, const int this_intra_error, MV *last_mv,
+   /* int *raw_motion_err_list, */ FRAME_STATS *stats) {
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
     const uint32_t mb_cols =
@@ -2503,21 +2453,20 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
         (ppcs_ptr->scs_ptr->seq_header.max_frame_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
     int this_inter_error = this_intra_error;
     FULLPEL_MV mv = kZeroFullMv;
-    //MV last_mv;
 
    // uint32_t full_lambda = context_ptr->hbd_mode_decision
    //     ? context_ptr->full_lambda_md[EB_10_BIT_MD]
-   //     : context_ptr->full_lambda_md[EB_8_BIT_MD];
+   //     : context_ptr->full_lambda_md[EB_8_BIT_MD]
    // int errorperbit = full_lambda >> RD_EPB_SHIFT;
    // errorperbit += (errorperbit == 0);
     EbSpatialFullDistType spatial_full_dist_type_fun =/* context_ptr->hbd_mode_decision
-        ? full_distortion_kernel16_bits
+        ? full_distortion_kernel16_bitsz
         : */spatial_full_distortion_kernel;
 
     int motion_error = 0;
     // TODO(pengchong): Replace the hard-coded threshold
     // anaghdin: to add support
-    if (1) //(raw_motion_error > LOW_MOTION_ERROR_THRESH)
+    if (1 /*raw_motion_error > LOW_MOTION_ERROR_THRESH*/)
     {
 
         //svt_product_prediction_fun_table[candidate_ptr->type](
@@ -2543,9 +2492,6 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
             (blk_origin_y + mv.row + last_input_picture_ptr->origin_y) *
                 last_input_picture_ptr->stride_y;
 
-      //  last_mv.col = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.col;
-      //  last_mv.row = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.row;
-
         motion_error =
             (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                 input_origin_index,
@@ -2553,8 +2499,8 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
                 last_input_picture_ptr->buffer_y,
                 ref_origin_index,
                 last_input_picture_ptr->stride_y,
-                blk_geom.bwidth,
-                blk_geom.bheight));
+                bwidth,
+                bheight));
 
         // Assume 0,0 motion with no mv overhead.
         if (mv.col != 0 && mv.row != 0) {
@@ -2589,19 +2535,20 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
                     golden_input_picture_ptr->buffer_y,
                     ref_origin_index,
                     golden_input_picture_ptr->stride_y,
-                    blk_geom.bwidth,
-                    blk_geom.bheight));
+                    bwidth,
+                    bheight));
 
 
             // Assume 0,0 motion with no mv overhead.
             if (gf_mv.col != 0 && gf_mv.row != 0) {
                 //const MV temp_full_mv = get_mv_from_fullmv(&gf_mv);
-                //gf_motion_error += mv_err_cost(&temp_full_mv,
+                gf_motion_error += 
+                // mv_err_cost(&temp_full_mv,
                 //    &kZeroMv,
                 //    context_ptr->md_rate_estimation_ptr->nmv_vec_cost,
                 //    context_ptr->md_rate_estimation_ptr->nmvcoststack,
                 //    errorperbit) +
-                //    NEW_MV_MODE_PENALTY;
+                    NEW_MV_MODE_PENALTY;
             }
         }
 
@@ -2679,9 +2626,7 @@ static int open_loop_firstpass_inter_prediction(PictureParentControlSet *ppcs_pt
 // Perform the processing for first pass
 // anaghdin add descriptions
 static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
-    MotionEstimationContext_t *me_context_ptr,
-    EbBool is_highbd) {
-
+                                    MotionEstimationContext_t *me_context_ptr, EbBool is_highbd) {
     //anaghdin: check if input_picture_ptr->width, scs_ptr->seq_header.max_frame_width and ppcs_ptr->aligned_width are the same
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
@@ -2719,9 +2664,6 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
 
             blk_origin_x = blk_index_x * FORCED_BLK_SIZE;
             blk_origin_y = blk_index_y * FORCED_BLK_SIZE;
-            input_origin_index =
-                (blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
-                (blk_origin_x + input_picture_ptr->origin_x);
             me_sb_x = blk_origin_x / me_sb_size;
             me_sb_y = blk_origin_y / me_sb_size;
             me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
@@ -2734,7 +2676,8 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
                 (ppcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
                 ? ppcs_ptr->aligned_height - blk_origin_y
                 : FORCED_BLK_SIZE;
-
+            //if (blk_width != FORCED_BLK_SIZE || blk_height != FORCED_BLK_SIZE)
+            //    continue;
             input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
                 input_picture_ptr->stride_y +
                 (input_picture_ptr->origin_x + blk_origin_x);
@@ -2742,11 +2685,15 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
             FRAME_STATS *mb_stats =
                 ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
 
-            int this_intra_error = 
-                open_firstpass_intra_prediction(
-                    ppcs_ptr,
-                    me_sb_addr, blk_origin_x, blk_origin_y, input_picture_ptr, input_origin_index,
-                    mb_stats);
+            int this_intra_error = open_firstpass_intra_prediction(ppcs_ptr,
+                                                                   me_sb_addr,
+                                                                   blk_origin_x,
+                                                                   blk_origin_y,
+                                                                   blk_width,
+                                                                   blk_height,
+                                                                   input_picture_ptr,
+                                                                   input_origin_index,
+                                                                   mb_stats);
 
             int this_inter_error = this_intra_error;
 
@@ -2764,11 +2711,18 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
                         blk_width,
                         blk_height));
 
-
-                this_inter_error = open_loop_firstpass_inter_prediction(ppcs_ptr,
-                    me_sb_addr, blk_origin_x, blk_origin_y, input_picture_ptr, input_origin_index,
+                this_inter_error = open_loop_firstpass_inter_prediction(
+                    ppcs_ptr,
+                    me_sb_addr,
+                    blk_origin_x,
+                    blk_origin_y,
+                    blk_width,
+                    blk_height,
+                    input_picture_ptr,
+                    input_origin_index,
                     this_intra_error,
-                    /*int *raw_motion_err_list, */&last_mv,  mb_stats);
+                    /*int *raw_motion_err_list, */ &last_mv,
+                    mb_stats);
 
                 if (blk_origin_x == 0)
                     first_top_mv = last_mv;
@@ -2859,19 +2813,13 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     // set search method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH; //anaghdin: check this
 
-    // set Lambda
-    // context_ptr->me_context_ptr->lambda =
-    //     lambda_mode_decision_ra_sad[ppcs_ptr->picture_qp];
+    uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
 
-    {
-        uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
-
-        //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
-        uint32_t i;
-        for (i = 0; i < sb_height; i++) {
-            char const *p = (char const *)(src_ptr + i * input_picture_ptr->stride_y);
-            _mm_prefetch(p, _MM_HINT_T2);
-        }
+    //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
+    uint32_t i;
+    for (i = 0; i < sb_height; i++) {
+        char const *p = (char const *)(src_ptr + i * input_picture_ptr->stride_y);
+        _mm_prefetch(p, _MM_HINT_T2);
     }
     context_ptr->me_context_ptr->sb_src_ptr    = &(input_picture_ptr->buffer_y[buffer_index]);
     context_ptr->me_context_ptr->sb_src_stride = input_picture_ptr->stride_y;
@@ -2921,9 +2869,9 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
     int encoder_bit_depth = (int)ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
 
     uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) /
-        BLOCK_SIZE_64; // I think only the part of the picture
+        BLOCK_SIZE_64;
     uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + BLOCK_SIZE_64 - 1) /
-        BLOCK_SIZE_64; // that fits to the 32x32 blocks are actually filtered
+        BLOCK_SIZE_64;
     uint32_t ss_x   = ppcs_ptr->scs_ptr->subsampling_x;
     uint32_t ss_y   = ppcs_ptr->scs_ptr->subsampling_y;
     uint32_t stride = input_picture_ptr->stride_y;
