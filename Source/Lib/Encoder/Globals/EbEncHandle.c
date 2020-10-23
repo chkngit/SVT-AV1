@@ -3203,11 +3203,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->min_qp_allowed = 10;
     config_ptr->enc_mode = MAX_ENC_PRESET;
     config_ptr->intra_period_length = -2;
-#if FASTER_MULTI_THREAD_TPL
-    config_ptr->intra_refresh_type = 2;
-#else
     config_ptr->intra_refresh_type = 1;
-#endif
     config_ptr->hierarchical_levels = 4;
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
     config_ptr->disable_dlf_flag = EB_FALSE;

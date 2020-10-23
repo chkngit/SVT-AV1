@@ -1166,8 +1166,14 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if ENABLE_TPL_TRAILING
     // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
+#if FASTER_MULTI_THREAD_TPL
+    if (pcs_ptr->enc_mode <= ENC_M6 && pcs_ptr->temporal_layer_index == 0) {
+        pcs_ptr->tpl_trailing_frame_count = (scs_ptr->intra_period_length - scs_ptr->encode_context_ptr->intra_period_position) <= 15 ? 0 : 6;
+    }
+#else
     if (pcs_ptr->enc_mode <= ENC_M6)
         pcs_ptr->tpl_trailing_frame_count = 6;
+#endif
     else
         pcs_ptr->tpl_trailing_frame_count = 0;
 
