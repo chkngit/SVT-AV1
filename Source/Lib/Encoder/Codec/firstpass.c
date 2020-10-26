@@ -28,6 +28,7 @@
 #include "mv.h"
 #if FIRST_PASS_RESTRUCTURE
 #include "EbMotionEstimation.h"
+//#include "EbMotionEstimationProcess.h"
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 #endif
@@ -2303,7 +2304,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 * Returns:
 *   this_intra_error.
 ***************************************************************************/
-static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
+static int open_loop_firstpass_intra_prediction(
     uint32_t             blk_origin_x,
     uint32_t             blk_origin_y,
     uint8_t bwidth,
@@ -2659,8 +2660,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
             FRAME_STATS *mb_stats =
                 ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
 
-            int this_intra_error = open_loop_firstpass_intra_prediction(ppcs_ptr,
-                                                                   blk_origin_x,
+            int this_intra_error = open_loop_firstpass_intra_prediction(blk_origin_x,
                                                                    blk_origin_y,
                                                                    blk_width,
                                                                    blk_height,
@@ -2847,7 +2847,6 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
         BLOCK_SIZE_64;
     uint32_t ss_x   = ppcs_ptr->scs_ptr->subsampling_x;
     uint32_t ss_y   = ppcs_ptr->scs_ptr->subsampling_y;
-    uint32_t stride = input_picture_ptr->stride_y;
 
     MeContext *context_ptr = me_context_ptr->me_context_ptr;
 
@@ -2892,7 +2891,7 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 /************************************************************************************
 * anaghdin: add description
 ************************************************************************************/
-EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
+void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
     
    // EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
@@ -2967,7 +2966,5 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     }
 
     eb_release_mutex(ppcs_ptr->first_pass_mutex);
-
-    return EB_ErrorNone;
 }
 #endif

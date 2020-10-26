@@ -340,10 +340,9 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv,
 /*!\endcond */
 
 #if FIRST_PASS_RESTRUCTURE
-struct MotionEstimationContext_t;
-extern EbErrorType open_loop_first_pass(struct PictureParentControlSet *  ppcs_ptr,
-                                        struct MotionEstimationContext_t *me_context_ptr,
-                                        int32_t                           segment_index);
+//extern void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
+//                                 MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
+
 #endif
 
 #ifdef __cplusplus

@@ -594,7 +594,11 @@ EbErrorType signal_tpl_me_kernel_oq(SequenceControlSet *       scs_ptr,
     return return_error;
 };
 #endif
+#if FIRST_PASS_RESTRUCTURE
+void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
+                                 MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
 
+#endif
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
