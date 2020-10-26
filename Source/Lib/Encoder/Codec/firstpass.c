@@ -2304,7 +2304,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 *   this_intra_error.
 ***************************************************************************/
 static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
-    uint32_t me_sb_addr, uint32_t blk_origin_x,
+    uint32_t             blk_origin_x,
     uint32_t             blk_origin_y,
     uint8_t bwidth,
     uint8_t bheight,
@@ -2340,8 +2340,6 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
             sub_blk_origin_y = blk_origin_y + sub_blk_index_y* bheight/ sub_blk_rows;
             above_row = above_data + 16;
             left_col = left_data + 16;
-            uint8_t *src = input_picture_ptr->buffer_y + ppcs_ptr->enhanced_picture_ptr->origin_x + sub_blk_origin_x +
-                (ppcs_ptr->enhanced_picture_ptr->origin_y + sub_blk_origin_y) * input_picture_ptr->stride_y;
 
             // Fill Neighbor Arrays
             update_neighbor_samples_array_open_loop_mb(above_row - 1, left_col - 1,
@@ -2608,8 +2606,7 @@ static int open_loop_firstpass_inter_prediction(
 }
 // Perform the processing for first pass
 // anaghdin add descriptions
-static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
-                                    MotionEstimationContext_t *me_context_ptr, EbBool is_highbd) {
+static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
     //anaghdin: check if input_picture_ptr->width, scs_ptr->seq_header.max_frame_width and ppcs_ptr->aligned_width are the same
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
@@ -2618,18 +2615,12 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
         FORCED_BLK_SIZE;
     const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_height
         FORCED_BLK_SIZE;
-    uint32_t stride = input_picture_ptr->stride_y;
-
-
+    
     uint32_t me_sb_size = ppcs_ptr->scs_ptr->sb_sz;
     uint32_t me_pic_width_in_sb =
         (ppcs_ptr->aligned_width + me_sb_size - 1) / me_sb_size;
     uint32_t me_sb_x, me_sb_y, me_sb_addr;
 
-    MeContext *context_ptr = me_context_ptr->me_context_ptr;
-
-    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
-   
     uint32_t blk_width;
     uint32_t blk_height;
     uint32_t blk_origin_x;
@@ -2669,7 +2660,6 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
                 ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
 
             int this_intra_error = open_loop_firstpass_intra_prediction(ppcs_ptr,
-                                                                   me_sb_addr,
                                                                    blk_origin_x,
                                                                    blk_origin_y,
                                                                    blk_width,
@@ -2847,10 +2837,9 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
 // anaghdin add descriptions
 static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                                     MotionEstimationContext_t *me_context_ptr,
-                                    int32_t segment_index, EbBool is_highbd) {
+                                    int32_t segment_index) {
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
 
-    int encoder_bit_depth = (int)ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
 
     uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
@@ -2879,8 +2868,6 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
-            int blk_y_src_offset = (blk_col * BLOCK_SIZE_64) + (blk_row * BLOCK_SIZE_64) * stride;
-
             // ------------
             // motion estimation
             // ------------
@@ -2908,9 +2895,9 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
     
-    EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
-    uint32_t encoder_bit_depth = ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
-    EbBool   is_highbd         = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+   // EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
+  //  uint32_t encoder_bit_depth = ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
+  //  EbBool   is_highbd         = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
     eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
 #if 0
@@ -2946,14 +2933,14 @@ EbErrorType open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
-    first_pass_me(ppcs_ptr, me_context_ptr, segment_index, is_highbd);
+    first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
 
     eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {
         setup_firstpass_data(ppcs_ptr);
         // Perform the processing of the frame for each frame after me is done for all blocks
-        first_pass_frame(ppcs_ptr, me_context_ptr, is_highbd);
+        first_pass_frame(ppcs_ptr);
 
 #if 0
         if (is_highbd) {
