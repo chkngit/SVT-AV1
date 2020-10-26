@@ -26,6 +26,11 @@
 #include "EbPictureDecisionProcess.h"
 #include "EbModeDecisionConfigurationProcess.h"
 #include "mv.h"
+#if FIRST_PASS_RESTRUCTURE
+#include "EbMotionEstimation.h"
+#undef _MM_HINT_T2
+#define _MM_HINT_T2 1
+#endif
 
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
@@ -2482,7 +2487,7 @@ static int open_loop_firstpass_inter_prediction(
 
         // Assume 0,0 motion with no mv overhead.
         if (mv.col != 0 && mv.row != 0) {
-            const MV temp_full_mv = get_mv_from_fullmv(&mv);
+//            const MV temp_full_mv = get_mv_from_fullmv(&mv);
             motion_error += 
                 /*mv_err_cost(&temp_full_mv,
                 &last_mv,
