@@ -2298,7 +2298,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 * Returns:
 *   this_intra_error.
 ***************************************************************************/
-static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
+static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
     uint32_t me_sb_addr, uint32_t blk_origin_x,
     uint32_t             blk_origin_y,
     uint8_t bwidth,
@@ -2347,16 +2347,14 @@ static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
         }
     }
 
-    EbSpatialFullDistType spatial_full_dist_type_fun = /*context_ptr->hbd_mode_decision
-        ? full_distortion_kernel16_bits
-        : */spatial_full_distortion_kernel;
+    EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
 
     int this_intra_error =
         (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
             input_origin_index,
             input_picture_ptr->stride_y,
             predictor8,
-            0,//blk_origin_index,
+            0,
             FORCED_BLK_SIZE,
             bwidth,
             bheight));
@@ -2368,19 +2366,6 @@ static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
         stats->image_data_start_row = mb_row;
     }
 
-    //if (context_ptr->hbd_mode_decision) {
-    //    switch (ppcs_ptr->av1_cm->bit_depth) {
-    //    case AOM_BITS_8: break;
-    //    case AOM_BITS_10: this_intra_error >>= 4; break;
-    //    case AOM_BITS_12: this_intra_error >>= 8; break;
-    //    default:
-    //        assert(0 &&
-    //            "seq_params->bit_depth should be AOM_BITS_8, "
-    //            "AOM_BITS_10 or AOM_BITS_12");
-    //        return -1;
-    //    }
-    //}
-
     // aom_clear_system_state();
     double log_intra = log1p((double)this_intra_error);
     if (log_intra < 10.0)
@@ -2388,11 +2373,7 @@ static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
     else
         stats->intra_factor += 1.0;
 
-    int level_sample;
-    //if (context_ptr->hbd_mode_decision)
-    //    level_sample = ((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
-    //else
-        level_sample = input_picture_ptr->buffer_y[input_origin_index];
+    int level_sample = input_picture_ptr->buffer_y[input_origin_index];
 
     if ((level_sample < DARK_THRESH) && (log_intra < 9.0))
         stats->brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
@@ -2407,7 +2388,7 @@ static int open_firstpass_intra_prediction(PictureParentControlSet *ppcs_ptr,
     // This penalty adds a cost matching that of a 0,0 mv to the intra case.
     this_intra_error += INTRA_MODE_PENALTY;
 
-    const int hbd = 0;// context_ptr->hbd_mode_decision;
+    const int hbd = 0;// context_ptr->hbd_mode_decision; //anaghdin clean up
     const int stride = input_picture_ptr->stride_y;
     if (hbd) {
         uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
@@ -2444,7 +2425,7 @@ static int open_loop_firstpass_inter_prediction(
     PictureParentControlSet *ppcs_ptr, uint32_t me_sb_addr, uint32_t blk_origin_x,
     uint32_t blk_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_picture_ptr,
     uint32_t input_origin_index, const int this_intra_error, MV *last_mv,
-   /* int *raw_motion_err_list, */ FRAME_STATS *stats) {
+    int raw_motion_err, FRAME_STATS *stats) {
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
     const uint32_t mb_cols =
@@ -2459,18 +2440,15 @@ static int open_loop_firstpass_inter_prediction(
    //     : context_ptr->full_lambda_md[EB_8_BIT_MD]
    // int errorperbit = full_lambda >> RD_EPB_SHIFT;
    // errorperbit += (errorperbit == 0);
-    EbSpatialFullDistType spatial_full_dist_type_fun =/* context_ptr->hbd_mode_decision
-        ? full_distortion_kernel16_bitsz
-        : */spatial_full_distortion_kernel;
+    EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
 
     int motion_error = 0;
     // TODO(pengchong): Replace the hard-coded threshold
     // anaghdin: to add support
-    if (1 /*raw_motion_error > LOW_MOTION_ERROR_THRESH*/)
+    if (raw_motion_err > LOW_MOTION_ERROR_THRESH)
     {
 
-        //svt_product_prediction_fun_table[candidate_ptr->type](
-        //    context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+
         //*(candidate_buffer->full_cost_ptr) = 0;
         // To convert full-pel MV
         uint32_t    me_mb_offset = 0;
@@ -2685,7 +2663,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
             FRAME_STATS *mb_stats =
                 ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols + blk_index_x;
 
-            int this_intra_error = open_firstpass_intra_prediction(ppcs_ptr,
+            int this_intra_error = open_loop_firstpass_intra_prediction(ppcs_ptr,
                                                                    me_sb_addr,
                                                                    blk_origin_x,
                                                                    blk_origin_y,
@@ -2721,7 +2699,8 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr,
                     input_picture_ptr,
                     input_origin_index,
                     this_intra_error,
-                    /*int *raw_motion_err_list, */ &last_mv,
+                    &last_mv,
+                    ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x],
                     mb_stats);
 
                 if (blk_origin_x == 0)

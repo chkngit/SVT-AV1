@@ -470,6 +470,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
 #endif
     }
+#if 1 //FIRST_PASS_RESTRUCTURE
+    if (use_output_stat(scs_ptr))
+        gm_level = 0;
+#endif
     set_gm_controls(pcs_ptr, gm_level);
 #else
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
@@ -1691,7 +1695,7 @@ void *inloop_me_kernel(void *input_ptr) {
 #if TUNE_SIGNAL_TPL_ME_OQ
                 signal_tpl_me_kernel_oq(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
 #else
-#if 1 //FIRST_PASS_RESTRUCTURE
+#if 0 //FIRST_PASS_RESTRUCTURE
                 if (use_output_stat(scs_ptr))
                     first_pass_signal_derivation_me_kernel(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
                 else
@@ -1724,7 +1728,7 @@ void *inloop_me_kernel(void *input_ptr) {
 #endif
             } else if (ppcs_ptr->slice_type != I_SLICE) {
                 // ME Kernel Signal(s) derivation
-#if 1 //FIRST_PASS_RESTRUCTURE
+#if 0 //FIRST_PASS_RESTRUCTURE
                 if (use_output_stat(scs_ptr))
                     first_pass_signal_derivation_me_kernel(scs_ptr, ppcs_ptr, (MotionEstimationContext_t*)context_ptr);
                 else
@@ -1770,7 +1774,10 @@ void *inloop_me_kernel(void *input_ptr) {
                 //    printf("[%ld]: skip iME\n", ppcs_ptr->picture_number);
 #endif
             }
-
+#if FIRST_PASS_RESTRUCTURE
+            if(use_output_stat(scs_ptr))
+                skip_me = EB_TRUE;
+#endif
             // Segments
             segment_index = in_results_ptr->segment_index;
 
