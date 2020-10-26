@@ -27,6 +27,9 @@
 #include "EbModeDecisionConfigurationProcess.h"
 #include "mv.h"
 #if FIRST_PASS_RESTRUCTURE
+#ifdef ARCH_X86
+#include <xmmintrin.h>
+#endif
 #include "EbMotionEstimation.h"
 //#include "EbMotionEstimationProcess.h"
 #undef _MM_HINT_T2
@@ -2788,13 +2791,14 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH; //anaghdin: check this
 
     uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
-
+#ifdef ARCH_X86
     //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
     uint32_t i;
     for (i = 0; i < sb_height; i++) {
         char const *p = (char const *)(src_ptr + i * input_picture_ptr->stride_y);
         _mm_prefetch(p, _MM_HINT_T2);
     }
+#endif
     context_ptr->me_context_ptr->sb_src_ptr    = &(input_picture_ptr->buffer_y[buffer_index]);
     context_ptr->me_context_ptr->sb_src_stride = input_picture_ptr->stride_y;
 

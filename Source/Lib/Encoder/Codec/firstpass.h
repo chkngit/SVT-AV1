@@ -15,9 +15,6 @@
 #include "EbDefinitions.h"
 #include "EbRateControlProcess.h"
 #include "EbPictureControlSet.h"
-#if 0//FIRST_PASS_RESTRUCTURE
-#include "EbMotionEstimationProcess.h"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -338,12 +335,6 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv,
     const int mb_rows, const int mb_cols,
     MV *last_mv, FRAME_STATS *stats);
 /*!\endcond */
-
-#if FIRST_PASS_RESTRUCTURE
-//extern void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
-//                                 MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
-
-#endif
 
 #ifdef __cplusplus
 }  // extern "C"
