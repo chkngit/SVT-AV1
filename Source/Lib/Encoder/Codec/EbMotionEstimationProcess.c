@@ -498,6 +498,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 #endif
     // Set hme/me based reference pruning level (0-4)
+#if 1//FIRST_PASS_RESTRUCTURE
+    if (use_output_stat(scs_ptr))
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+    else
+#endif
     if (enc_mode <= ENC_MR)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
 #if TUNE_NEW_PRESETS
@@ -509,6 +514,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
     // Set hme-based me sr adjustment level
+#if 1 //FIRST_PASS_RESTRUCTURE
+    if (use_output_stat(scs_ptr))
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+    else
+#endif
     if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
     else
@@ -1494,7 +1504,8 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if FIRST_PASS_RESTRUCTURE
         else {
             // ME Kernel Signal(s) derivation
-            first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+          //  first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+            signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
 
             // first pass start
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;

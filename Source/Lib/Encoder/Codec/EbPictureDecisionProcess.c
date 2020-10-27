@@ -3922,6 +3922,7 @@ void process_first_pass_frame(
     pcs_ptr->first_pass_seg_row_count = 1;// scs_ptr->tf_segment_row_count;
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
+    first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
     // anaghdin: do we always need this if single thread is used?
     if (pcs_ptr->me_data_wrapper_ptr == NULL) {
         EbObjectWrapper               *me_wrapper;

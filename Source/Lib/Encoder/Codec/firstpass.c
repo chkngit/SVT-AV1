@@ -2441,12 +2441,6 @@ static int open_loop_firstpass_inter_prediction(
         (ppcs_ptr->scs_ptr->seq_header.max_frame_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
     int this_inter_error = this_intra_error;
     FULLPEL_MV mv = kZeroFullMv;
-
-   // uint32_t full_lambda = context_ptr->hbd_mode_decision
-   //     ? context_ptr->full_lambda_md[EB_10_BIT_MD]
-   //     : context_ptr->full_lambda_md[EB_8_BIT_MD]
-   // int errorperbit = full_lambda >> RD_EPB_SHIFT;
-   // errorperbit += (errorperbit == 0);
     EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
 
     int motion_error = 0;
@@ -2454,10 +2448,6 @@ static int open_loop_firstpass_inter_prediction(
     // anaghdin: to add support
     if (raw_motion_err > LOW_MOTION_ERROR_THRESH)
     {
-
-
-        //*(candidate_buffer->full_cost_ptr) = 0;
-        // To convert full-pel MV
         uint32_t    me_mb_offset = 0;
         BlockGeom   blk_geom;
         const MeSbResults *me_results = ppcs_ptr->pa_me_data->me_results[me_sb_addr];
@@ -2489,19 +2479,12 @@ static int open_loop_firstpass_inter_prediction(
 
         // Assume 0,0 motion with no mv overhead.
         if (mv.col != 0 && mv.row != 0) {
-//            const MV temp_full_mv = get_mv_from_fullmv(&mv);
             motion_error += 
-                /*mv_err_cost(&temp_full_mv,
-                &last_mv,
-                context_ptr->md_rate_estimation_ptr->nmv_vec_cost,
-                context_ptr->md_rate_estimation_ptr->nmvcoststack,
-                errorperbit) +*/
                 NEW_MV_MODE_PENALTY;
         }
-#if 1
         // Motion search in 2nd reference frame.
         int gf_motion_error = motion_error;
-        if (ppcs_ptr->first_pass_ref_count > 1) {
+        if (ppcs_ptr->first_pass_ref_count > 1 && me_results->total_me_candidate_index[me_mb_offset] > 1) {
             // To convert full-pel MV
             list_index = 0;
             ref_pic_index = 1;
@@ -2526,13 +2509,7 @@ static int open_loop_firstpass_inter_prediction(
 
             // Assume 0,0 motion with no mv overhead.
             if (gf_mv.col != 0 && gf_mv.row != 0) {
-                //const MV temp_full_mv = get_mv_from_fullmv(&gf_mv);
                 gf_motion_error += 
-                // mv_err_cost(&temp_full_mv,
-                //    &kZeroMv,
-                //    context_ptr->md_rate_estimation_ptr->nmv_vec_cost,
-                //    context_ptr->md_rate_estimation_ptr->nmvcoststack,
-                //    errorperbit) +
                     NEW_MV_MODE_PENALTY;
             }
         }
@@ -2544,7 +2521,7 @@ static int open_loop_firstpass_inter_prediction(
         // best of the motion predicted score and the intra coded error
         // (just as will be done for) accumulation of "coded_error" for
         // the last frame.
-        if (ppcs_ptr->first_pass_ref_count > 1) {
+        if (ppcs_ptr->first_pass_ref_count > 1 &&  (gf_motion_error < motion_error * 300)) {
             stats->sr_coded_error += AOMMIN(gf_motion_error, this_intra_error);
         }
         else {
@@ -2568,7 +2545,6 @@ static int open_loop_firstpass_inter_prediction(
         else {
             stats->tr_coded_error += motion_error;
         }
-#endif
     }
     else {
         stats->sr_coded_error += motion_error;
