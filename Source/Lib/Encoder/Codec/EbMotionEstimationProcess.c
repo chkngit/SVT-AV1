@@ -1494,8 +1494,8 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if FIRST_PASS_RESTRUCTURE
         else {
             // ME Kernel Signal(s) derivation
-          //  first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
-            signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+            first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+          //  signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
 
             // first pass start
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;

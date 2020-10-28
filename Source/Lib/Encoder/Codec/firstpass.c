@@ -2520,7 +2520,7 @@ static int open_loop_firstpass_inter_prediction(
         // best of the motion predicted score and the intra coded error
         // (just as will be done for) accumulation of "coded_error" for
         // the last frame.
-        if (ppcs_ptr->first_pass_ref_count > 1 &&  (gf_motion_error < motion_error * 300)) {
+        if (ppcs_ptr->first_pass_ref_count > 1 &&  (gf_motion_error < motion_error * 3)) {
             stats->sr_coded_error += AOMMIN(gf_motion_error, this_intra_error);
         }
         else {
