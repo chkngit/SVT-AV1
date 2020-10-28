@@ -1246,7 +1246,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 #endif
-
+#if !FIRST_PASS_RESTRUCTURE
             // ZZ SSDs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
             if (use_output_stat(scs_ptr) && scs_ptr->static_config.look_ahead_distance != 0) {
@@ -1261,6 +1261,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                         y_sb_end_index);
                 }
             }
+#endif
             // Calculate the ME Distortion and OIS Historgrams
 
             eb_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);

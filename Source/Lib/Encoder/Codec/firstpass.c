@@ -2478,7 +2478,7 @@ static int open_loop_firstpass_inter_prediction(
 
         // Assume 0,0 motion with no mv overhead.
         if (mv.col != 0 && mv.row != 0) {
-            motion_error += 
+            motion_error +=
                 NEW_MV_MODE_PENALTY;
         }
         // Motion search in 2nd reference frame.
@@ -2508,7 +2508,7 @@ static int open_loop_firstpass_inter_prediction(
 
             // Assume 0,0 motion with no mv overhead.
             if (gf_mv.col != 0 && gf_mv.row != 0) {
-                gf_motion_error += 
+                gf_motion_error +=
                     NEW_MV_MODE_PENALTY;
             }
         }
@@ -2589,12 +2589,12 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
     //anaghdin: check if input_picture_ptr->width, scs_ptr->seq_header.max_frame_width and ppcs_ptr->aligned_width are the same
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
-    
+
     const uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_width
         FORCED_BLK_SIZE;
     const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_height
         FORCED_BLK_SIZE;
-    
+
     uint32_t me_sb_size = ppcs_ptr->scs_ptr->sb_sz;
     uint32_t me_pic_width_in_sb =
         (ppcs_ptr->aligned_width + me_sb_size - 1) / me_sb_size;
@@ -2689,7 +2689,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
 
         }
     }
-    
+
     return EB_ErrorNone;
 }
 
@@ -2852,7 +2852,7 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 ************************************************************************************/
 void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
-    
+
    // EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
   //  uint32_t encoder_bit_depth = ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
   //  EbBool   is_highbd         = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;

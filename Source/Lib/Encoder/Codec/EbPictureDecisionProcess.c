@@ -4858,7 +4858,7 @@ void* picture_decision_kernel(void *input_ptr)
                         break;
                     }
                     else {
-                        
+
                         PictureParentControlSet *first_pass_pcs_ptr = (PictureParentControlSet*)first_pass_queue_entry->parent_pcs_wrapper_ptr->object_ptr;
                         if (!first_pass_pcs_ptr->first_pass_done) {
                             SVT_LOG("First Pass: POC:%lld\n", first_pass_queue_entry->picture_number);

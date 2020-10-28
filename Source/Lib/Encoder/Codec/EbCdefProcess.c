@@ -137,7 +137,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t end_gi;
 #if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
-                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2 
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 #endif
 
@@ -337,7 +337,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
 
 #if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
-                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2 
+                                 : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 #endif
     uint32_t  fbr, fbc;

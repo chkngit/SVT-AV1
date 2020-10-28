@@ -6710,7 +6710,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 #if !FIX_IFS
 #if FEATURE_OPT_IFS
                                            candidate_buffer_ptr->prediction_ptr,
-#else                                      
+#else
                                            md_context_ptr->prediction_ptr_temp,
 #endif
 #endif

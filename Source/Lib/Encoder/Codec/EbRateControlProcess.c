@@ -399,7 +399,7 @@ void tpl_mc_flow_dispenser(
     DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
-    
+
     EbPictureBufferDesc *input_ptr =  pcs_ptr->enhanced_picture_ptr;
     uint8_t *above_row;
     uint8_t *left_col;

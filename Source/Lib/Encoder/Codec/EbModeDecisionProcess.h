@@ -220,7 +220,7 @@ typedef struct DepthRefinementCtrls {
     uint8_t use_pred_block_cost;   // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
 #endif
 #if FEATURE_PD0_CUT_DEPTH
-    uint8_t disallow_below_16x16;  // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64 
+    uint8_t disallow_below_16x16;  // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
 #endif
 }DepthRefinementCtrls;
 #if PARTIAL_FREQUENCY
@@ -290,8 +290,8 @@ typedef struct CoeffBSwMdCtrls {
 typedef struct RdoqCtrls {
     uint8_t enabled;
 
-    uint8_t eob_fast_l_inter; // 0: do not use eob_fast  for luma inter; 1:  use eob_fast  for luma inter  
-    uint8_t eob_fast_l_intra; // 0: do not use eob_fast  for luma intra; 1:  use eob_fast  for luma intra  
+    uint8_t eob_fast_l_inter; // 0: do not use eob_fast  for luma inter; 1:  use eob_fast  for luma inter
+    uint8_t eob_fast_l_intra; // 0: do not use eob_fast  for luma intra; 1:  use eob_fast  for luma intra
     uint8_t eob_fast_c_inter; // 0: do not use eob_fast  for chroma inter; 1:  use eob_fast  for chroma inter
     uint8_t eob_fast_c_intra; // 0: do not use eob_fast  for chroma intra; 1:  use eob_fast  for chroma intra
     uint8_t fp_q_l;           // 0: use default quant for luma; 1: use fp_quant for luma
