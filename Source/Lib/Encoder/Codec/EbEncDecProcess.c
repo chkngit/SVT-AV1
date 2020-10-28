@@ -3965,6 +3965,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     return return_error;
 }
+#if !FIRST_PASS_RESTRUCTURE
 /******************************************************
 * Derive EncDec Settings for first pass
 Input   : encoder mode and pd pass
@@ -3973,6 +3974,7 @@ Output  : EncDec Kernel signal(s)
 EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr);
+#endif
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds, uint32_t sb_org_x,
                            uint32_t sb_org_y);
@@ -5003,6 +5005,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 #endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+#if !FIRST_PASS_RESTRUCTURE
         if (use_output_stat(scs_ptr) && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
             force_blk_size = FORCED_BLK_SIZE;
             if (blk_geom->bheight == FORCED_BLK_SIZE && blk_geom->bwidth == FORCED_BLK_SIZE &&
@@ -5018,6 +5021,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     FORCED_BLK_SIZE;
             }
         }
+#endif
 #if FEATURE_PD0_CUT_DEPTH
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
@@ -5067,19 +5071,22 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 #endif
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
-
+#if !FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr)) {
                         if (blk_geom->sq_size == force_blk_size)
                             results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
                     }
                     else {
+#endif
                     if (blk_geom->sq_size > min_sq_size)
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_TRUE;
                     else
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_FALSE;
+#if !FIRST_PASS_RESTRUCTURE
                     }
+#endif
                 }
                 blk_index++;
             }
@@ -5494,9 +5501,11 @@ void *mode_decision_kernel(void *input_ptr) {
                     }
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
+#if !FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr))
                         first_pass_signal_derivation_enc_dec_kernel(pcs_ptr, context_ptr->md_context);
                     else
+#endif
 #if FEATURE_REMOVE_CIRCULAR
                         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
 #else
@@ -5538,7 +5547,9 @@ void *mode_decision_kernel(void *input_ptr) {
                                     context_ptr);
 #else
                     // Encode Pass
+#if !FIRST_PASS_RESTRUCTURE
                     if(!use_output_stat(scs_ptr))
+#endif
                     av1_encode_decode(
                         scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);
 #endif

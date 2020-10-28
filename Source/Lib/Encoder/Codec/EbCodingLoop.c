@@ -3202,7 +3202,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL
                                                                                  : COMPONENT_LUMA);
                                 }
-
+#if !FIRST_PASS_RESTRUCTURE
                                 // CBF Tu decision
                                 if (use_output_stat(scs_ptr)) {
                                     context_ptr->md_context
@@ -3219,7 +3219,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         count_non_zero_coeffs[2] != 0 ? EB_TRUE : EB_FALSE;
                                 }
                                 else
-
+#endif
                                 av1_encode_txb_calc_cost(context_ptr,
                                                          count_non_zero_coeffs,
                                                          y_tu_full_distortion,

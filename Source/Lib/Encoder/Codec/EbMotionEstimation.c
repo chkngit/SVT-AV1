@@ -1900,7 +1900,7 @@ void integer_search_sb(
 #if !FEATURE_INL_ME
             if (context_ptr->me_alt_ref == 0) {
 #else
-            if (context_ptr->me_type != ME_MCTF) {
+            if (context_ptr->me_type != ME_MCTF) {//anaghdin
 #endif
                 int8_t round_up = ((dist%8) == 0) ? 0 : 1;
                 dist = ((dist * 5) / 8) + round_up;

@@ -473,6 +473,7 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet 
 
     return return_error;
 }
+#if !FIRST_PASS_RESTRUCTURE
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,
@@ -579,7 +580,9 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr,
     //ALL PLANE
     *(candidate_buffer->full_cost_ptr) = 0;
 }
+#endif
 #define LOW_MOTION_ERROR_THRESH 25
+#if !FIRST_PASS_RESTRUCTURE
 /***************************************************************************
 * Computes and returns the intra pred error of a block.
 * intra pred error: sum of squared error of the intra predicted residual.
@@ -606,12 +609,8 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
     const BlockSize bsize       = context_ptr->blk_geom->bsize;
 
     // Initialize tx_depth
-#if FIRST_PASS_RESTRUCTURE
-    candidate_buffer->candidate_ptr->tx_depth = 0;
-#else
     candidate_buffer->candidate_ptr->tx_depth =
         use_dc_pred ? 0 : (bsize == BLOCK_16X16 ? 2 : bsize == BLOCK_8X8 ? 1 : 0);
-#endif
     candidate_buffer->candidate_ptr->fast_luma_rate   = 0;
     candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
     context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
@@ -642,7 +641,6 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
                                               candidate_buffer->prediction_ptr->stride_y,
                                               context_ptr->blk_geom->bwidth,
                                               context_ptr->blk_geom->bheight));
-#if !FIRST_PASS_RESTRUCTURE
     if (this_intra_error < UL_INTRA_THRESH) {
         ++stats->intra_skip_count;
     } else if ((mb_col > 0) && (stats->image_data_start_row == INVALID_ROW)) {
@@ -709,7 +707,6 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
     }
     // Accumulate the intra error.
     stats->intra_error += (int64_t)this_intra_error;
-#endif
     return this_intra_error;
 }
 /***************************************************************************
@@ -907,7 +904,6 @@ static int firstpass_inter_prediction(
 
 void set_inter_comp_controls(ModeDecisionContext *mdctxt, uint8_t inter_comp_mode);
 void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level);
-
 /******************************************************
 * Derive md Settings(feature signals) that could be
   changed  at the block level
@@ -937,6 +933,7 @@ extern EbErrorType first_pass_signal_derivation_block(
     return return_error;
 }
 
+
 void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
 #if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
                                         NeighborArrayUnit *  skip_coeff_neighbor_array,
@@ -955,7 +952,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint32_t blk_origin_index);
 void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          EbPictureBufferDesc *input_picture_ptr, uint32_t blk_origin_index);
-
 // inject intra candidates for first pass
 void  first_pass_inject_intra_candidates(
     ModeDecisionContext          *context_ptr,
@@ -1437,7 +1433,6 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                                       mb_stats);
 
     int this_inter_error = this_intra_error;
-#if !FIRST_PASS_RESTRUCTURE
     if (pcs_ptr->slice_type != I_SLICE && fast_candidate_total_count > 1) {
         this_inter_error = firstpass_inter_prediction(pcs_ptr,
                                                       context_ptr,
@@ -1457,7 +1452,6 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
         mb_stats->tr_coded_error += this_intra_error;
         mb_stats->coded_error += this_intra_error;
     }
-#endif
     // choose between Intra and inter LAST based on inter/intra error
     if (this_inter_error < this_intra_error)
         context_ptr->best_candidate_index_array[0] = 1;
@@ -1688,6 +1682,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     #endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
+#endif
 #if FEATURE_OPT_TF
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
 #else
@@ -1852,6 +1847,8 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 #endif
     return return_error;
 }
+
+#if !FIRST_PASS_RESTRUCTURE
 #if TUNE_TX_TYPE_LEVELS
 void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
 #else
@@ -2170,6 +2167,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 #endif
     return return_error;
 }
+#endif
 /******************************************************
 * Derive Mode Decision Config Settings for first pass
 Input   : encoder mode and tune
@@ -2231,6 +2229,7 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     pcs_ptr->hbd_mode_decision = EB_8_BIT_MD; //first pass hard coded to 8bit
     return return_error;
 }
+
 void* set_me_hme_params_oq(
     MeContext                     *me_context_ptr,
     PictureParentControlSet       *pcs_ptr,
@@ -2687,27 +2686,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                 mb_stats->tr_coded_error += this_intra_error;
                 mb_stats->coded_error += this_intra_error;
             }
-#if 0
-            // Handle stat for non 16x16 blocks. For non 16x16 blocks, some of the stats are increased multiple times
-            // First find the last block in the 16x16 area and then devide the stats by the number of small blocks
-            if (context_ptr->blk_geom->bsize != BLOCK_16X16 &&
-                (context_ptr->blk_origin_x + context_ptr->blk_geom->bwidth ==
-                    pcs_ptr->parent_pcs_ptr->aligned_width ||
-                    (context_ptr->blk_geom->origin_x + context_ptr->blk_geom->bwidth) % FORCED_BLK_SIZE ==
-                    0) &&
-                    (context_ptr->blk_origin_y + context_ptr->blk_geom->bheight ==
-                        pcs_ptr->parent_pcs_ptr->aligned_height ||
-                        (context_ptr->blk_geom->origin_y + context_ptr->blk_geom->bheight) % FORCED_BLK_SIZE ==
-                        0)) {
-                int blk_num =
-                    (((context_ptr->blk_geom->origin_x % FORCED_BLK_SIZE) + context_ptr->blk_geom->bwidth) /
-                        context_ptr->blk_geom->bwidth) *
-                        (((context_ptr->blk_geom->origin_y % FORCED_BLK_SIZE) +
-                            context_ptr->blk_geom->bheight) /
-                            context_ptr->blk_geom->bheight);
-                average_non_16x16_stats(mb_stats, blk_num);
-            }
-#endif
+
         }
     }
     
