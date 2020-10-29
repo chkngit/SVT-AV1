@@ -6161,7 +6161,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
              double factor;
              if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
-                 factor = 1.5;
+                 factor = 2;
              else
                  factor = 1;
              pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
@@ -6679,7 +6679,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
-                factor = 1.5;
+                factor = 2;
             else
                 factor = 1;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
