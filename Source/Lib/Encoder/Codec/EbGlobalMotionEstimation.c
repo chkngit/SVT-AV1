@@ -161,6 +161,9 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             if (pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype >
                 TRANSLATION)
                 pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_TRUE;
+
+
+         //   printf("GM %lld (%i,%i) %i \n", pcs_ptr->picture_number, list_index, ref_pic_index, pcs_ptr->is_global_motion[list_index][ref_pic_index]);
         }
     }
 }
@@ -291,6 +294,9 @@ void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *c
             if (pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype >
                 TRANSLATION)
                 pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_TRUE;
+
+
+         //   printf("GM %lld (%i,%i) %i \n", pcs_ptr->picture_number, list_index, ref_pic_index, pcs_ptr->is_global_motion[list_index][ref_pic_index]);
         }
     }
 }

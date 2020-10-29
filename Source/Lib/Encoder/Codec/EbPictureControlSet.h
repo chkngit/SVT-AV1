@@ -482,7 +482,20 @@ typedef struct MotionEstimationData {
     MeSbResults **me_results;
     uint16_t sb_total_count_unscaled;
 } MotionEstimationData;
+#if TUNE_TPL_OPT
+typedef struct TplControls {
+    uint8_t tpl_opt_flag;               // 0:OFF 1:ON - TPL optimizations : no rate, only DC
+    uint8_t enable_tpl_qps;             // 0:OFF 1:ON - QPS in TPL
+    uint8_t disable_intra_pred_nref;    // 0:OFF 1:ON - Disable intra prediction in NREF
+    uint8_t disable_intra_pred_nbase;   // 0:OFF 1:ON - Disable intra prediction in NBASE
+    uint8_t disable_tpl_nref;           // 0:OFF 1:ON - Disable tpl in NREF
+    uint8_t disable_tpl_pic_dist;       // 16: OFF - 0: ON
+    uint8_t get_best_ref;               // Reference pruning, get best reference
 
+}TplControls;
+
+
+#endif
 /*!
  * \brief Refresh frame flags for different type of frames.
  *
@@ -507,8 +520,11 @@ typedef struct {
     EbBool      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbBool      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if FIX_TPL_TRAILING_FRAME_BUG
+#if FIX_TPL_TRAILING_FRAME_BUG && !TUNE_TPL_OPT
     uint8_t       tpl_opt_flag;
+#endif
+#if TUNE_TPL_OPT
+    TplControls  tpl_ctrls;
 #endif
 } TPLData;
 #endif
@@ -883,7 +899,17 @@ typedef struct PictureParentControlSet {
     uint8_t  tpl_me_segments_row_count;
     uint8_t  tpl_me_done;
 #endif
-
+#if PAME_BACK
+    AtomicVarU32  pame_done;          //set when PA ME is done.
+    EbHandle   pame_done_semaphore;
+#endif
+#if SERIAL_BASE
+    uint64_t   base_order;
+#endif
+#if USE_PAREF
+    uint8_t num_tpl_grps; 
+    uint8_t num_tpl_processed;
+#endif
     int16_t tf_segments_total_count;
     uint8_t tf_segments_column_count;
     uint8_t tf_segments_row_count;

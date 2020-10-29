@@ -47,6 +47,9 @@ typedef struct ReferenceQueueEntry {
     uint64_t         picture_number;
     uint64_t         decode_order;
     EbObjectWrapper *reference_object_ptr;
+#if PAME_BACK
+    EbObjectWrapper *ref_wraper;
+#endif
     uint32_t         dependent_count;
     EbBool           release_enable;
     EbBool           reference_available;

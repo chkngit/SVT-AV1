@@ -33,6 +33,10 @@ typedef struct PictureManagerContext {
     EbFifo *picture_input_fifo_ptr;
     EbFifo *picture_manager_output_fifo_ptr;
     EbFifo *picture_control_set_fifo_ptr;
+
+#if SERIAL_BASE
+     uint64_t pmgr_base_order;
+#endif
 } PictureManagerContext;
 
 // Token buffer is only used for palette tokens.
@@ -339,12 +343,18 @@ static uint8_t tpl_setup_me_refs(
 #endif
 #endif
                     *ref_count_ptr += 1;
-#if TUNE_INL_TPL_ME_DBG_MSG
+#if PAME_BACK 
+                    if(pcs_tpl_base_ptr->tpl_group[j]->ds_pics.picture_number!= ref_poc)
+                        printf("\t ERR internal ref L%d: %ld=>%ld, use input, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
+#endif
+
+#if 0//TUNE_INL_TPL_ME_DBG_MSG
                     printf("\t L%d: %ld=>%ld, use input, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
 #endif
                     break;
                 }
             }
+
 #if !TUNE_IME_REUSE_TPL_RESULT
             if (list_index == REF_LIST_1 && ref_in_slide_window) {
                 // Remove duplicate refs from list1 which is already in list0
@@ -362,7 +372,49 @@ static uint8_t tpl_setup_me_refs(
 #endif
 
             if (!ref_in_slide_window) {
+
+#if  USE_PAREF
+                EbPaReferenceObject * ref_obj =
+                    (EbPaReferenceObject *)pcs_tpl_group_frame_ptr->ref_pa_pic_ptr_array[list_index][*ref_count_ptr]->object_ptr;
+
+                pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_number = ref_obj->picture_number;
+                
+                if (ref_poc != pcs_tpl_group_frame_ptr->ref_pic_poc_array[list_index][*ref_count_ptr])
+                {
+                    printf("ERR POC:%lld ", pcs_tpl_group_frame_ptr->picture_number);
+                    fflush(stdout);
+                }
+
+                pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_ptr =
+                    ref_obj->input_padded_picture_ptr;
+                pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].sixteenth_picture_ptr = NULL;
+                pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].quarter_picture_ptr = NULL;
+
+                *ref_count_ptr += 1;
+#else
+
                 ReferenceQueueEntry* ref_entry_ptr = search_ref_in_ref_queue(scs_ptr->encode_context_ptr, ref_poc);
+
+#if PAME_BACK && SERIAL_BASE
+                if (ref_entry_ptr) {
+
+                    EbReferenceObject * ref_obj = (EbReferenceObject *)ref_entry_ptr->ref_wraper->object_ptr;
+
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
+                       ref_obj->ds_pics;
+
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].picture_ptr =
+                        ref_obj->input_picture;
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].sixteenth_picture_ptr =
+                        ref_obj->sixteenth_input_picture;
+                    pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr].quarter_picture_ptr =
+                        ref_obj->quarter_input_picture;
+
+                    *ref_count_ptr += 1;
+                    printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
+
+
+#else
                 if (ref_entry_ptr && ref_entry_ptr->reference_available) {
 #if TUNE_INL_TPL_ENHANCEMENT
                     pcs_tpl_group_frame_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
@@ -370,7 +422,7 @@ static uint8_t tpl_setup_me_refs(
                     pcs_tpl_group_frame_ptr->tpl_ref_ds_ptr_array[list_index][*ref_count_ptr] =
 #endif
                         ((EbReferenceObject *)ref_entry_ptr->reference_object_ptr->object_ptr)->ds_pics;
-#if TUNE_INL_TPL_ME_DBG_MSG
+#if 0//TUNE_INL_TPL_ME_DBG_MSG
                     printf("\t L%d: %ld=>%ld, use recon, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
 #endif
 #if TUNE_INL_TPL_ON_INPUT
@@ -392,9 +444,14 @@ static uint8_t tpl_setup_me_refs(
 #endif
 #endif
                     *ref_count_ptr += 1;
+
+#endif
+
                 } else {
-                    //printf("\t L%d: %ld=>%ld, doesn't exist, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
+                    printf("\t L%d: %ld=>%ld, doesn't exist, ref_count %d\n", list_index, curr_poc, ref_poc, ref_list_count);
                 }
+
+#endif
             }
         }
     }
@@ -444,7 +501,10 @@ static uint8_t tpl_setup_me_refs(
 #endif
     return 0;
 }
-
+#if TUNE_TPL_OPT
+void set_tpl_controls(
+    PictureParentControlSet       *pcs_ptr, uint8_t tpl_level);
+#endif
 #if TUNE_INL_TPL_ENHANCEMENT
 static EbErrorType tpl_init_pcs_tpl_data(
     PictureParentControlSet         *pcs_tpl_group_frame_ptr,
@@ -483,10 +543,14 @@ static EbErrorType tpl_init_pcs_tpl_data(
     }
 
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+    set_tpl_controls(pcs_tpl_group_frame_ptr,pcs_tpl_group_frame_ptr->enc_mode);
+#else
     if (pcs_tpl_group_frame_ptr->enc_mode <= ENC_M4)
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 0;
     else
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 1;
+#endif
 #endif
     return 0;
 }
@@ -497,10 +561,18 @@ static EbErrorType tpl_get_open_loop_me(
     PictureManagerContext           *context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr) {
-    //printf("[%ld]: PM got input\n", pcs_tpl_base_ptr->picture_number);
+    
+  //  printf("[%ld]: PM got input\n", pcs_tpl_base_ptr->picture_number);
+
+#if PAME_BACK
+    if (//scs_ptr->in_loop_me &&
+        scs_ptr->static_config.enable_tpl_la &&
+        pcs_tpl_base_ptr->temporal_layer_index == 0) {
+#else
     if (scs_ptr->in_loop_me &&
             scs_ptr->static_config.enable_tpl_la &&
             pcs_tpl_base_ptr->temporal_layer_index == 0) {
+#endif
         // Do tpl ME to get ME results
         for (uint32_t i = 0; i < pcs_tpl_base_ptr->tpl_group_size; i++) {
             PictureParentControlSet* pcs_tpl_group_frame_ptr = pcs_tpl_base_ptr->tpl_group[i];
@@ -540,6 +612,13 @@ static EbErrorType tpl_get_open_loop_me(
                         pcs_tpl_group_frame_ptr, pcs_tpl_base_ptr,
                         &ref_list0_count, &ref_list1_count,
                         &is_trailing_tpl_frame);
+
+#if PAME_BACK
+                continue;
+#endif
+
+
+
 #if FEATURE_IN_LOOP_TPL
                 if (!pcs_tpl_group_frame_ptr->tpl_me_done){
 #endif
@@ -722,6 +801,9 @@ void *picture_manager_kernel(void *input_ptr) {
                             [encode_context_ptr->reference_picture_queue_tail_index];
                     reference_entry_ptr->picture_number        = pcs_ptr->picture_number;
                     reference_entry_ptr->reference_object_ptr  = (EbObjectWrapper *)NULL;
+#if PAME_BACK
+                    reference_entry_ptr->ref_wraper = pcs_ptr->reference_picture_wrapper_ptr; //at this time only the src data is valid
+#endif
                     reference_entry_ptr->release_enable        = EB_TRUE;
                     reference_entry_ptr->reference_available   = EB_FALSE;
                     reference_entry_ptr->slice_type            = pcs_ptr->slice_type;
@@ -896,6 +978,13 @@ void *picture_manager_kernel(void *input_ptr) {
                         use_input_stat(scs_ptr))
 #endif
                         availability_flag = EB_FALSE;
+
+
+#if SERIAL_BASE
+                    if (entry_pcs_ptr->temporal_layer_index == 0 && entry_pcs_ptr->picture_number>0 && entry_pcs_ptr->base_order!= context_ptr->pmgr_base_order +1 )                      
+                        availability_flag = EB_FALSE;
+#endif
+
 
                     // Check RefList0 Availability
                     for (uint8_t ref_idx = 0; ref_idx < entry_pcs_ptr->ref_list0_count; ++ref_idx) {
@@ -1510,6 +1599,12 @@ void *picture_manager_kernel(void *input_ptr) {
                             eb_object_inc_live_count(child_pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr,
                                                      1);
                         }
+
+#if SERIAL_BASE
+                        if (child_pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0)
+                            context_ptr->pmgr_base_order = child_pcs_ptr->parent_pcs_ptr->base_order;
+#endif
+
 
 #if FEATURE_INL_ME
 

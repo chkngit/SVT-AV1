@@ -214,6 +214,8 @@ typedef struct SequenceControlSet {
     Quants quants_8bit;  // 8bit
     Dequants deq_8bit; // 8bit
 #endif
+
+    uint32_t tot_refs;
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

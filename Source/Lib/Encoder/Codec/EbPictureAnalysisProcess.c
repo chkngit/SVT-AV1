@@ -4191,6 +4191,17 @@ void *picture_analysis_kernel(void *input_ptr) {
                 pa_ref_obj_->sixteenth_decimated_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr = ds_obj->sixteenth_picture_ptr;
 #endif
             } else {
+
+
+#if  PAME_BACK
+                  //not passing through the DS pool, so 1/4 and 1/16 are not used
+                  pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
+                  pcs_ptr->ds_pics.quarter_picture_ptr = NULL; 
+                  pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
+                  pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
+#endif
+
+
                 // Original path
                 // Get PA ref, copy 8bit luma to pa_ref->input_padded_picture_ptr
                 pa_ref_obj_ =

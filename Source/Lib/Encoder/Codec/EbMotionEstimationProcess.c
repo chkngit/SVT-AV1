@@ -1151,11 +1151,53 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if !FIX_GM_BUG
                         eb_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
+
+#if GM_AGAIN
+                        // Global motion estimation
+                        // TODO: create an other kernel ?
+#if FEATURE_GM_OPT
+                        if (pcs_ptr->gm_ctrls.enabled &&
+#else
+                        if (context_ptr->me_context_ptr->compute_global_motion &&
+#endif
+
+                            // Compute only when ME of all 64x64 SBs is performed
+                            pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+
+
+
+
+#if FEATURE_INL_ME
+                            if (!scs_ptr->in_loop_me)
+#if FEATURE_GM_OPT
+                                global_motion_estimation(
+                                    pcs_ptr, input_picture_ptr);
+#else
+                                global_motion_estimation(
+                                    pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
+#else
+                            global_motion_estimation(
+                                pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
+                        }
+#if FIX_GM_PARAMS_UPDATE
+                        else if (!pcs_ptr->gm_ctrls.enabled) {
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                        }
+#endif
+#endif
+
+
                         eb_release_mutex(pcs_ptr->me_processed_sb_mutex);
 #endif
                     }
                 }
             }
+
+#if !GM_AGAIN
+
             // Global motion estimation
             // TODO: create an other kernel ?
 #if FEATURE_GM_OPT
@@ -1189,6 +1231,9 @@ void *motion_estimation_kernel(void *input_ptr) {
                 memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
             }
 #endif
+
+#endif
+
             if (
 #if TUNE_TPL_OIS
                 scs_ptr->in_loop_ois == 0 &&

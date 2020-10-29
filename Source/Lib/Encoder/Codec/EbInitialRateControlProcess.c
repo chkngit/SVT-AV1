@@ -1375,6 +1375,29 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+
+
+#if PAME_BACK           
+            if (scs_ptr->static_config.enable_tpl_la)
+            {  
+
+                {                  
+                   // printfTime("        Production done %lld  %p\n", pcs_ptr->picture_number, pcs_ptr);
+                   // fflush(stdout);
+                }
+
+                eb_post_semaphore(pcs_ptr->pame_done_semaphore);
+             
+               
+                atomic_set_u32(& pcs_ptr->pame_done, 1);   
+
+             //   printfTime("        irc free %lld\n", pcs_ptr->picture_number);
+
+            }
+#endif
+
+
+
 #if FIX_OPTIMIZE_BUILD_QUANTIZER
             if (pcs_ptr->picture_number == 0) {
                 Quants *const quants_8bit = &scs_ptr->quants_8bit;
@@ -1408,9 +1431,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
 #if FEATURE_INL_ME
+#if !USE_PAREF
                 // Release Pa ref after TPL
                 if (!scs_ptr->in_loop_me)
                     release_pa_reference_objects(scs_ptr, pcs_ptr);
+#endif
 #else
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
 #endif

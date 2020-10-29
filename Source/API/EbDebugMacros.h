@@ -35,8 +35,18 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define SERIAL_BASE                0
+#define USE_PAREF                  1
 
+#define GM_AGAIN                   1
+#define PAME_BACK                  1
 #define FASTER_MULTI_THREAD_TPL    1
+
+
+#define TUNE_TPL_CRA  1 // Tune TPL for CRA pictures
+
+
+#if 1
 // START  svt-03 /////////////////////////////////////////////////////////
 #define FEATURE_MDS2 1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2
 #define PR1481       1 //Fix memory leaks from valgrind
@@ -139,15 +149,21 @@ extern "C" {
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
 #define TUNE_NEW_PRESETS                             1 // Preset tuning for M0-M7
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
+#if GM_AGAIN
+#define FIX_GM_BUG                                   0
+#else
 #define FIX_GM_BUG                                   1 // FIX GM r2r difference
+#endif
 #define FIX_ME_IDX_LUPT_ASSERT                       1 // change location of assert statement, code cleanup
 #define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
 #define FIX_GM_PARAMS_UPDATE                         1 // Fix GM r2r related to improper setting of GM params for NREF frames when GM is used for REF only
 // END  svt-03 /////////////////////////////////////////////////////////
-
+#endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define TUNE_CHROMA_SSIM  0 // Enable better Chroma/SSIM
+#define TUNE_TPL_OPT           1  // Tune TPL for better BDR/speed , added signals
+#define TUNE_TPL_LOSSLESS      1  // Algorithmic  TPL clean up
 #ifdef __cplusplus
 }
 #endif // __cplusplus

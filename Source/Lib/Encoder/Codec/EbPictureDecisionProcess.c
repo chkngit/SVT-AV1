@@ -4080,6 +4080,12 @@ void store_tpl_pictures(
             //printf("[%ld]: Got me data [TPL] %p\n", pcs_tpl_ptr->picture_number, pcs_tpl_ptr->pa_me_data);
         }
         //printf("====[%ld]: TPL group Base %ld, TPL group size %d\n",pcs->picture_number, pcs_tpl_ptr->picture_number, pcs->tpl_group_size);
+
+#if USE_PAREF
+        pcs_tpl_ptr->num_tpl_grps++; 
+#endif
+
+
     }
 #endif
 }
@@ -4094,6 +4100,7 @@ void send_picture_out(
 
     if (scs->static_config.look_ahead_distance == 0) {
 
+        //printf("goget :%lld  \n", pcs->picture_number);
         EbObjectWrapper* reference_picture_wrapper;
         // Get Empty Reference Picture Object
         eb_get_empty_object(
@@ -4103,6 +4110,7 @@ void send_picture_out(
         // Give the new Reference a nominal live_count of 1
         eb_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
 
+       // printf("...got :%lld\n", pcs->picture_number);
 
 
 #if TUNE_INL_ME_RECON_INPUT && FASTER_MULTI_THREAD_TPL
@@ -4126,6 +4134,9 @@ void send_picture_out(
                 dst += dst_stride;
             }
             pad_input_pictures(scs, dst_ptr);
+
+#if ! PAME_BACK
+
             // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
             if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                 downsample_filtering_input_picture(
@@ -4141,6 +4152,7 @@ void send_picture_out(
                     reference_object->quarter_input_picture,
                     reference_object->sixteenth_input_picture);
             }
+#endif
         }
 #endif
     }
@@ -4589,6 +4601,47 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 
     return NULL;
 }
+
+#if TUNE_TPL_OPT
+extern void set_tpl_controls(
+    PictureParentControlSet       *pcs_ptr, uint8_t tpl_level) {
+    TplControls *tpl_ctrls = &pcs_ptr->tpl_data.tpl_ctrls;
+
+    switch (tpl_level) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        tpl_ctrls->tpl_opt_flag = 0;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 5:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 6:
+    case 7:
+    case 8:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        break;
+    }
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -5577,7 +5630,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 frm_hdr = &pcs_ptr->frm_hdr;
                             }
                             pcs_ptr->picture_number_alt = encode_context_ptr->picture_number_alt++;
-
+#if SERIAL_BASE
+                            if (pcs_ptr->temporal_layer_index == 0)
+                                pcs_ptr->base_order = encode_context_ptr->base_order++;
+#endif
                             // Set the Decode Order
                             if ((context_ptr->mini_gop_idr_count[mini_gop_index] == 0) &&
                                 (context_ptr->mini_gop_length[mini_gop_index] == pcs_ptr->pred_struct_ptr->pred_struct_period) &&
@@ -5778,10 +5834,14 @@ void* picture_decision_kernel(void *input_ptr)
                             mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
 
 #if FIX_TPL_TRAILING_FRAME_BUG
+#if TUNE_TPL_OPT
+                            set_tpl_controls(pcs_ptr,pcs_ptr->enc_mode);
+#else
                             if (pcs_ptr->enc_mode <= ENC_M4)
                                 pcs_ptr->tpl_data.tpl_opt_flag = 0;
                             else
                                 pcs_ptr->tpl_data.tpl_opt_flag = 1;
+#endif
 #endif
                         }
 

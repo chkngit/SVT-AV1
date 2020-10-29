@@ -1608,7 +1608,12 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     }
 #if FEATURE_INL_ME
     // Save down scaled reference for HME
+
+#if PAME_BACK
+    if(1){  //we dont need to decimated; just the full luma src
+#else
     if (scs_ptr->in_loop_me) {
+
         if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
             downsample_filtering_input_picture(
                     pcs_ptr->parent_pcs_ptr,
@@ -1622,6 +1627,8 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                     reference_object->quarter_reference_picture,
                     reference_object->sixteenth_reference_picture);
         }
+#endif
+
 #if TUNE_INL_ME_RECON_INPUT && !FASTER_MULTI_THREAD_TPL
         // Copy original input to reference->input_picture
         EbPictureBufferDesc *src_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -1640,6 +1647,8 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
             dst += dst_stride;
         }
         pad_input_pictures(scs_ptr, dst_ptr);
+
+#if ! PAME_BACK
         // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
         if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
             downsample_filtering_input_picture(
@@ -1654,6 +1663,8 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                     reference_object->quarter_input_picture,
                     reference_object->sixteenth_input_picture);
         }
+#endif
+
 #endif
     }
 #endif

@@ -43,7 +43,7 @@
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
 #endif
-#if PRINTF_TIME
+#if 1//PRINTF_TIME
 #include <time.h>
 #ifdef _WIN32
 void printfTime(const char *fmt, ...) {
@@ -360,3 +360,15 @@ EbErrorType eb_destroy_mutex(EbHandle mutex_handle)
 
     return return_error;
 }
+
+#if PAME_BACK
+/*
+    set an atomic variable to an input value
+*/
+void atomic_set_u32(AtomicVarU32 *var, uint32_t in)
+{
+    eb_block_on_mutex(var->mutex);
+    var->obj = in;
+    eb_release_mutex(var->mutex);
+}
+#endif

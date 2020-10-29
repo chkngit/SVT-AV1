@@ -2098,6 +2098,13 @@ semaphores, mutexs, etc.
 */
 typedef void * EbHandle;
 
+
+#if PAME_BACK
+typedef struct AtomicVarU32 {
+    uint32_t  obj;
+    EbHandle mutex;
+} AtomicVarU32;
+#endif
 /**
 object_ptr is a EbPtr to the object being constructed.
 object_init_data_ptr is a EbPtr to a data structure used to initialize the object.

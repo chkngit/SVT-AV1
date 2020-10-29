@@ -179,7 +179,9 @@ typedef struct EncodeContext {
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
     EbHandle         shared_reference_mutex;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
-
+#if SERIAL_BASE
+    uint64_t  base_order;
+#endif
     EbHandle stat_file_mutex;
 
     //DPB list management

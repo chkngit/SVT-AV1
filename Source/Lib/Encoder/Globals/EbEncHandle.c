@@ -412,6 +412,10 @@ EbErrorType load_default_buffer_configuration_settings(
         (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
     uint32_t me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
+
+
+ //   me_seg_w = me_seg_h = 1;
+
     if ((core_count != SINGLE_CORE_COUNT) && (core_count < (CONS_CORE_COUNT >> 2)))
     {
         enc_dec_seg_h = MAX(1, enc_dec_seg_h / 2);
@@ -611,7 +615,11 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
+#if USE_PAREF
+            scs_ptr->reference_picture_buffer_init_count = 2 * MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
+#else
             scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
+#endif
             scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
@@ -2286,6 +2294,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->in_loop_me = 1;
 #endif
+
+#if PAME_BACK
+    scs_ptr->in_loop_me = 0;
+#endif
+
+
 #if TUNE_TPL_OIS
         // Open loop intra done with TPL, data is not stored
         scs_ptr->in_loop_ois = 1;
@@ -3355,7 +3369,7 @@ static void print_lib_params(
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: Constraint VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
     else
         SVT_LOG("\nSVT [config]: BRC Mode / QP  / LookaheadDistance / SceneChange\t\t\t: CQP / %d / %d / %d ", scs->static_config.qp, config->look_ahead_distance, config->scene_change_detection);
-#ifdef DEBUG_BUFFERS
+#if 1//def DEBUG_BUFFERS
     SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_LOG("\nSVT [config]: CPCS / PAREF / REF \t\t\t\t\t\t: %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count);
     SVT_LOG("\nSVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d ",
