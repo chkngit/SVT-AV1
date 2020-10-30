@@ -77,6 +77,16 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS
     } else {
         stats_out->stat[frame_number] = *stats;
     }
+#if LAP_ENABLED_VBR
+    if (scs_ptr->lap_enabled && frame_number == 0) {
+        scs_ptr->twopass.stats_buf_ctx->stats_in_start =
+            stats_out->stat;
+        scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+
+        scs_ptr->twopass.stats_buf_ctx->stats_in_end =
+            scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+    }
+#endif
 // TEMP debug code
 #if OUTPUT_FPF
     {
@@ -330,7 +340,12 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end++;
+#if LAP_ENABLED_VBR
     if ((use_output_stat(scs_ptr)) &&
+#else
+    if ((use_output_stat(scs_ptr)) &&
+
+#endif
         (twopass->stats_buf_ctx->stats_in_end >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end = twopass->stats_buf_ctx->stats_in_start;
     }
@@ -2891,8 +2906,9 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
-    first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
-
+    if (ppcs_ptr->first_pass_ref_count) //anaghdin added the condition
+        first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
+    
     eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {

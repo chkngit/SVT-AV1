@@ -55,8 +55,12 @@ typedef struct {
 } GF_FRAME_STATS;
 
 void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
-
+#if LAP_ENABLED_VBR
+//anaghdin update as above functions
+void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
+#else
 void av1_init_single_pass_lap(AV1_COMP *cpi);
+#endif
 
 void svt_av1_get_second_pass_params(struct PictureParentControlSet *pcs_ptr);
 

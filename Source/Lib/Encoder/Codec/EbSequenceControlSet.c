@@ -184,8 +184,11 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
 
     scs_ptr->film_grain_random_seed = 7391;
     scs_ptr->reference_count        = 4;
-
+#if LAP_ENABLED_VBR
+    scs_ptr->lap_enabled = 1;
+#else
     scs_ptr->lap_enabled = 0;
+#endif
     return EB_ErrorNone;
 }
 

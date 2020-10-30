@@ -2529,7 +2529,12 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
+#if LAP_ENABLED_VBR
+    else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
+#else
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr)))
+#endif
+
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);

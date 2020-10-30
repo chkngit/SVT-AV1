@@ -137,6 +137,7 @@ extern "C" {
 #define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
 
 #define FIRST_PASS_RESTRUCTURE 1
+#define LAP_ENABLED_VBR 1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

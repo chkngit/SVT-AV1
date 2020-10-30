@@ -4850,7 +4850,11 @@ void* picture_decision_kernel(void *input_ptr)
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
 #if FIRST_PASS_RESTRUCTURE
+#if LAP_ENABLED_VBR
+            if (use_output_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#else
             if (use_output_stat(scs_ptr)) {
+#endif
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);
                     PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
@@ -5429,7 +5433,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
-                                if (use_output_stat(scs_ptr))
+                                if (use_output_stat(scs_ptr)) //anaghdin: do we need to create a new function for 1 pass lap_enabled?
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);

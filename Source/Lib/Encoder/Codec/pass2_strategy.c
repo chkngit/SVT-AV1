@@ -2368,7 +2368,41 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   twopass->rolling_arf_group_target_bits = 1;
   twopass->rolling_arf_group_actual_bits = 1;
 }
+#if LAP_ENABLED_VBR
+//anaghdin update as above functions
+void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {
+    TWO_PASS *const twopass = &scs_ptr->twopass;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+   // FrameInfo *frame_info = &encode_context_ptr->frame_info;
 
+    if (!twopass->stats_buf_ctx->stats_in_end) return;
+
+    // This variable monitors how far behind the second ref update is lagging.
+    twopass->sr_update_lag = 1;
+
+    twopass->bits_left = 0;
+    twopass->modified_error_min = 0.0;
+    twopass->modified_error_max = 0.0;
+    twopass->modified_error_left = 0.0;
+
+    // Reset the vbr bits off target counters
+    encode_context_ptr->rc.vbr_bits_off_target = 0;
+    encode_context_ptr->rc.vbr_bits_off_target_fast = 0;
+
+    encode_context_ptr->rc.rate_error_estimate = 0;
+
+    // Static sequence monitor variables.
+    twopass->kf_zeromotion_pct = 100;
+    twopass->last_kfgroup_zeromotion_pct = 100;
+
+    // Initialize bits per macro_block estimate correction factor.
+    twopass->bpm_factor = 1.0;
+    // Initialize actual and target bits counters for ARF groups so that
+    // at the start we have a neutral bpm adjustment.
+    twopass->rolling_arf_group_target_bits = 1;
+    twopass->rolling_arf_group_actual_bits = 1;
+}
+#endif
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
   SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;

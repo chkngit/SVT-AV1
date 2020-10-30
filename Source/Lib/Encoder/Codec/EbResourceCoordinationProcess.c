@@ -671,8 +671,20 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
                 &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
             svt_av1_init_second_pass(scs_ptr);
         }
-    }
 
+    }
+#if LAP_ENABLED_VBR
+    else if (scs_ptr->lap_enabled){
+   /*     scs_ptr->twopass.stats_buf_ctx->stats_in_start =
+            encode_context_ptr->stats_out.stat;
+        scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;*/
+        //     scs_ptr->twopass.stats_buf_ctx->stats_in_end =
+         //        &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
+        svt_av1_init_single_pass_lap(scs_ptr);
+
+
+    }
+#endif
 }
 
 extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
@@ -1013,9 +1025,16 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             reset_pcs_av1(pcs_ptr);
             if (pcs_ptr->picture_number == 0) {
+#if LAP_ENABLED_VBR
+                
+#endif
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
+#if LAP_ENABLED_VBR
+                if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
+#else
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))
+#endif
                     setup_two_pass(scs_ptr);
             }
             pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
