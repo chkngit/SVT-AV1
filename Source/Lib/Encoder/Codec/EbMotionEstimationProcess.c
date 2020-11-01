@@ -1148,45 +1148,20 @@ void *motion_estimation_kernel(void *input_ptr) {
                                            sb_origin_y,
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
-#if !FIX_GM_BUG
+#if !FIX_GM_BUG || GM_AGAIN
                         eb_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
 
 #if GM_AGAIN
-                        // Global motion estimation
-                        // TODO: create an other kernel ?
-#if FEATURE_GM_OPT
-                        if (pcs_ptr->gm_ctrls.enabled &&
-#else
-                        if (context_ptr->me_context_ptr->compute_global_motion &&
-#endif
-
-                            // Compute only when ME of all 64x64 SBs is performed
-                            pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
-
-
-
-
-#if FEATURE_INL_ME
-                            if (!scs_ptr->in_loop_me)
-#if FEATURE_GM_OPT
+                        // We need to finish ME for all SBs to do GM
+                        if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+                            if (pcs_ptr->gm_ctrls.enabled)
                                 global_motion_estimation(
                                     pcs_ptr, input_picture_ptr);
-#else
-                                global_motion_estimation(
-                                    pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
-#endif
-#else
-                            global_motion_estimation(
-                                pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
-#endif
+                            else
+                            // Initilize global motion to be OFF when GM is OFF
+                                memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                         }
-#if FIX_GM_PARAMS_UPDATE
-                        else if (!pcs_ptr->gm_ctrls.enabled) {
-                            // Initilize global motion to be OFF for all references frames.
-                            memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-                        }
-#endif
 #endif
 
 
@@ -1834,7 +1809,7 @@ void *inloop_me_kernel(void *input_ptr) {
                                 sb_origin_y,
                                 context_ptr->me_context_ptr,
                                 input_picture_ptr);
-#if !FIX_GM_BUG
+#if !FIX_GM_BUG || GM_AGAIN
 #if TUNE_IME_REUSE_TPL_RESULT
                         {
 #else
@@ -1849,6 +1824,33 @@ void *inloop_me_kernel(void *input_ptr) {
                 }
             }
             if (task_type == 0) {
+
+#if GM_AGAIN
+                if (scs_ptr->static_config.enable_tpl_la) {
+                    if (segment_index == 0) {
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+
+                }
+                else {
+                    eb_block_on_mutex(ppcs_ptr->me_processed_sb_mutex);
+                    if (ppcs_ptr->me_processed_sb_count == ppcs_ptr->sb_total_count) {
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+                    eb_release_mutex(ppcs_ptr->me_processed_sb_mutex);
+
+                }
+#else
                 // Global motion estimation
                 // TODO: create an other kernel ?
 #if FEATURE_GM_OPT
@@ -1876,6 +1878,7 @@ void *inloop_me_kernel(void *input_ptr) {
                     // Initilize global motion to be OFF for all references frames.
                     memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                 }
+#endif
 #endif
                 //printf("[%ld]: iME, sending to RC kernel\n",
                 //        ppcs_ptr->picture_number);

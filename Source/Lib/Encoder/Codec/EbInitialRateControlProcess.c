@@ -1431,11 +1431,14 @@ void *initial_rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
 #if FEATURE_INL_ME
-#if !USE_PAREF
+#if USE_PAREF
+                // Release Pa ref after when TPL is OFF
+                if (!scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la == 0)
+#else
                 // Release Pa ref after TPL
                 if (!scs_ptr->in_loop_me)
-                    release_pa_reference_objects(scs_ptr, pcs_ptr);
 #endif
+                    release_pa_reference_objects(scs_ptr, pcs_ptr);
 #else
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
 #endif

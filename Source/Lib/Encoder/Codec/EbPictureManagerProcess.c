@@ -541,7 +541,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
         pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag = pcs_tpl_group_frame_ptr->is_used_as_reference_flag;
         pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order = pcs_tpl_group_frame_ptr->decode_order;
     }
-
+#if !FIX_TPL_OPT_FLAG
 #if FIX_TPL_TRAILING_FRAME_BUG
 #if TUNE_TPL_OPT
     set_tpl_controls(pcs_tpl_group_frame_ptr,pcs_tpl_group_frame_ptr->enc_mode);
@@ -550,6 +550,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 0;
     else
         pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 1;
+#endif
 #endif
 #endif
     return 0;
