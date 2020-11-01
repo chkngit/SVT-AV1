@@ -42,6 +42,7 @@ extern "C" {
 #define PAME_BACK                  1
 #define FASTER_MULTI_THREAD_TPL    1
 #define FIX_TPL_OPT_FLAG            1
+#define TRUN_OFF_TRAILING            1
 
 
 #define TUNE_TPL_CRA  1 // Tune TPL for CRA pictures
