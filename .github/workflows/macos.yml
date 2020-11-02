@@ -36,11 +36,13 @@ jobs:
         run: |
           set -x
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
-          brew update
-          brew upgrade -f
-          brew install -f yasm ccache cmake
-          printf '%s\n' "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
-            "::set-env name=CCACHE_DIR::$HOME/.ccache"
+          {
+            brew update || brew update-reset
+            brew upgrade yasm ccache cmake ninja || brew install -q yasm ccache cmake ninja
+          } || brew update-reset
+          printf '%s\n' \
+            "PATH=/usr/local/opt/ccache/libexec:$PATH" \
+            "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           clang -v
       - name: Run CMake
         run: cmake -S "$GITHUB_WORKSPACE" -B Build -G"${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -112,13 +114,12 @@ jobs:
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
           {
-            brew update &&
-            brew upgrade &&
-            brew install -q yasm ccache cmake ninja
+            brew update || brew update-reset
+            brew upgrade yasm ccache cmake ninja || brew install -q yasm ccache cmake ninja
           } || brew update-reset
           printf '%s\n' \
-            "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
-            "::set-env name=CCACHE_DIR::$HOME/.ccache"
+            "PATH=/usr/local/opt/ccache/libexec:$PATH" \
+            "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           clang -v
           rm -rf macos-build
       - name: Run CMake
@@ -148,7 +149,7 @@ jobs:
           path: Bin/Release
       - name: Run unit tests
         run: |
-          [ -d  macos-vectors ] || cmake -S "$GITHUB_WORKSPACE" -B macos-vectors -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DBUILD_APPS=OFF
+          cmake -S "$GITHUB_WORKSPACE" -B macos-vectors -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DBUILD_APPS=OFF
           cmake --build macos-vectors --config Release --target TestVectors
           chmod +x ./Bin/Release/SvtAv1UnitTests
           parallel -u -j 4 GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests ::: $(seq 0 $((GTEST_TOTAL_SHARDS - 1)))

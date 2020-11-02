@@ -175,7 +175,7 @@ static int find_qindex_by_rate_with_correction(
   while (low < high) {
     const int mid = (low + high) >> 1;
     const double mid_factor = calc_correction_factor(error_per_mb, mid);
-    const double q = eb_av1_convert_qindex_to_q(mid, bit_depth);
+    const double q = svt_av1_convert_qindex_to_q(mid, bit_depth);
     const int enumerator = qbpm_enumerator(rate_err_tol);
     const int mid_bits_per_mb =
         (int)((enumerator * mid_factor * group_weight_factor) / q);
@@ -447,7 +447,7 @@ static double calc_frame_boost(const RATE_CONTROL *rc,
                                const FIRSTPASS_STATS *this_frame,
                                double this_frame_mv_in_out, double max_boost) {
   double frame_boost;
-  const double lq = eb_av1_convert_qindex_to_q(rc->avg_frame_qindex[INTER_FRAME],
+  const double lq = svt_av1_convert_qindex_to_q(rc->avg_frame_qindex[INTER_FRAME],
                                             frame_info->bit_depth);
   const double boost_q_correction = AOMMIN((0.5 + (lq * 0.015)), 1.5);
   const double active_area = calculate_active_area(frame_info, this_frame);
@@ -479,7 +479,7 @@ static double calc_kf_frame_boost(const RATE_CONTROL *rc,
                                   const FIRSTPASS_STATS *this_frame,
                                   double *sr_accumulator, double max_boost) {
   double frame_boost;
-  const double lq = eb_av1_convert_qindex_to_q(rc->avg_frame_qindex[INTER_FRAME],
+  const double lq = svt_av1_convert_qindex_to_q(rc->avg_frame_qindex[INTER_FRAME],
                                             frame_info->bit_depth);
   const double boost_q_correction = AOMMIN((0.50 + (lq * 0.015)), 2.00);
   const double active_area = calculate_active_area(frame_info, this_frame);
@@ -522,10 +522,10 @@ static int get_projected_gfu_boost(const RATE_CONTROL *rc, int gfu_boost,
 
   double min_boost_factor = sqrt(rc->baseline_gf_interval);
   // Get the current tpl factor (number of frames = frames_to_project).
-  double tpl_factor = av1_get_gfu_boost_projection_factor(
+  double tpl_factor = svt_av1_get_gfu_boost_projection_factor(
       min_boost_factor, MAX_GFUBOOST_FACTOR, frames_to_project);
   // Get the tpl factor when number of frames = num_stats_used_for_prior_boost.
-  double tpl_factor_num_stats = av1_get_gfu_boost_projection_factor(
+  double tpl_factor_num_stats = svt_av1_get_gfu_boost_projection_factor(
       min_boost_factor, MAX_GFUBOOST_FACTOR, num_stats_used_for_gfu_boost);
   int projected_gfu_boost =
       (int)rint((tpl_factor * gfu_boost) / tpl_factor_num_stats);
@@ -2017,7 +2017,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
     rc->active_worst_quality = tmp_q;
     rc->ni_av_qi = tmp_q;
     rc->last_q[INTER_FRAME] = tmp_q;
-    rc->avg_q = eb_av1_convert_qindex_to_q(tmp_q, scs_ptr->encoder_bit_depth);
+    rc->avg_q = svt_av1_convert_qindex_to_q(tmp_q, scs_ptr->encoder_bit_depth);
     rc->avg_frame_qindex[INTER_FRAME] = tmp_q;
     rc->last_q[KEY_FRAME] = (tmp_q + rc_cfg->best_allowed_q) / 2;
     rc->avg_frame_qindex[KEY_FRAME] = rc->last_q[KEY_FRAME];
