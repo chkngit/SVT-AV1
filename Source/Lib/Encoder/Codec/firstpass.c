@@ -340,12 +340,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end++;
-#if LAP_ENABLED_VBR
     if ((use_output_stat(scs_ptr)) &&
-#else
-    if ((use_output_stat(scs_ptr)) &&
-
-#endif
         (twopass->stats_buf_ctx->stats_in_end >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end = twopass->stats_buf_ctx->stats_in_start;
     }
@@ -2345,9 +2340,9 @@ static int open_loop_firstpass_intra_prediction(
     DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
     uint8_t *predictor = predictor8;
 
-    uint8_t sub_blk_rows = use_dc_pred ? (bheight == FORCED_BLK_SIZE) ? 1 : bheight / 8
+    uint8_t sub_blk_rows = use_dc_pred ? (bheight == FORCED_BLK_SIZE && bwidth == FORCED_BLK_SIZE) ? 1 : bheight / 8
         : bheight / 4;
-    uint8_t sub_blk_cols = use_dc_pred ? (bwidth == FORCED_BLK_SIZE) ? 1 : bheight / 8
+    uint8_t sub_blk_cols = use_dc_pred ? (bheight == FORCED_BLK_SIZE && bwidth == FORCED_BLK_SIZE) ? 1 : bwidth / 8
         : bwidth / 4;
 
     for (uint32_t sub_blk_index_y = 0; sub_blk_index_y < sub_blk_rows; ++sub_blk_index_y) {
@@ -2660,7 +2655,11 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                                                                    input_picture_ptr,
                                                                    input_origin_index,
                                                                    mb_stats);
-
+            if (ppcs_ptr->picture_number == 0)
+            SVT_LOG("(%d\t%d\t%d\n",
+                blk_origin_x,
+                blk_origin_y,
+                this_intra_error);
             int this_inter_error = this_intra_error;
 
             if (blk_origin_x == 0)
@@ -2934,7 +2933,11 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
 #endif
 
         first_pass_frame_end(ppcs_ptr, ppcs_ptr->ts_duration);
+#if LAP_ENABLED_VBR
+        if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_enabled)
+#else
         if (ppcs_ptr->end_of_sequence_flag)
+#endif
             svt_av1_end_first_pass(ppcs_ptr);
         // signal that first pass is done
         eb_post_semaphore(ppcs_ptr->first_pass_done_semaphore);
