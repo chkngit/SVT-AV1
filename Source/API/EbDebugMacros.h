@@ -138,6 +138,9 @@ extern "C" {
 
 #define FIRST_PASS_RESTRUCTURE 1
 #define LAP_ENABLED_VBR 1
+#define LAP_ENABLED_VBR_DEBUG 1
+
+#define LAP_LIMITED_STAT 1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

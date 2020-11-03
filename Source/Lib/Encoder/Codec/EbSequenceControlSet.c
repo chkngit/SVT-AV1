@@ -186,7 +186,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     scs_ptr->reference_count        = 4;
 #if LAP_ENABLED_VBR
     if(1 /*use_output_stat(scs_ptr) || use_input_stat(scs_ptr)*/)
-        scs_ptr->lap_enabled = 1;
+        scs_ptr->lap_enabled = 1 ;
     else
         scs_ptr->lap_enabled = 1;
 #else

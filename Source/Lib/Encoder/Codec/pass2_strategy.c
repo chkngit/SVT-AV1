@@ -18,7 +18,9 @@
 #include "firstpass.h"
 #include "EbSequenceControlSet.h"
 #include "EbEntropyCoding.h"
-
+#if LAP_ENABLED_VBR_DEBUG
+#include "EbLog.h"
+#endif
 //#define INT_MAX 0x7fffffff
 
 #define DEFAULT_KF_BOOST 2300
@@ -87,11 +89,16 @@ static int input_stats_lap(TWO_PASS *p, FIRSTPASS_STATS *fps) {
     if (p->stats_in >= p->stats_buf_ctx->stats_in_end) return EOF;
 
     *fps = *p->stats_in;
-    /* Move old stats[0] out to accommodate for next frame stats  */
-    memmove(p->frame_stats_arr[0], p->frame_stats_arr[1],
-        (p->stats_buf_ctx->stats_in_end - p->stats_in - 1) *
-        sizeof(FIRSTPASS_STATS));
-    p->stats_buf_ctx->stats_in_end--;
+    ///* Move old stats[0] out to accommodate for next frame stats  */
+    //memmove(p->frame_stats_arr[0], p->frame_stats_arr[1],
+    //    (p->stats_buf_ctx->stats_in_end - p->stats_in - 1) *
+    //    sizeof(FIRSTPASS_STATS));
+
+    //p->stats_buf_ctx->stats_in_end--;
+    ++p->stats_in;
+#if LAP_ENABLED_VBR_DEBUG
+    SVT_LOG("stats_in_end--:  %.0f\t%.0f\n", p->stats_in->frame, (p->stats_buf_ctx->stats_in_end-1)->frame);
+#endif
     return 1;
 }
 #endif
@@ -1659,7 +1666,24 @@ static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS 
 
   return frames_to_key;
 }
+#if LAP_ENABLED_VBR
+static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_group_err/*,
+                                 double kf_group_avg_error*/) {
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *const rc = &encode_context_ptr->rc;
+    TWO_PASS *const twopass = &scs_ptr->twopass;
+    int64_t kf_group_bits;
 
+    if (scs_ptr->lap_enabled)
+        kf_group_bits = (int64_t)rc->frames_to_key * rc->avg_frame_bandwidth;
+    else
+        kf_group_bits = (int64_t)(twopass->bits_left *
+            (kf_group_err / twopass->modified_error_left));
+
+    return kf_group_bits;
+}
+#else
 static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_group_err/*,
                                  double kf_group_avg_error*/) {
   SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
@@ -1675,7 +1699,7 @@ static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_gro
 
   return kf_group_bits;
 }
-
+#endif
 static int calc_avg_stats(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *avg_frame_stat) {
   SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;

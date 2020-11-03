@@ -2539,14 +2539,19 @@ void copy_api_from_app(
 #endif
 
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
-    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
+    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0) //LAP_ENABLED_VBR anaghdin check these functions
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
+#if LAP_ENABLED_VBR
+        scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD) {
+#else
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
         scs_ptr->static_config.rate_control_mode == 0) {
+#endif
+    
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
     }

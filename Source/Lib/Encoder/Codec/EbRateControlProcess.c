@@ -7466,9 +7466,10 @@ void *rate_control_kernel(void *input_ptr) {
             } else {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
-#if LAP_ENABLED_VBR
-#endif
                     if (use_input_stat(scs_ptr)
+#if LAP_ENABLED_VBR
+                        || scs_ptr->lap_enabled
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                         &&
                         scs_ptr->static_config.look_ahead_distance != 0
@@ -7564,8 +7565,10 @@ void *rate_control_kernel(void *input_ptr) {
             // 2pass QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
-                use_input_stat(scs_ptr) &&
 #if LAP_ENABLED_VBR
+                (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#else
+                use_input_stat(scs_ptr) &&
 #endif
 #if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
@@ -7595,8 +7598,10 @@ void *rate_control_kernel(void *input_ptr) {
                 }
             }
 #if LAP_ENABLED_VBR
-#endif
+            if(use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
+#else
             if (use_input_stat(scs_ptr))
+#endif
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             // Get Empty Rate Control Results Buffer
             eb_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
@@ -7679,7 +7684,11 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)parentpicture_control_set_ptr->total_num_bits -
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
+#if LAP_ENABLED_VBR
+                if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
+#else
                 if (use_input_stat(scs_ptr)
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                     &&
                     scs_ptr->static_config.look_ahead_distance != 0
@@ -7690,8 +7699,10 @@ void *rate_control_kernel(void *input_ptr) {
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
 #if LAP_ENABLED_VBR
-#endif
+                    if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
+#else
                     if (use_input_stat(scs_ptr)
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                         &&
                         scs_ptr->static_config.look_ahead_distance != 0

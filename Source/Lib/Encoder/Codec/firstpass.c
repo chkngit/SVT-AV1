@@ -35,6 +35,7 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 #endif
+
 #if !FIRST_PASS_RESTRUCTURE
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
@@ -337,9 +338,13 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
+#if LAP_ENABLED_VBR_DEBUG
+    SVT_LOG("stats_in_end++: %.0f\n", twopass->stats_buf_ctx->stats_in_end->frame);
+#endif
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end++;
+
     if ((use_output_stat(scs_ptr)) &&
         (twopass->stats_buf_ctx->stats_in_end >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end = twopass->stats_buf_ctx->stats_in_start;
@@ -2926,7 +2931,9 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
             }
         }
 #endif
-
+#if 0//LAP_LIMITED_STAT
+        if (!ppcs_ptr->scs_ptr->lap_enabled)
+#endif
         first_pass_frame_end(ppcs_ptr, ppcs_ptr->ts_duration);
 #if LAP_ENABLED_VBR
         if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_enabled)
