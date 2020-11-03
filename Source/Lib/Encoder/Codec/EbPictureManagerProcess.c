@@ -886,7 +886,11 @@ void *picture_manager_kernel(void *input_ptr) {
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
 #if TUNE_INL_ME_DECODE_ORDER
+#if LAP_ENABLED_VBR
+                    ((scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la) || use_input_stat(scs_ptr) ||scs_ptr->lap_enabled))
+#else
                         ((scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la) || use_input_stat(scs_ptr)))
+#endif
 #else
                         use_input_stat(scs_ptr))
 #endif

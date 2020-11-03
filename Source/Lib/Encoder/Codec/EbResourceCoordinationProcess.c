@@ -675,14 +675,7 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
     }
 #if LAP_ENABLED_VBR
     else if (scs_ptr->lap_enabled){
-   /*     scs_ptr->twopass.stats_buf_ctx->stats_in_start =
-            encode_context_ptr->stats_out.stat;
-        scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;*/
-        //     scs_ptr->twopass.stats_buf_ctx->stats_in_end =
-         //        &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
         svt_av1_init_single_pass_lap(scs_ptr);
-
-
     }
 #endif
 }

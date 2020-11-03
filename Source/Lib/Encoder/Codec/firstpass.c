@@ -35,13 +35,13 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 #endif
-
+#if !FIRST_PASS_RESTRUCTURE
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
     if (cnt >= MODE_DECISION_CANDIDATE_MAX_COUNT_Y)                                          \
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
-
+#endif
 #define OUTPUT_FPF 1
 
 #define INTRA_MODE_PENALTY 1024
@@ -2655,11 +2655,6 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                                                                    input_picture_ptr,
                                                                    input_origin_index,
                                                                    mb_stats);
-            if (ppcs_ptr->picture_number == 0)
-            SVT_LOG("(%d\t%d\t%d\n",
-                blk_origin_x,
-                blk_origin_y,
-                this_intra_error);
             int this_inter_error = this_intra_error;
 
             if (blk_origin_x == 0)

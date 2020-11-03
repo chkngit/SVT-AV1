@@ -131,7 +131,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
             }
             else {
+#if LAP_ENABLED_VBR
+                if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
                 if (use_output_stat(scs_ptr)) {
+#endif
                     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 37;
                     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 175;
                 }
@@ -162,7 +166,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
         }
@@ -173,7 +181,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #endif
     else {
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
         }
@@ -201,7 +213,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
         }
     if (!pcs_ptr->sc_content_detected)
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
         }
@@ -265,7 +281,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
 #endif
     if (!pcs_ptr->sc_content_detected)
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
                 me_context_ptr->hme_level1_search_area_in_width_array[1] =
                 me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -1262,10 +1282,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                 }
             }
 #endif
+#if !LAP_ENABLED_VBR
             // Calculate the ME Distortion and OIS Historgrams
 
             eb_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
-
 #if !FEATURE_INL_ME
             if (scs_ptr->static_config.rate_control_mode
                 && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
@@ -1455,8 +1475,8 @@ void *motion_estimation_kernel(void *input_ptr) {
                 }
             }
 #endif
-
             eb_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+#endif
 
             // Get Empty Results Object
             eb_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,

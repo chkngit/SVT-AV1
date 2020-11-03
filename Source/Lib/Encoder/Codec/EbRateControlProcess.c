@@ -6348,6 +6348,17 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
   // Set absolute upper and lower quality limits
   rc->worst_quality = rc_cfg->worst_allowed_q;
   rc->best_quality  = rc_cfg->best_allowed_q;
+#if LAP_ENABLED_VBR
+  if (scs_ptr->lap_enabled) {
+      double frame_rate = (double)scs_ptr->static_config.frame_rate_numerator / (double)scs_ptr->static_config.frame_rate_denominator;
+      // Each frame can have a different duration, as the frame rate in the source
+      // isn't guaranteed to be constant. The frame rate prior to the first frame
+      // encoded in the second pass is a guess. However, the sum duration is not.
+      // It is calculated based on the actual durations of all frames from the
+      // first pass.
+      av1_new_framerate(scs_ptr, frame_rate);
+  }
+#endif
 }
 
 static AOM_INLINE int combine_prior_with_tpl_boost_org(double min_factor,
@@ -7317,7 +7328,11 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->sad_me +=
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
+#if LAP_ENABLED_VBR
+            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#else
             if (use_input_stat(scs_ptr)) {
+#endif
                 if (pcs_ptr->picture_number == 0) {
                     set_rc_buffer_sizes(scs_ptr);
                     av1_rc_init(scs_ptr);
@@ -7451,6 +7466,8 @@ void *rate_control_kernel(void *input_ptr) {
             } else {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
+#if LAP_ENABLED_VBR
+#endif
                     if (use_input_stat(scs_ptr)
 #if !ENABLE_TPL_ZERO_LAD
                         &&
@@ -7548,6 +7565,8 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
                 use_input_stat(scs_ptr) &&
+#if LAP_ENABLED_VBR
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
@@ -7575,6 +7594,8 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
                 }
             }
+#if LAP_ENABLED_VBR
+#endif
             if (use_input_stat(scs_ptr))
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             // Get Empty Rate Control Results Buffer
@@ -7638,6 +7659,8 @@ void *rate_control_kernel(void *input_ptr) {
                         ? context_ptr->rate_control_param_queue[PARALLEL_GOP_MAX_NUMBER - 1]
                         : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
+#if LAP_ENABLED_VBR
+#endif
             if (scs_ptr->static_config.rate_control_mode == 0 &&
                 use_input_stat(scs_ptr)
 #if !ENABLE_TPL_ZERO_LAD
@@ -7666,6 +7689,8 @@ void *rate_control_kernel(void *input_ptr) {
                 } else
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
+#if LAP_ENABLED_VBR
+#endif
                     if (use_input_stat(scs_ptr)
 #if !ENABLE_TPL_ZERO_LAD
                         &&

@@ -82,6 +82,19 @@ static int input_stats(TWO_PASS *p, FIRSTPASS_STATS *fps) {
   ++p->stats_in;
   return 1;
 }
+#if LAP_ENABLED_VBR
+static int input_stats_lap(TWO_PASS *p, FIRSTPASS_STATS *fps) {
+    if (p->stats_in >= p->stats_buf_ctx->stats_in_end) return EOF;
+
+    *fps = *p->stats_in;
+    /* Move old stats[0] out to accommodate for next frame stats  */
+    memmove(p->frame_stats_arr[0], p->frame_stats_arr[1],
+        (p->stats_buf_ctx->stats_in_end - p->stats_in - 1) *
+        sizeof(FIRSTPASS_STATS));
+    p->stats_buf_ctx->stats_in_end--;
+    return 1;
+}
+#endif
 
 // Read frame stats at an offset from the current position.
 static const FIRSTPASS_STATS *read_frame_stats(const TWO_PASS *p, int offset) {
@@ -2024,8 +2037,8 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   }
 
   int err = 0;
-  if (scs_ptr->lap_enabled) {
-    //err = input_stats_lap(twopass, this_frame);
+  if (scs_ptr->lap_enabled) {//anaghdin add this LAP_ENABLED_VBR
+    err = input_stats_lap(twopass, this_frame);
   } else {
     err = input_stats(twopass, this_frame);
   }
@@ -2264,9 +2277,12 @@ static void av1_rc_update_framerate(SequenceControlSet *scs_ptr/*, int width, in
 
   av1_rc_set_gf_interval_range(scs_ptr, rc);
 }
-
 // from aom encoder.c
+#if LAP_ENABLED_VBR
+void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
+#else
 static void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
+#endif
   //cpi->framerate = framerate < 0.1 ? 30 : framerate;
   scs_ptr->double_frame_rate = framerate < 0.1 ? 30 : framerate;
   av1_rc_update_framerate(scs_ptr/*, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height*/);
@@ -2373,10 +2389,42 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
 void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {
     TWO_PASS *const twopass = &scs_ptr->twopass;
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
-   // FrameInfo *frame_info = &encode_context_ptr->frame_info;
+    FrameInfo *frame_info = &encode_context_ptr->frame_info;
 
     if (!twopass->stats_buf_ctx->stats_in_end) return;
 
+    {
+        const int is_vbr = scs_ptr->static_config.rate_control_mode == 1;
+        frame_info->frame_width = scs_ptr->seq_header.max_frame_width;
+        frame_info->frame_height = scs_ptr->seq_header.max_frame_height;
+        frame_info->mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+        frame_info->mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        frame_info->num_mbs = frame_info->mb_cols * frame_info->mb_rows;
+        frame_info->bit_depth = scs_ptr->static_config.encoder_bit_depth;
+        // input config  from options
+        encode_context_ptr->two_pass_cfg.vbrmin_section = scs_ptr->static_config.vbr_min_section_pct;
+        encode_context_ptr->two_pass_cfg.vbrmax_section = scs_ptr->static_config.vbr_max_section_pct;
+        encode_context_ptr->two_pass_cfg.vbrbias = scs_ptr->static_config.vbr_bias_pct;
+        encode_context_ptr->rc_cfg.mode = scs_ptr->static_config.rate_control_mode == 1 ? AOM_VBR : AOM_Q;
+        encode_context_ptr->rc_cfg.best_allowed_q = (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed];
+        encode_context_ptr->rc_cfg.worst_allowed_q = (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed];
+        encode_context_ptr->rc_cfg.over_shoot_pct = scs_ptr->static_config.over_shoot_pct;
+        encode_context_ptr->rc_cfg.under_shoot_pct = scs_ptr->static_config.under_shoot_pct;
+        encode_context_ptr->rc_cfg.cq_level = quantizer_to_qindex[scs_ptr->static_config.qp];
+        encode_context_ptr->rc_cfg.maximum_buffer_size_ms = is_vbr ? 240000 : 6000;//cfg->rc_buf_sz;
+        encode_context_ptr->rc_cfg.starting_buffer_level_ms = is_vbr ? 60000 : 4000;//cfg->rc_buf_initial_sz;
+        encode_context_ptr->rc_cfg.optimal_buffer_level_ms = is_vbr ? 60000 : 5000;//cfg->rc_buf_optimal_sz;
+        encode_context_ptr->gf_cfg.lag_in_frames = 25;//hack scs_ptr->static_config.look_ahead_distance + 1;
+        encode_context_ptr->gf_cfg.gf_min_pyr_height = scs_ptr->static_config.hierarchical_levels;
+        encode_context_ptr->gf_cfg.gf_max_pyr_height = scs_ptr->static_config.hierarchical_levels;
+        encode_context_ptr->gf_cfg.min_gf_interval = 1 << scs_ptr->static_config.hierarchical_levels;
+        encode_context_ptr->gf_cfg.max_gf_interval = 1 << scs_ptr->static_config.hierarchical_levels;
+        encode_context_ptr->gf_cfg.enable_auto_arf = 1;
+        encode_context_ptr->kf_cfg.sframe_dist = 0; // not supported yet
+        encode_context_ptr->kf_cfg.sframe_mode = 0; // not supported yet
+        encode_context_ptr->kf_cfg.auto_key = 0;
+        encode_context_ptr->kf_cfg.key_freq_max = scs_ptr->intra_period_length + 1;
+    }
     // This variable monitors how far behind the second ref update is lagging.
     twopass->sr_update_lag = 1;
 

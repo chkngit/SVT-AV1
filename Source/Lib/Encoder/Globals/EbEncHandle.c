@@ -2280,12 +2280,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-
+#if LAP_ENABLED_VBR
+        scs_ptr->in_loop_me = 1;
+#else
 #if FEATURE_INL_ME
     if (scs_ptr->static_config.rate_control_mode != 0 && !use_input_stat(scs_ptr))
         scs_ptr->in_loop_me = 0;
     else
         scs_ptr->in_loop_me = 1;
+#endif
 #endif
 #if TUNE_TPL_OIS
         // Open loop intra done with TPL, data is not stored
@@ -2298,7 +2301,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->over_boundary_block_mode = 1;
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
-    if (use_output_stat(scs_ptr))
+    if (use_output_stat(scs_ptr)) //anaghdin: check to remove
         scs_ptr->over_boundary_block_mode = 0;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
