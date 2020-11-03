@@ -1100,17 +1100,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if ENABLE_TPL_TRAILING
     // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
     if (pcs_ptr->enc_mode <= ENC_M6)
-#if PAME_BACK
-    {
-        if (scs_ptr->static_config.logical_processors == 1)
             pcs_ptr->tpl_trailing_frame_count = 6;
-        else
-            pcs_ptr->tpl_trailing_frame_count = 0;
-
-    }
-#else
-            pcs_ptr->tpl_trailing_frame_count = 6;
-#endif
     else
         pcs_ptr->tpl_trailing_frame_count = 0;
 #endif

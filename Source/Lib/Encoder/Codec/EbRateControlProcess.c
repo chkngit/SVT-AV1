@@ -458,16 +458,9 @@ void tpl_mc_flow_dispenser(
     mb_plane.dequant_qtx = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
     pcs_ptr->base_rdmult = svt_av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 #if TUNE_TPL_OIS
-    DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
-    DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
-    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
-    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
 
     EbPictureBufferDesc *input_ptr =  pcs_ptr->enhanced_picture_ptr;
-    uint8_t *above_row;
-    uint8_t *left_col;
-    uint8_t *above0_row;
-    uint8_t *left0_col;
+
 #endif
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
@@ -530,9 +523,18 @@ void tpl_mc_flow_dispenser(
                     }
                     else { // ois
                         // always process as block16x16 even bsize or tx_size is 8x8
-                        TxSize tx_size = TX_16X16;
                         bsize = 16;
+#if TUNE_TPL_OIS
+                        DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
+                        DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
+                        DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+                        DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
 
+                        uint8_t *above_row;
+                        uint8_t *left_col;
+                        uint8_t *above0_row;
+                        uint8_t *left0_col;
+#endif
                         above0_row = above0_data + 16;
                         left0_col = left0_data + 16;
                         above_row = above_data + 16;
@@ -792,11 +794,12 @@ void tpl_mc_flow_dispenser(
                     }
                     else {
                         // intra recon
+#if 1//!TUNE_TPL_OIS
                         uint8_t *above_row;
                         uint8_t *left_col;
                         DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
                         DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
-
+#endif
                         above_row = above_data + 16;
                         left_col = left_data + 16;
                         uint8_t *recon_buffer =
