@@ -612,7 +612,7 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
-#if USE_PAREF
+#if FEATURE_PA_ME
             scs_ptr->reference_picture_buffer_init_count = 2 * MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
 #else
             scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
@@ -2302,7 +2302,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.rate_control_mode != 0 && !use_input_stat(scs_ptr))
         scs_ptr->in_loop_me = 0;
     else
-#if PAME_BACK
+#if FEATURE_PA_ME
         if (scs_ptr->static_config.logical_processors == 1)
         // lp = 1 iME
         scs_ptr->in_loop_me = 1 ;

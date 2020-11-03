@@ -2013,7 +2013,7 @@ typedef void * EbHandle;
 
 
 
-#if PAME_BACK
+#if FEATURE_PA_ME
 /** The AtomicVarU32 type is used to define sn obj with its mutex
 */
 typedef struct AtomicVarU32 {

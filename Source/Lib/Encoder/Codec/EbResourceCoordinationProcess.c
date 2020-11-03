@@ -367,7 +367,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     svt_release_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
     context_ptr->prev_enc_mod = scs_ptr->encode_context_ptr->enc_mode;
 }
-#if PAME_BACK
+#if FEATURE_PA_ME
 static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #else
 void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
@@ -482,15 +482,13 @@ void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #endif
 #endif
 
-#if PAME_BACK
+#if FEATURE_PA_ME
     atomic_set_u32(&pcs_ptr->pame_done, 0);
     EB_CREATE_SEMAPHORE(pcs_ptr->pame_done_semaphore, 0, 1);
-#endif
-#if USE_PAREF
+
    pcs_ptr->num_tpl_grps = 0;
    pcs_ptr->num_tpl_processed = 0;
-#endif
-#if PAME_BACK
+
     return EB_ErrorNone;
 #endif
 }

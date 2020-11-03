@@ -1377,7 +1377,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
-#if PAME_BACK
+#if FEATURE_PA_ME
             if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0)
             {
                 svt_post_semaphore(pcs_ptr->pame_done_semaphore);
@@ -1388,7 +1388,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
 #if FEATURE_INL_ME
-#if USE_PAREF
+#if FEATURE_PA_ME
                 // Release Pa ref after when TPL is OFF
                 if (!scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la == 0)
 #else

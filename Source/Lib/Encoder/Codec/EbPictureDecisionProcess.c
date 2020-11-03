@@ -1094,16 +1094,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->tpl_opt_flag = 1;
 #endif
-#if TRUN_OFF_TRAILING
-        pcs_ptr->tpl_trailing_frame_count = 0;
-#else
 #if ENABLE_TPL_TRAILING
-    // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
-    if (pcs_ptr->enc_mode <= ENC_M6)
-            pcs_ptr->tpl_trailing_frame_count = 6;
-    else
+        // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
         pcs_ptr->tpl_trailing_frame_count = 0;
-#endif
 #endif
     pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
     return return_error;
@@ -3998,10 +3991,10 @@ void store_tpl_pictures(
         }
         //printf("====[%ld]: TPL group Base %ld, TPL group size %d\n",pcs->picture_number, pcs_tpl_ptr->picture_number, pcs->tpl_group_size);
 
-#if USE_PAREF
+#if FEATURE_PA_ME
         pcs_tpl_ptr->num_tpl_grps++;
 #endif
-#if FIX_TPL_OPT_FLAG
+#if ENABLE_TPL_TRAILING
         set_tpl_controls(pcs_tpl_ptr,pcs_tpl_ptr->enc_mode);
 #endif
     }
@@ -4026,7 +4019,7 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
         // Give the new Reference a nominal live_count of 1
         svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
-#if TUNE_INL_ME_RECON_INPUT && FASTER_MULTI_THREAD_TPL
+#if TUNE_INL_ME_RECON_INPUT
         if (pcs->is_used_as_reference_flag) {
             EbReferenceObject *reference_object =
         (EbReferenceObject *)pcs->reference_picture_wrapper_ptr->object_ptr;
@@ -4048,7 +4041,6 @@ void send_picture_out(
             }
             pad_input_pictures(scs, dst_ptr);
 
-#if ! PAME_BACK || 1
             if (scs->in_loop_me ) {
                 // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
                 if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
@@ -4066,7 +4058,6 @@ void send_picture_out(
                         reference_object->sixteenth_input_picture);
                 }
             }
-#endif
         }
 #endif
     }
@@ -5655,18 +5646,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                             mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
 
-#if !FIX_TPL_OPT_FLAG
-#if ENABLE_TPL_TRAILING
-#if TUNE_TPL_OPT
-                            set_tpl_controls(pcs_ptr,pcs_ptr->enc_mode);
-#else
-                            if (pcs_ptr->enc_mode <= ENC_M4)
-                                pcs_ptr->tpl_data.tpl_opt_flag = 0;
-                            else
-                                pcs_ptr->tpl_data.tpl_opt_flag = 1;
-#endif
-#endif
-#endif
                         }
 
                         //Do TF loop in display order

@@ -360,7 +360,7 @@ EbErrorType svt_destroy_mutex(EbHandle mutex_handle)
 
     return return_error;
 }
-#if PAME_BACK
+#if FEATURE_PA_ME
 /*
     set an atomic variable to an input value
 */

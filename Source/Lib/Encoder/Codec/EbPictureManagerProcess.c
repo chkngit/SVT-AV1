@@ -358,7 +358,7 @@ static uint8_t tpl_setup_me_refs(
 #endif
 
             if (!ref_in_slide_window) {
-#if  USE_PAREF
+#if  FEATURE_PA_ME
                 if (scs_ptr->in_loop_me == 0) {
                     EbPaReferenceObject * ref_obj =
                         (EbPaReferenceObject *)pcs_tpl_group_frame_ptr->ref_pa_pic_ptr_array[list_index][*ref_count_ptr]->object_ptr;
@@ -400,7 +400,7 @@ static uint8_t tpl_setup_me_refs(
 #endif
                     *ref_count_ptr += 1;
                 }
-#if  USE_PAREF
+#if  FEATURE_PA_ME
                 }
 #endif
             }
@@ -471,19 +471,6 @@ static EbErrorType tpl_init_pcs_tpl_data(
         pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag = pcs_tpl_group_frame_ptr->is_used_as_reference_flag;
         pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order = pcs_tpl_group_frame_ptr->decode_order;
     }
-
-#if !FIX_TPL_OPT_FLAG
-#if ENABLE_TPL_TRAILING
-#if TUNE_TPL_OPT
-    set_tpl_controls(pcs_tpl_group_frame_ptr,pcs_tpl_group_frame_ptr->enc_mode);
-#else
-    if (pcs_tpl_group_frame_ptr->enc_mode <= ENC_M4)
-        pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 0;
-    else
-        pcs_tpl_group_frame_ptr->tpl_data.tpl_opt_flag = 1;
-#endif
-#endif
-#endif
     return 0;
 }
 #endif
@@ -494,7 +481,7 @@ static EbErrorType tpl_get_open_loop_me(
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr) {
 
-#if PAME_BACK
+#if FEATURE_PA_ME
     if (scs_ptr->static_config.enable_tpl_la &&
         pcs_tpl_base_ptr->temporal_layer_index == 0) {
 #else
@@ -537,7 +524,7 @@ static EbErrorType tpl_get_open_loop_me(
                         &ref_list0_count, &ref_list1_count,
                         &is_trailing_tpl_frame);
 
-#if PAME_BACK
+#if FEATURE_PA_ME
                 if (scs_ptr->in_loop_me == 0)
                 continue;
 #endif
@@ -716,7 +703,7 @@ void *picture_manager_kernel(void *input_ptr) {
                             [encode_context_ptr->reference_picture_queue_tail_index];
                     reference_entry_ptr->picture_number        = pcs_ptr->picture_number;
                     reference_entry_ptr->reference_object_ptr  = (EbObjectWrapper *)NULL;
-#if PAME_BACK
+#if FEATURE_PA_ME
                     reference_entry_ptr->ref_wraper = pcs_ptr->reference_picture_wrapper_ptr; //at this time only the src data is valid
 #endif
                     reference_entry_ptr->release_enable        = EB_TRUE;
@@ -887,11 +874,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
-#if TUNE_INL_ME_RECON_INPUT && !FASTER_MULTI_THREAD_TPL
-                        ((scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la) || use_input_stat(scs_ptr)))
-#else
                         use_input_stat(scs_ptr))
-#endif
                         availability_flag = EB_FALSE;
 
                     // Check RefList0 Availability

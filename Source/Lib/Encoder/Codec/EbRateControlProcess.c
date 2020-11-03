@@ -1211,7 +1211,7 @@ EbErrorType tpl_mc_flow(
     for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
         pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
 
-#if PAME_BACK
+#if FEATURE_PA_ME
 
     if (scs_ptr->in_loop_me == 0) {
         //wait for PA ME to be done.
@@ -1261,7 +1261,7 @@ EbErrorType tpl_mc_flow(
 #endif
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
-#if USE_PAREF
+#if FEATURE_PA_ME
             pcs_array[frame_idx]->num_tpl_processed ++;
 #endif
         }
@@ -1327,7 +1327,7 @@ EbErrorType tpl_mc_flow(
             EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
     }
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
-#if USE_PAREF  //TODO: release PA REFs when TPL is OFF
+#if FEATURE_PA_ME
     if (scs_ptr->in_loop_me == 0) {
         for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
             if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps) {
@@ -7398,7 +7398,7 @@ void *rate_control_kernel(void *input_ptr) {
 
 #if FEATURE_IN_LOOP_TPL
 
-#if PAME_BACK
+#if FEATURE_PA_ME
             if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
 #else
@@ -7981,7 +7981,7 @@ void *rate_control_kernel(void *input_ptr) {
             }
 #endif
             total_number_of_fb_frames++;
-#if PAME_BACK
+#if FEATURE_PA_ME
             EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_done_semaphore);
 #endif
 

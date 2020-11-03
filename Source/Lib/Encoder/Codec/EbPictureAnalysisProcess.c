@@ -4192,7 +4192,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                 pa_ref_obj_->sixteenth_decimated_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr = ds_obj->sixteenth_picture_ptr;
 
             } else {
-#if  PAME_BACK
+#if  FEATURE_PA_ME
                 if (scs_ptr->in_loop_me == 0){
                   //not passing through the DS pool, so 1/4 and 1/16 are not used
                   pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;

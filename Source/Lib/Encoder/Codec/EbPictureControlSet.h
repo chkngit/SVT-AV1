@@ -854,11 +854,11 @@ typedef struct PictureParentControlSet {
     uint8_t  tpl_me_segments_row_count;
     uint8_t  tpl_me_done;
 #endif
-#if PAME_BACK
+#if FEATURE_PA_ME
     AtomicVarU32  pame_done;          //set when PA ME is done.
     EbHandle   pame_done_semaphore;
 #endif
-#if USE_PAREF
+#if FEATURE_PA_ME
     uint8_t num_tpl_grps;
     uint8_t num_tpl_processed;
 #endif
