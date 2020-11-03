@@ -35,11 +35,48 @@ extern "C" {
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
 #endif
+#if 1
+#define USE_PAREF                       1
+
+#define PAME_BACK                       1
+#define FASTER_MULTI_THREAD_TPL         1
+#define FIX_TPL_OPT_FLAG                1
+#define TRUN_OFF_TRAILING               1
+
+#define TUNE_TPL_OPT           1  // Tune TPL for better BDR/speed , added signals
+#define TUNE_TPL_LOSSLESS      1  // Algorithmic  TPL clean up
+#define TUNE_TPL_OIS                             1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
+#define TUNE_TPL_RATE                            1 // remove  uncessary rate calculation
+
+#define TUNE_TPL_CRA  1 // Tune TPL for CRA pictures
+
+#endif
+
 
 #define FIX_RC_BUG 1 // Fix the one pass QP assignment using frames_to_be_encoded
 #define FIX_VBR_BUG 1 // Fix 1st pass bug (bug from rebasing the branch)
 #define FIX_10BIT     1 // fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // fix RC token check to include double dash
+
+#define FEATURE_NEW_DELAY             1 // Change delay some sorts of I in PicDecision
+#define FEATURE_INL_ME                1 //Enable in-loop ME
+#if FEATURE_INL_ME
+#define TUNE_IME_REUSE_TPL_RESULT     1 // Reuse TPL results for iLoopME
+#define TUNE_INL_TPL_ENHANCEMENT      1 // Refinement for TPL
+#define TUNE_INL_ME_RECON_INPUT       1 // Perform ME GM, TPL on input/recon: 1 on input, 0 on recon
+#if !TUNE_IME_REUSE_TPL_RESULT
+#define TUNE_SIGNAL_TPL_ME_OQ         1 // A separate signal_xxx_oq for TPL ME
+#endif
+#endif
+
+#define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
+#if FEATURE_IN_LOOP_TPL
+#define ENABLE_TPL_ZERO_LAD     1 // Enable TPL in loop to work with zero LAD
+#define TUNE_TPL                1   // Tuning TPL algorithm for QP assignment
+#define ENABLE_TPL_TRAILING     1 //enable trailing pictures for TPL
+#endif
+
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
