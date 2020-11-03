@@ -855,7 +855,7 @@ void tpl_mc_flow_dispenser(
                     disable_intra_pred  = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
                         pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
                     if (!disable_intra_pred ||
-                        (disable_intra_pred && pcs_ptr->tpl_data.is_used_as_reference_flag))
+                        (pcs_ptr->tpl_data.is_used_as_reference_flag))
 #endif
                     if (eob) {
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
@@ -1232,14 +1232,14 @@ EbErrorType tpl_mc_flow(
         encode_context_ptr,
         pcs_ptr,
         pcs_array);
-#if TUNE_TPL_OPT
-    uint8_t tpl_on ;
-#endif
 
 #if TUNE_INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 #else
     if (pcs_array[0]->temporal_layer_index == 0) {
+#endif
+#if TUNE_TPL_OPT
+        uint8_t tpl_on ;
 #endif
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {

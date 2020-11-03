@@ -34,7 +34,7 @@ bool set_default_config(EbSvtAv1EncConfiguration* config)
 void release_enc_config(void *config_ptr) {
     if (config_ptr) {
         EbConfig *config = (EbConfig *)config_ptr;
-        eb_config_dtor(config);
+        svt_config_dtor(config);
     }
 }
 
