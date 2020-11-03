@@ -39,7 +39,7 @@ void release_enc_config(void *config_ptr) {
 }
 
 void *create_enc_config() {
-    EbConfig *config = eb_config_ctor(ENCODE_SINGLE_PASS);
+    EbConfig *config = svt_config_ctor(ENCODE_SINGLE_PASS);
     assert(config != NULL);
     if (!set_default_config(&config->config)) {
         release_enc_config(config);
