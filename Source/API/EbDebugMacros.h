@@ -63,7 +63,7 @@ extern "C" {
 #define TUNE_TPL_LOSSLESS       1  // Algorithmic  TPL clean up
 #define TUNE_TPL_OIS            1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
 #define TUNE_TPL_RATE           1 // remove  uncessary rate calculation
-#define TUNE_TPL_CRA            1 // Tune TPL for CRA pictures
+#define TUNE_TPL_FWD_FRAME      1 // Tune TPL for FWD FRAME
 #endif
 
 

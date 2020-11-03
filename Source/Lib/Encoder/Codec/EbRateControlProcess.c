@@ -6024,7 +6024,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         double q_val;
         rc->worst_quality   = MAXQ;
         rc->best_quality    = MINQ;
-#if TUNE_TPL_CRA
+#if TUNE_TPL_FWD_FRAME
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
@@ -6533,7 +6533,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
-#if TUNE_TPL_CRA
+#if TUNE_TPL_FWD_FRAME
         else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
