@@ -33,6 +33,9 @@ typedef struct PictureManagerContext {
     EbFifo *picture_input_fifo_ptr;
     EbFifo *picture_manager_output_fifo_ptr;
     EbFifo *picture_control_set_fifo_ptr;
+#if FEATURE_PA_ME
+    uint64_t pmgr_dec_order;
+#endif
 } PictureManagerContext;
 
 // Token buffer is only used for palette tokens.
@@ -877,6 +880,12 @@ void *picture_manager_kernel(void *input_ptr) {
                         use_input_stat(scs_ptr))
                         availability_flag = EB_FALSE;
 
+ #if FEATURE_PA_ME
+                    //pic mgr starts pictures in dec order (no need to wait for feedback)
+                    if(entry_scs_ptr->enable_pic_mgr_dec_order)
+                        if (entry_pcs_ptr->picture_number > 0 && entry_pcs_ptr->decode_order != context_ptr->pmgr_dec_order + 1)
+                            availability_flag = EB_FALSE;
+#endif
                     // Check RefList0 Availability
                     for (uint8_t ref_idx = 0; ref_idx < entry_pcs_ptr->ref_list0_count; ++ref_idx) {
                         //if (entry_pcs_ptr->ref_list0_count)  // NM: to double check.
@@ -1014,6 +1023,9 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf = child_pcs_ptr->rst_tmpbuf;
 
+#if FEATURE_PA_ME
+                        context_ptr->pmgr_dec_order = child_pcs_ptr->parent_pcs_ptr->decode_order;
+#endif
                         //3.make all  init for ChildPCS
                         pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
                                                      entry_scs_ptr->sb_size_pix - 1) /

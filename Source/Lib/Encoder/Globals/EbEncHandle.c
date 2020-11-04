@@ -543,8 +543,13 @@ EbErrorType load_default_buffer_configuration_settings(
         //Pic-Manager will inject one child at a time.
         min_child = 1;
 
+#if FEATURE_PA_ME
+        //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
+        min_ref = 18;
+#else
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
+#endif
 
 
 #if FEATURE_INL_ME
@@ -2303,14 +2308,21 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->in_loop_me = 0;
     else
 #if FEATURE_PA_ME
-        if (scs_ptr->static_config.logical_processors == 1)
-        // lp = 1 iME
-        scs_ptr->in_loop_me = 1 ;
-    else
         scs_ptr->in_loop_me = 0 ;
 #else
         scs_ptr->in_loop_me = 1;
 #endif
+#endif
+
+#if FEATURE_PA_ME
+    // Enforce starting frame in decode order (at PicMgr)
+    // Does not wait for feedback from PKT
+    if (scs_ptr->static_config.logical_processors == 1 && // LP1
+        scs_ptr->in_loop_me == 0 && // PAME
+        scs_ptr->static_config.enable_tpl_la)
+        scs_ptr->enable_pic_mgr_dec_order = 1;
+    else
+        scs_ptr->enable_pic_mgr_dec_order = 0;
 #endif
 
 #if TUNE_TPL_OIS

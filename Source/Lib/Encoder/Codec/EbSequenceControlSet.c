@@ -304,6 +304,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if TUNE_TPL_OIS
     dst->in_loop_ois                     = src->in_loop_ois;
 #endif
+#if FEATURE_PA_ME
+    dst->enable_pic_mgr_dec_order = src->enable_pic_mgr_dec_order;
+#endif
     return EB_ErrorNone;
 }
 
