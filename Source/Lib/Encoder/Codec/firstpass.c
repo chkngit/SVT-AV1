@@ -338,7 +338,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
-#if LAP_ENABLED_VBR_DEBUG
+#if 0//LAP_ENABLED_VBR_DEBUG
     SVT_LOG("stats_in_end++: %.0f\n", twopass->stats_buf_ctx->stats_in_end->frame);
 #endif
     /*In the case of two pass, first pass uses it as a circular buffer,

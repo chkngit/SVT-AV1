@@ -8,7 +8,15 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-
+#if VBR_CODE_UPDATE
+ /*!\defgroup gf_group_algo Golden Frame Group
+  * \ingroup high_level_algo
+  * Algorithms regarding determining the length of GF groups and defining GF
+  * group structures.
+  * @{
+  */
+  /*! @} - end defgroup gf_group_algo */
+#endif
 #include <stdint.h>
 
 #include "EbDefinitions.h"
@@ -96,7 +104,7 @@ static int input_stats_lap(TWO_PASS *p, FIRSTPASS_STATS *fps) {
 
     //p->stats_buf_ctx->stats_in_end--;
     ++p->stats_in;
-#if LAP_ENABLED_VBR_DEBUG
+#if 0//LAP_ENABLED_VBR_DEBUG
     SVT_LOG("stats_in_end--:  %.0f\t%.0f\n", p->stats_in->frame, (p->stats_buf_ctx->stats_in_end-1)->frame);
 #endif
     return 1;
@@ -211,7 +219,32 @@ static int find_qindex_by_rate_with_correction(
 
 // Bits Per MB at different Q (Multiplied by 512)
 #define BPER_MB_NORMBITS 9
-
+#if VBR_CODE_UPDATE
+/*!\brief Choose a target maximum Q for a group of frames
+ *
+ * \ingroup rate_control
+ *
+ * This function is used to estimate a suitable maximum Q for a
+ * group of frames. Inititally it is called to get a crude estimate
+ * for the whole clip. It is then called for each ARF/GF group to get
+ * a revised estimate for that group.
+ *
+ * \param[in]    cpi                 Top-level encoder structure
+ * \param[in]    av_frame_err        The average per frame coded error score
+ *                                   for frames making up this section/group.
+ * \param[in]    inactive_zone       Used to mask off /ignore part of the
+ *                                   frame. The most common use case is where
+ *                                   a wide format video (e.g. 16:9) is
+ *                                   letter-boxed into a more square format.
+ *                                   Here we want to ignore the bands at the
+ *                                   top and bottom.
+ * \param[in]    av_target_bandwidth The target bits per frame
+ * \param[in]    group_weight_factor A correction factor allowing the algorithm
+ *                                   to correct for errors over time.
+ *
+ * \return The maximum Q for frames in the group.
+ */
+#endif
 static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const double section_err,
                                      double inactive_zone,
                                      int section_target_bandwidth,
@@ -663,8 +696,21 @@ static int calculate_section_intra_ratio(const FIRSTPASS_STATS *begin,
 
   return (int)(intra_error / DOUBLE_DIVIDE_CHECK(coded_error));
 }
-
+#if VBR_CODE_UPDATE
 // Calculate the total bits to allocate in this GF/ARF group.
+/*!\brief Calculates the bit target for this GF/ARF group
+ *
+ * \ingroup rate_control
+ *
+ * Calculates the total bits to allocate in this GF/ARF group.
+ *
+ * \param[in]    cpi              Top-level encoder structure
+ * \param[in]    gf_group_err     Cumulative coded error score for the
+ *                                frames making up this group.
+ *
+ * \return The target total number of bits for this GF/ARF group.
+ */
+#endif
 static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs_ptr,
                                              double gf_group_err) {
   SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
@@ -673,12 +719,12 @@ static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs_ptr,
   TWO_PASS *const twopass = &scs_ptr->twopass;
   const int max_bits = frame_max_bits(rc, encode_context_ptr);
   int64_t total_group_bits;
-
+#if !VBR_CODE_UPDATE
   if (scs_ptr->lap_enabled) {
     total_group_bits = rc->avg_frame_bandwidth * rc->baseline_gf_interval;
     return total_group_bits;
   }
-
+#endif
   // Calculate the bits to be allocated to the group as a whole.
   if ((twopass->kf_group_bits > 0) && (twopass->kf_group_error_left > 0)) {
     total_group_bits = (int64_t)(twopass->kf_group_bits *
@@ -738,12 +784,24 @@ static void allocate_gf_group_bits(GF_GROUP *gf_group, RATE_CONTROL *const rc,
 
   // Subtract the extra bits set aside for ARF frames from the Group Total
   if (use_arf || !key_frame) total_group_bits -= gf_arf_bits;
+#if 0//VBR_CODE_UPDATE anaghdin to check
+  // For key frames the frame target rate is already set and it
+// is also the golden frame.
+// === [frame_index == 0] ===
+  int frame_index = !!key_frame;
 
+  // Subtract the extra bits set aside for ARF frames from the Group Total
+  if (use_arf) total_group_bits -= gf_arf_bits;
+
+  int num_frames =
+      AOMMAX(1, rc->baseline_gf_interval - (rc->frames_since_key == 0));
+  base_frame_bits = (int)(total_group_bits / num_frames);
+#else
   if (rc->baseline_gf_interval)
     base_frame_bits = (int)(total_group_bits / rc->baseline_gf_interval);
   else
     base_frame_bits = (int)1;
-
+#endif
   // For key frames the frame target rate is already set and it
   // is also the golden frame.
   // === [frame_index == 0] ===
@@ -1076,6 +1134,23 @@ static void av1_gop_bit_allocation(RATE_CONTROL *const rc,
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 // Analyse and define a gf/arf group.
 #define MAX_GF_BOOST 5400
+#if VBR_CODE_UPDATE
+/*!\brief Define a GF group.
+ *
+ * \ingroup gf_group_algo
+ * This function defines the structure of a GF group, along with various
+ * parameters regarding bit-allocation and quality setup.
+ *
+ * \param[in]    cpi             Top-level encoder structure
+ * \param[in]    this_frame      First pass statistics structure
+ * \param[in]    frame_params    Structure with frame parameters
+ * \param[in]    max_gop_length  Maximum length of the GF group
+ * \param[in]    is_final_pass   Whether this is the final pass for the
+ *                               GF group, or a trial (non-zero)
+ *
+ * \return Nothing is returned. Instead, cpi->gf_group is changed.
+ */
+#endif
 static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *this_frame,
                             const EncodeFrameParams *const frame_params,
                             int max_gop_length, int is_final_pass) {
@@ -1128,6 +1203,7 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
   // If this is a key frame or the overlay from a previous arf then
   // the error score / cost of this frame has already been accounted for.
   // There is no overlay support for now
+  //anaghdin: VBR_CODE_UPDATE: removed in the new code
   if (is_intra_only) {
     gf_stats.gf_group_err -= first_frame_stats.frame_err;
 #if GROUP_ADAPTIVE_MAXQ
@@ -1275,7 +1351,14 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
 
   // Reset the file position.
   reset_fpf_position(twopass, start_pos);
-
+#if VBR_CODE_UPDATE
+  if (scs_ptr->lap_enabled) {
+      // Since we don't have enough stats to know the actual error of the
+      // gf group, we assume error of each frame to be equal to 1 and set
+      // the error of the group as baseline_gf_interval.
+      gf_stats.gf_group_err = rc->baseline_gf_interval;
+  }
+#endif
   // Calculate the bits to be allocated to the gf/arf group as a whole
   gf_group_bits = calculate_total_gf_group_bits(pcs_ptr, gf_stats.gf_group_err);
   rc->gf_group_bits = gf_group_bits;
@@ -1552,7 +1635,21 @@ static int get_projected_kf_boost(RATE_CONTROL *const rc) {
       (int)rint((tpl_factor * rc->kf_boost) / tpl_factor_num_stats);
   return projected_kf_boost;
 }
-
+#if VBR_CODE_UPDATE
+/*!\brief Determine the location of the next key frame
+ *
+ * \ingroup gf_group_algo
+ * This function decides the placement of the next key frame when a
+ * scenecut is detected or the maximum key frame distance is reached.
+ *
+ * \param[in]    cpi              Top-level encoder structure
+ * \param[in]    this_frame       Pointer to first pass stats
+ * \param[out]   kf_group_err     The total error in the KF group
+ * \param[in]    num_frames_to_detect_scenecut Maximum lookahead frames.
+ *
+ * \return       Number of frames to the next key.
+ */
+#endif
 static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *this_frame,
                               double *kf_group_err,
                               int num_frames_to_detect_scenecut) {
@@ -1801,6 +1898,9 @@ static double get_kf_boost_score(PictureParentControlSet *pcs_ptr, double kf_raw
   }
   return boost_score;
 }
+#if VBR_CODE_UPDATE
+#define MAX_KF_BITS_INTERVAL_SINGLE_PASS 5
+#endif
 // This function imposes the key frames based on the intra refresh period
 //anaghdin only works for key frames, and scene change is not detected for now
 static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *this_frame) {
@@ -1845,7 +1945,12 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     double kf_group_err = 0.0;
     double sr_accumulator = 0.0;
     //double kf_group_avg_error = 0.0;
+#if VBR_CODE_UPDATE
+    int frames_to_key, frames_to_key_clipped = INT_MAX;
+    int64_t kf_group_bits_clipped = INT64_MAX;
+#else
     int frames_to_key;
+#endif
     // Is this a forced key frame by interval.
     rc->this_key_frame_forced = rc->next_key_frame_forced;
 
@@ -1862,7 +1967,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
         rc->frames_to_key = AOMMIN(kf_cfg->key_freq_max, frames_to_key);
     else
         rc->frames_to_key = kf_cfg->key_freq_max;
-
+    //anaghdin
     //if (scs_ptr->lap_enabled) correct_frames_to_key(cpi);
 
     // If there is a max kf interval set by the user we must obey it.
@@ -1927,7 +2032,24 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
         twopass->kf_group_bits = 0;
     }
     twopass->kf_group_bits = AOMMAX(0, twopass->kf_group_bits);
+#if VBR_CODE_UPDATE
 
+    if (scs_ptr->lap_enabled) {
+        // In the case of single pass based on LAP, frames to  key may have an
+        // inaccurate value, and hence should be clipped to an appropriate
+        // interval.
+        frames_to_key_clipped =
+            (int)(MAX_KF_BITS_INTERVAL_SINGLE_PASS * scs_ptr->double_frame_rate);
+
+        // This variable calculates the bits allocated to kf_group with a clipped
+        // frames_to_key.
+        if (rc->frames_to_key > frames_to_key_clipped) {
+            kf_group_bits_clipped =
+                (int64_t)((double)twopass->kf_group_bits * frames_to_key_clipped /
+                    rc->frames_to_key);
+        }
+    }
+#endif
     // Reset the first pass file position.
     reset_fpf_position(twopass, start_position);
 
@@ -1974,9 +2096,17 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     }
 
     // Work out how many bits to allocate for the key frame itself.
+#if VBR_CODE_UPDATE
+  // In case of LAP enabled for VBR, if the frames_to_key value is
+  // very high, we calculate the bits based on a clipped value of
+  // frames_to_key.
+    kf_bits = calculate_boost_bits(
+        AOMMIN(rc->frames_to_key, frames_to_key_clipped) - 1, rc->kf_boost,
+        AOMMIN(twopass->kf_group_bits, kf_group_bits_clipped));
+#else
     kf_bits = calculate_boost_bits((rc->frames_to_key - 1), rc->kf_boost,
         twopass->kf_group_bits);
-
+#endif
     twopass->kf_group_bits -= kf_bits;
 
     // Save the bits to spend on the key frame.
@@ -1984,7 +2114,17 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     gf_group->update_type[0] = KF_UPDATE;
 
     // Note the total error score of the kf group minus the key frame itself.
+#if VBR_CODE_UPDATE
+    if (scs_ptr->lap_enabled)
+        // As we don't have enough stats to know the actual error of the group,
+        // we assume the complexity of each frame to be equal to 1, and set the
+        // error as the number of frames in the group(minus the keyframe).
+        twopass->kf_group_error_left = (int)(rc->frames_to_key - 1);
+    else
+        twopass->kf_group_error_left = (int)(kf_group_err - kf_mod_err);
+#else
     twopass->kf_group_error_left = (int)(kf_group_err - kf_mod_err);
+#endif
 
     // Adjust the count of total modified error left.
     // The count of bits left is adjusted elsewhere based on real coded frame

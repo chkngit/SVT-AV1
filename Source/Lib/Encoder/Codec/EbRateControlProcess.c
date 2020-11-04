@@ -6385,6 +6385,36 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
     if (scs_ptr->lap_enabled) {
         double min_boost_factor = sqrt(rc->baseline_gf_interval);
+#if LAP_ENABLED_VBR
+#if TUNE_TPL
+        // The new tpl only looks at pictures in tpl group, which is fewer than before,
+        // As a results, we defined a factor to adjust r0
+        if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
+            double div_factor = 1;
+#if ENABLE_TPL_TRAILING
+            double factor;
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+                factor = 2;
+            else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+
+            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = factor;
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 1.0 / factor;
+#else
+
+            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = 2;
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 0.5;
+#endif
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
+        }
+#endif
+#endif
         const int gfu_boost = get_gfu_boost_from_r0_lap(
                 min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0,
                 rc->num_stats_required_for_gfu_boost);
@@ -6811,6 +6841,10 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     }
 
     adjust_active_best_and_worst_quality_org(pcs_ptr, rc, &active_worst_quality, &active_best_quality);
+#if LAP_ENABLED_VBR_DEBUG
+    if(pcs_ptr->temporal_layer_index == 0)
+    printf("\n Before poc%d boost=%d, q=%d, bottom_index=%d top_index=%d\tbase_frame_target=%d\trc->this_frame_target%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, rc->base_frame_target, rc->this_frame_target);
+#endif
     q = get_q(pcs_ptr, active_worst_quality, active_best_quality);
     // Special case when we are targeting the max allowed rate.
     if (rc->this_frame_target >= rc->max_frame_bandwidth &&
@@ -6821,7 +6855,13 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     assert(q <= rc->worst_quality && q >= rc->best_quality);
 
     if (gf_group->update_type[pcs_ptr->parent_pcs_ptr->gf_group_index] == ARF_UPDATE) rc->arf_q = q;
-    //printf("\nrc_pick_q_and_bounds return poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, isintra=%d base_frame_target=%d, buffer_level=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, frame_is_intra_only(pcs_ptr->parent_pcs_ptr), rc->base_frame_target, rc->buffer_level);
+#if LAP_ENABLED_VBR_DEBUG
+    if (pcs_ptr->temporal_layer_index == 0)
+        printf("\n After poc%d boost=%d, q=%d, bottom_index=%d top_index=%d\tbase_frame_target=%d\trc->this_frame_target:%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, rc->base_frame_target, rc->this_frame_target);
+
+        //printf("\n After poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, base_frame_target=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, rc->this_frame_target);
+#endif 
+    //  printf("\nrc_pick_q_and_bounds return poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, isintra=%d base_frame_target=%d, buffer_level=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, frame_is_intra_only(pcs_ptr->parent_pcs_ptr), rc->base_frame_target, rc->buffer_level);
 
     return q;
 }
