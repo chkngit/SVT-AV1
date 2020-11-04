@@ -53,7 +53,6 @@ extern "C" {
 #endif
 
 #define FEATURE_PA_ME                1 // The ability to do ME inloop or in PAME
-#define FEATURE_PA_ME                      1 // TPL fix for Lp1 case
 
 #define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
 #if FEATURE_IN_LOOP_TPL
