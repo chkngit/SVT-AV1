@@ -141,6 +141,7 @@ extern "C" {
 #define LAP_ENABLED_VBR_DEBUG 1
 #define VBR_CODE_UPDATE 1
 #define LAP_LIMITED_STAT 1
+#define ONE_MIN_QP_ALLOWED 1 // set default min_qp_allowed=1
 // END  svt-03 /////////////////////////////////////////////////////////
 
 //FOR DEBUGGING - Do not remove

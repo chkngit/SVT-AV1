@@ -6843,7 +6843,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     adjust_active_best_and_worst_quality_org(pcs_ptr, rc, &active_worst_quality, &active_best_quality);
 #if LAP_ENABLED_VBR_DEBUG
     if(pcs_ptr->temporal_layer_index == 0)
-    printf("\n Before poc%d boost=%d, q=%d, bottom_index=%d top_index=%d\tbase_frame_target=%d\trc->this_frame_target%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, rc->base_frame_target, rc->this_frame_target);
+    printf("\n Before poc%d boost=%d, q=%d, bottom_index=%d top_index=%d\tbase_frame_target=%d\trc->this_frame_target%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, active_best_quality, active_best_quality, active_worst_quality, rc->base_frame_target, rc->this_frame_target);
 #endif
     q = get_q(pcs_ptr, active_worst_quality, active_best_quality);
     // Special case when we are targeting the max allowed rate.
