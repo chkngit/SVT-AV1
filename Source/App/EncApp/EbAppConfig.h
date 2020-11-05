@@ -202,6 +202,9 @@ typedef struct EbConfig {
     uint8_t **sequence_buffer;
 
     uint32_t      injector_frame_rate;
+#if TUNE_CDEF_FILTER
+#else
+#endif
     uint32_t      injector;
     uint32_t      speed_control_flag;
 
