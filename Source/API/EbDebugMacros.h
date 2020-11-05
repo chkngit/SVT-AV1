@@ -116,6 +116,7 @@ extern "C" {
 #define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
 #define FIX_GM_PARAMS_UPDATE                         1 // Fix GM r2r related to improper setting of GM params for NREF frames when GM is used for REF only
 
+#define GM_AGAIN                   1
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 

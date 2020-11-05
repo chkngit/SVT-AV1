@@ -1145,14 +1145,27 @@ void *motion_estimation_kernel(void *input_ptr) {
                                            sb_origin_y,
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
-#if !FEATURE_IN_LOOP_TPL
+#if !FEATURE_IN_LOOP_TPL || GM_AGAIN
                         svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
+
+#if GM_AGAIN
+                        // We need to finish ME for all SBs to do GM
+                        if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+                            if (pcs_ptr->gm_ctrls.enabled)
+                                global_motion_estimation(
+                                    pcs_ptr, input_picture_ptr);
+                            else
+                            // Initilize global motion to be OFF when GM is OFF
+                                memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                        }
+#endif
                         svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
 #endif
                     }
                 }
             }
+#if !GM_AGAIN
             // Global motion estimation
             // TODO: create an other kernel ?
 #if FEATURE_GM_OPT
@@ -1186,6 +1199,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 // Initilize global motion to be OFF for all references frames.
                 memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
             }
+#endif
 #endif
             if (
 #if TUNE_TPL_OIS
@@ -1791,7 +1805,7 @@ void *inloop_me_kernel(void *input_ptr) {
                                 sb_origin_y,
                                 context_ptr->me_context_ptr,
                                 input_picture_ptr);
-#if !FEATURE_IN_LOOP_TPL
+#if !FEATURE_IN_LOOP_TPL || GM_AGAIN
 #if TUNE_IME_REUSE_TPL_RESULT
                         {
 #else
@@ -1806,6 +1820,33 @@ void *inloop_me_kernel(void *input_ptr) {
                 }
             }
             if (task_type == 0) {
+
+#if GM_AGAIN
+                if (scs_ptr->static_config.enable_tpl_la) {
+                    if (segment_index == 0) {
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+
+                }
+                else {
+                    svt_block_on_mutex(ppcs_ptr->me_processed_sb_mutex);
+                    if (ppcs_ptr->me_processed_sb_count == ppcs_ptr->sb_total_count) {
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+                    svt_release_mutex(ppcs_ptr->me_processed_sb_mutex);
+
+                }
+#else
                 // Global motion estimation
                 // TODO: create an other kernel ?
 #if FEATURE_GM_OPT
@@ -1833,6 +1874,7 @@ void *inloop_me_kernel(void *input_ptr) {
                     // Initilize global motion to be OFF for all references frames.
                     memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                 }
+#endif
 #endif
                 svt_get_empty_object(context_ptr->output_fifo_ptr,
                         &out_results_wrapper_ptr);

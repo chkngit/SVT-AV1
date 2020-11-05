@@ -5717,7 +5717,7 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->inloop_me_segments_total_count =
                                 (uint16_t)(pcs_ptr->inloop_me_segments_column_count * pcs_ptr->inloop_me_segments_row_count);
 #endif
-#if !FEATURE_IN_LOOP_TPL
+#if !FEATURE_IN_LOOP_TPL || GM_AGAIN
                             pcs_ptr->me_processed_sb_count = 0;
 #endif
                             //****************************************************
