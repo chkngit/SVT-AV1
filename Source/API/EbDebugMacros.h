@@ -65,6 +65,7 @@ extern "C" {
 #define TUNE_TPL_RATE           1 // remove  uncessary rate calculation
 #define TUNE_TPL_FWD_FRAME      1 // Tune TPL for FWD FRAME
 #endif
+#define FIX_GM_COMPUTATION      1  // Fix global motion computation for different modes
 
 
 //FOR DEBUGGING - Do not remove

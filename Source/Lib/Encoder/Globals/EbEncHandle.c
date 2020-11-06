@@ -2324,6 +2324,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->enable_pic_mgr_dec_order = 0;
 #endif
+#if FEATURE_PA_ME
+    // Enforce encoding frame in decode order
+    // Wait for feedback from PKT
+    if (scs_ptr->static_config.logical_processors == 1 && // LP1
+        scs_ptr->in_loop_me == 1 && // inloop ME
+        scs_ptr->static_config.enable_tpl_la)
+        scs_ptr->enable_dec_order = 1;
+    else
+        scs_ptr->enable_dec_order = 0;
+#endif
 
 #if TUNE_TPL_OIS
         // Open loop intra done with TPL, data is not stored

@@ -990,9 +990,21 @@ void *motion_estimation_kernel(void *input_ptr) {
                                            sb_origin_y,
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
-#if !FEATURE_IN_LOOP_TPL
+#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
                         svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
+
+#if FIX_GM_COMPUTATION
+                        // We need to finish ME for all SBs to do GM
+                        if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+                            if (context_ptr->me_context_ptr->compute_global_motion)
+                                global_motion_estimation(
+                                    pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+                            else
+                            // Initilize global motion to be OFF when GM is OFF
+                                memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                        }
+#endif
                         svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
 #endif
                     }
@@ -1000,6 +1012,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             }
             // Global motion estimation
             // TODO: create an other kernel ?
+#if !FIX_GM_COMPUTATION
             if (context_ptr->me_context_ptr->compute_global_motion &&
 #if FEATURE_IN_LOOP_TPL
                 segment_index == 0) {
@@ -1017,6 +1030,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
 #endif
             }
+#endif
             if (
 #if TUNE_TPL_OIS
                 scs_ptr->in_loop_ois == 0 &&
@@ -1621,7 +1635,7 @@ void *inloop_me_kernel(void *input_ptr) {
                                 sb_origin_y,
                                 context_ptr->me_context_ptr,
                                 input_picture_ptr);
-#if !FEATURE_IN_LOOP_TPL
+#if !FEATURE_IN_LOOP_TPL || FIX_GM_COMPUTATION
 #if TUNE_IME_REUSE_TPL_RESULT
                         {
 #else
@@ -1636,6 +1650,33 @@ void *inloop_me_kernel(void *input_ptr) {
                 }
             }
             if (task_type == 0) {
+
+#if FIX_GM_COMPUTATION
+                if (scs_ptr->static_config.enable_tpl_la) {
+                    if (segment_index == 0) {
+                        if (context_ptr->me_context_ptr->compute_global_motion && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+
+                }
+                else {
+                    svt_block_on_mutex(ppcs_ptr->me_processed_sb_mutex);
+                    if (ppcs_ptr->me_processed_sb_count == ppcs_ptr->sb_total_count) {
+                        if (context_ptr->me_context_ptr->compute_global_motion && ppcs_ptr->slice_type != I_SLICE)
+                            global_motion_estimation_inl(
+                                ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+                        else
+                            // Initilize global motion to be OFF for all references frames.
+                            memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                    }
+                    svt_release_mutex(ppcs_ptr->me_processed_sb_mutex);
+
+                }
+#else
                 // Global motion estimation
                 // TODO: create an other kernel ?
                 if (context_ptr->me_context_ptr->compute_global_motion &&
@@ -1649,6 +1690,7 @@ void *inloop_me_kernel(void *input_ptr) {
                     global_motion_estimation_inl(
                             ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
                 }
+#endif
                 svt_get_empty_object(context_ptr->output_fifo_ptr,
                         &out_results_wrapper_ptr);
 
