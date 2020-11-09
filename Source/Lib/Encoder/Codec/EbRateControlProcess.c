@@ -1213,6 +1213,8 @@ EbErrorType tpl_mc_flow(
 
 #if FEATURE_PA_ME
 
+   // printf("TPL wait %lld  \n", pcs_ptr->tpl_group[0]->picture_number);
+
     if (scs_ptr->in_loop_me == 0) {
         //wait for PA ME to be done.
         for (uint32_t i = 1; i < pcs_ptr->tpl_group_size; i++) {
@@ -1227,6 +1229,7 @@ EbErrorType tpl_mc_flow(
 
     }
 
+   // printf("TPL %lld start \n", pcs_ptr->tpl_group[0]->picture_number);
 #endif
     init_tpl_buffers(
         encode_context_ptr,
@@ -7396,6 +7399,8 @@ void *rate_control_kernel(void *input_ptr) {
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
+           
+#if ! TPL_SOP
 #if FEATURE_IN_LOOP_TPL
 
 #if FEATURE_PA_ME
@@ -7407,6 +7412,7 @@ void *rate_control_kernel(void *input_ptr) {
 #endif
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
             }
+#endif
 #endif
 
 #if FEATURE_INL_ME

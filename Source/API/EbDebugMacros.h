@@ -36,6 +36,14 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+
+
+#define IME_SUPP     0  // enable in loop me
+
+
+
+
+
 #define FIX_RC_BUG 1 // Fix the one pass QP assignment using frames_to_be_encoded
 #define FIX_VBR_BUG 1 // Fix 1st pass bug (bug from rebasing the branch)
 #define FIX_10BIT     1 // fix 1st pass for 10bit input
@@ -53,7 +61,9 @@ extern "C" {
 #endif
 
 #define FEATURE_PA_ME                1 // The ability to do ME inloop or in PAME
-
+#if !IME_SUPP
+#define   TPL_SOP    1
+#endif
 #define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
 #if FEATURE_IN_LOOP_TPL
 #define ENABLE_TPL_ZERO_LAD     1 // Enable TPL in loop to work with zero LAD

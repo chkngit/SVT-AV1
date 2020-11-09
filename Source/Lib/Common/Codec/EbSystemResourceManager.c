@@ -567,6 +567,10 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
         (object_ptr->live_count == 0) ? object_ptr->live_count : object_ptr->live_count - 1;
 
     if ((object_ptr->release_enable == EB_TRUE) && (object_ptr->live_count == 0)) {
+
+
+      //  if (object_ptr->system_resource_ptr->object_total_count == 17)
+      //      printf("...Ref-Rel \n");
         // Set live_count to EB_ObjectWrapperReleasedValue
         object_ptr->live_count = EB_ObjectWrapperReleasedValue;
 

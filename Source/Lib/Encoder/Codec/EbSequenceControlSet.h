@@ -212,6 +212,10 @@ typedef struct SequenceControlSet {
     int32_t  lap_enabled;
     TWO_PASS twopass;
     double   double_frame_rate;
+
+   // uint32_t tot_refs;
+   // EbHandle            srm_mutex;
+
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

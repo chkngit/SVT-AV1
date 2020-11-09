@@ -1380,6 +1380,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if FEATURE_PA_ME
             if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0)
             {
+
+           //     printf("[%ld]: iRC in \n", pcs_ptr->picture_number);
+
                 svt_post_semaphore(pcs_ptr->pame_done_semaphore);
                 atomic_set_u32(& pcs_ptr->pame_done, 1);
 

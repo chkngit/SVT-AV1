@@ -1019,6 +1019,13 @@ void *resource_coordination_kernel(void *input_ptr) {
             reset_pcs_av1(pcs_ptr);
 
             if (pcs_ptr->picture_number == 0) {
+
+                
+              //  EB_CREATE_MUTEX(scs_ptr->srm_mutex);
+             //   scs_ptr->tot_refs = 0;
+
+
+
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))
@@ -1027,10 +1034,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
+         //   printf("PARENT++ %lld\n", pcs_ptr->picture_number);
             // Get Empty Reference Picture Object
             svt_get_empty_object(scs_ptr->encode_context_ptr->pa_reference_picture_pool_fifo_ptr,
                                  &reference_picture_wrapper_ptr);
-
+        //    printf("PA_REF++ %lld\n", pcs_ptr->picture_number);
             pcs_ptr->pa_reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
             // Since overlay pictures are not added to PA_Reference queue in PD and not released there, the life count is only set to 1
             if (pcs_ptr->is_overlay)

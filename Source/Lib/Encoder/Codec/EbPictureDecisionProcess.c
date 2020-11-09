@@ -1096,7 +1096,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if ENABLE_TPL_TRAILING
         // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
-        pcs_ptr->tpl_trailing_frame_count = 0;
+        pcs_ptr->tpl_trailing_frame_count = 6;
 #endif
     pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
     return return_error;
@@ -4012,11 +4012,21 @@ void send_picture_out(
     if (scs->static_config.look_ahead_distance == 0) {
 
         EbObjectWrapper* reference_picture_wrapper;
+
+     //   printf("[%ld]: go get ref\n", pcs->picture_number);
+
         // Get Empty Reference Picture Object
         svt_get_empty_object(
             scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
             &reference_picture_wrapper);
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+
+        
+      //  svt_block_on_mutex(scs->srm_mutex);
+      //  scs->tot_refs++;
+      ////  printf("[%ld]: got it ref  tot:%i \n", pcs->picture_number, scs->tot_refs);
+      //  svt_release_mutex(scs->srm_mutex);
+
         // Give the new Reference a nominal live_count of 1
         svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
 #if TUNE_INL_ME_RECON_INPUT

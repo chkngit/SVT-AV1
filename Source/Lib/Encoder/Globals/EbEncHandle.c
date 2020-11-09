@@ -653,7 +653,11 @@ EbErrorType load_default_buffer_configuration_settings(
     if (core_count > 1){
         scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count            = MAX(MIN(15, core_count >> 1), core_count / 6));
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
+#if TPL_SOP
+        scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
+#else
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count     = MAX(MIN(3, core_count >> 1), core_count / 12));
+#endif
 #if FEATURE_INL_ME
         // TODO: Tune the count here
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
@@ -2277,6 +2281,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.super_block_size = 64;
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+
+#if 1//OMARK
+
+    scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode < ENC_M4) ? 128 : 64;
+
+#endif
+
+
+
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     if (use_output_stat(scs_ptr))
@@ -2308,7 +2321,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->in_loop_me = 0;
     else
 #if FEATURE_PA_ME
+#if IME_SUPP
+        scs_ptr->in_loop_me = 1 ;
+#else
         scs_ptr->in_loop_me = 0 ;
+#endif
 #else
         scs_ptr->in_loop_me = 1;
 #endif
@@ -2327,7 +2344,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FEATURE_PA_ME
     // Enforce encoding frame in decode order
     // Wait for feedback from PKT
+#if IME_SUPP
+    if (
+#else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
+#endif
         scs_ptr->in_loop_me == 1 && // inloop ME
         scs_ptr->static_config.enable_tpl_la)
         scs_ptr->enable_dec_order = 1;
@@ -2337,7 +2358,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 #if TUNE_TPL_OIS
         // Open loop intra done with TPL, data is not stored
-        scs_ptr->in_loop_ois = 1;
+        scs_ptr->in_loop_ois = 0;
 #endif
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed

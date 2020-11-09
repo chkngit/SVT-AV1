@@ -275,6 +275,10 @@ static uint8_t tpl_setup_me_refs(
             REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
 #endif
 
+//    if (pcs_tpl_group_frame_ptr->picture_number == 18)
+//        printf("STOPME");
+
+
     uint8_t ref_list_count = 0;
     for (uint8_t list_index = REF_LIST_0; list_index <= REF_LIST_1; list_index++) {
         uint8_t *ref_count_ptr = (list_index == REF_LIST_0) ? ref0_count : ref1_count;
@@ -479,8 +483,10 @@ static EbErrorType tpl_init_pcs_tpl_data(
 #endif
 
 
-static EbErrorType tpl_get_open_loop_me(
+ EbErrorType tpl_get_open_loop_me(
+#if ! TPL_SOP
     PictureManagerContext           *context_ptr,
+#endif
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr) {
 
@@ -546,7 +552,11 @@ static EbErrorType tpl_get_open_loop_me(
                         EbObjectWrapper *out_results_wrapper_ptr;
 
                         svt_get_empty_object(
-                                context_ptr->picture_manager_output_fifo_ptr,
+#if  TPL_SOP 
+                            0,
+#else                               
+                            context_ptr->picture_manager_output_fifo_ptr,
+#endif
                                 &out_results_wrapper_ptr);
 
                         PictureManagerResults *out_results_ptr = (PictureManagerResults*)out_results_wrapper_ptr->object_ptr;
@@ -656,7 +666,7 @@ void *picture_manager_kernel(void *input_ptr) {
             scs_ptr            = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
-            //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
+        //    printf("PM IN  %d \n ", pcs_ptr->picture_number);
                 pred_position_ptr = pcs_ptr->pred_struct_ptr
                                         ->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index];
 
@@ -757,6 +767,12 @@ void *picture_manager_kernel(void *input_ptr) {
                 }
                 // Release the Reference Buffer once we know it is not a reference
                 if (pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
+
+                  /*  svt_block_on_mutex(scs_ptr->srm_mutex);
+                    scs_ptr->tot_refs--;
+                    printf("[%ld]:  REF--nrf  tot:%i\n", pcs_ptr->picture_number, scs_ptr->tot_refs);
+                    svt_release_mutex(scs_ptr->srm_mutex);
+*/
                     // Release the nominal live_count value
                     svt_release_object(pcs_ptr->reference_picture_wrapper_ptr);
                     pcs_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)NULL;
@@ -780,6 +796,10 @@ void *picture_manager_kernel(void *input_ptr) {
                                EB_ENC_PM_ERROR7);
 
             reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;
+
+
+          //  printf("PM REF  %d \n ", input_picture_demux_ptr->picture_number);
+
             // Find the Reference in the Reference Queue
             do {
                 reference_entry_ptr =
@@ -819,6 +839,9 @@ void *picture_manager_kernel(void *input_ptr) {
 
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
             reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;
+
+          //  printf("PM FEEDBACK  %d \n ", input_picture_demux_ptr->picture_number);
+
             // Find the Reference in the Reference Queue
             do {
                 reference_entry_ptr =
@@ -1509,9 +1532,14 @@ void *picture_manager_kernel(void *input_ptr) {
 
 #if FEATURE_INL_ME
 
+#if ! TPL_SOP
                         // Get TPL ME
                         tpl_get_open_loop_me(context_ptr, scs_ptr, child_pcs_ptr->parent_pcs_ptr);
+#endif
 
+
+                    //    printf("[%ld]: PM post to iME\n", child_pcs_ptr->picture_number);
+                     
                         const uint32_t segment_counts =  child_pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count;
                         for (uint32_t segment_index = 0; segment_index < segment_counts; ++segment_index) {
                             EbObjectWrapper               *out_results_wrapper_ptr;
@@ -1576,6 +1604,16 @@ void *picture_manager_kernel(void *input_ptr) {
                     (reference_entry_ptr->release_enable) &&
                     (reference_entry_ptr->reference_object_ptr)) {
                     // Release the nominal live_count value
+
+                   /* if (reference_entry_ptr->reference_object_ptr->live_count <= 1) {
+                       
+                        svt_block_on_mutex(scs_ptr->srm_mutex);
+                        scs_ptr->tot_refs--;                       
+                        printf("[%ld]:  REF--fdb  tot:%i\n", reference_entry_ptr->picture_number, scs_ptr->tot_refs);
+                        svt_release_mutex(scs_ptr->srm_mutex);
+                    }*/
+
+
                     svt_release_object(reference_entry_ptr->reference_object_ptr);
                     reference_entry_ptr->reference_object_ptr      = (EbObjectWrapper *)NULL;
                     reference_entry_ptr->reference_available       = EB_FALSE;
