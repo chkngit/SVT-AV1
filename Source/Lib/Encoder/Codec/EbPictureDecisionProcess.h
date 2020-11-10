@@ -111,10 +111,6 @@ typedef struct PictureDecisionContext
     uint32_t                 mg_size;//number of active pictures in above array
     PictureParentControlSet* mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
 #endif
-#if FIRST_PASS_RESTRUCTURE
-    EbPictureBufferDesc *first_pass_last_frame;
-    EbPictureBufferDesc *first_pass_golden_frame;
-#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

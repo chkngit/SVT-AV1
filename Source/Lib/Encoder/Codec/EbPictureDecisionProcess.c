@@ -240,10 +240,6 @@ static void picture_decision_context_dctor(EbPtr p)
     EB_FREE_2D(obj->ahd_running_avg);
     EB_FREE_2D(obj->ahd_running_avg_cr);
     EB_FREE_2D(obj->ahd_running_avg_cb);
-#if FIRST_PASS_RESTRUCTURE
-    EB_DELETE(obj->first_pass_last_frame);
-    EB_DELETE(obj->first_pass_golden_frame);
-#endif
 
     EB_FREE_ARRAY(obj);
 }
@@ -284,29 +280,6 @@ EbErrorType picture_decision_context_ctor(
     context_ptr->me_fifo_ptr = eb_system_resource_get_producer_fifo(
             enc_handle_ptr->me_pool_ptr_array[0], 0);
 
-#if FIRST_PASS_RESTRUCTURE
-    // anaghdin: handle 10 bit
-    const SequenceControlSet *  scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
-    EbPictureBufferDescInitData picture_buffer_desc_init_data;
-    picture_buffer_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
-    picture_buffer_desc_init_data.max_width = scs_ptr->max_input_luma_width;
-    picture_buffer_desc_init_data.max_height = scs_ptr->max_input_luma_height;
-    picture_buffer_desc_init_data.bit_depth = EB_8BIT;
-    picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
-    picture_buffer_desc_init_data.left_padding  = scs_ptr->left_padding;
-    picture_buffer_desc_init_data.right_padding = scs_ptr->right_padding;
-    picture_buffer_desc_init_data.top_padding = scs_ptr->top_padding;
-    picture_buffer_desc_init_data.bot_padding = scs_ptr->bot_padding;
-    picture_buffer_desc_init_data.split_mode = EB_FALSE;
-
-    EB_NEW(context_ptr->first_pass_last_frame,
-        eb_picture_buffer_desc_ctor,
-        (EbPtr)&picture_buffer_desc_init_data);
-
-    EB_NEW(context_ptr->first_pass_golden_frame,
-        eb_picture_buffer_desc_ctor,
-        (EbPtr)&picture_buffer_desc_init_data);
-#endif
     return EB_ErrorNone;
 }
 
@@ -3950,20 +3923,6 @@ void process_first_pass_frame(
 
     eb_release_object(pcs_ptr->me_data_wrapper_ptr);
     pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
-    // anaghdin piture_number not set yet to remove?
-    if (pcs_ptr->picture_number > 0)
-        memcpy(context_ptr->first_pass_golden_frame->buffer_y,
-            context_ptr->first_pass_last_frame->buffer_y,
-            context_ptr->first_pass_last_frame->stride_y *
-            (context_ptr->first_pass_last_frame->origin_y * 2 +
-                context_ptr->first_pass_last_frame->height));
-
-    memcpy(context_ptr->first_pass_last_frame->buffer_y,
-        pcs_ptr->enhanced_picture_ptr->buffer_y,
-        pcs_ptr->enhanced_picture_ptr->stride_y *
-        (pcs_ptr->enhanced_picture_ptr->origin_y * 2 +
-            pcs_ptr->enhanced_picture_ptr->height));
-
 }
 #endif
 
@@ -4929,21 +4888,6 @@ void* picture_decision_kernel(void *input_ptr)
                             (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
 #else
                         parent_pcs_window[2 + window_index] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
-#endif
-#if 0//FIRST_PASS_RESTRUCTURE
-                        PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
-                        PictureParentControlSet *first_pass_pcs_ptr = (PictureParentControlSet*)first_pass_queue_entry->parent_pcs_wrapper_ptr->object_ptr;
-                        if (!first_pass_pcs_ptr->first_pass_done) {
-                            SVT_LOG("First Pass: POC:%lld\n", first_pass_queue_entry->picture_number);
-                            first_pass_pcs_ptr->first_pass_done = 1;
-                            int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(entry_index);
-                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[0] = first_pass_queue_entry->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
-                            temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(temp_entry_index);
-                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[1] = first_pass_queue_entry->picture_number > 1 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
-                            first_pass_pcs_ptr->first_pass_ref_count = first_pass_queue_entry->picture_number > 1 ? 2 : first_pass_queue_entry->picture_number > 0 ? 1 : 0;
-
-                            process_first_pass_frame(scs_ptr, first_pass_pcs_ptr, context_ptr);
-                        }
 #endif
                     }
                 }
