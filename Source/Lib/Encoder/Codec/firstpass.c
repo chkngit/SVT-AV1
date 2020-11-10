@@ -761,7 +761,6 @@ static int firstpass_inter_prediction(
 
     int motion_error = 0;
     // TODO(pengchong): Replace the hard-coded threshold
-    // anaghdin: to add support
     if (1) //(raw_motion_error > LOW_MOTION_ERROR_THRESH)
     {
         uint32_t                      cand_index = 1;
@@ -2459,7 +2458,6 @@ static int open_loop_firstpass_inter_prediction(
 
     int motion_error = 0;
     // TODO(pengchong): Replace the hard-coded threshold
-    // anaghdin: to add support
     if (raw_motion_err > LOW_MOTION_ERROR_THRESH)
     {
         uint32_t    me_mb_offset = 0;
@@ -2601,7 +2599,6 @@ static int open_loop_firstpass_inter_prediction(
 // Perform the processing for first pass
 // anaghdin add descriptions
 static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
-    //anaghdin: check if input_picture_ptr->width, scs_ptr->seq_header.max_frame_width and ppcs_ptr->aligned_width are the same
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
 
@@ -2719,13 +2716,11 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     context_ptr->me_context_ptr->is_used_as_reference_flag   = 1;
 
     if (ppcs_ptr->first_pass_ref_count) {
-        // assert anaghdin
         context_ptr->me_context_ptr->me_ds_ref_array[0][0] =
             ppcs_ptr->first_pass_ref_ppcs_ptr[0]->ds_pics;
         context_ptr->me_context_ptr->num_of_ref_pic_to_search[0]++;
     }
     if (ppcs_ptr->first_pass_ref_count > 1) {
-        // assert anaghdin
         context_ptr->me_context_ptr->me_ds_ref_array[0][1] =
             ppcs_ptr->first_pass_ref_ppcs_ptr[1]->ds_pics;
         context_ptr->me_context_ptr->num_of_ref_pic_to_search[0]++;
@@ -2787,24 +2782,23 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
             sixteenth_pic_ptr->stride_y +
         sixteenth_pic_ptr->origin_x + (sb_origin_x >> 2);
 
-    {
-        uint8_t *frame_ptr = &(sixteenth_pic_ptr->buffer_y[buffer_index]);
-        uint8_t *local_ptr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
+    uint8_t *frame_ptr = &(sixteenth_pic_ptr->buffer_y[buffer_index]);
+    uint8_t *local_ptr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
 
-        if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
-            for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 1) {
-                EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
-                local_ptr += 16;
-                frame_ptr += sixteenth_pic_ptr->stride_y;
-            }
-        } else {
-            for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 2) {
-                EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
-                local_ptr += 16;
-                frame_ptr += sixteenth_pic_ptr->stride_y << 1;
-            }
+    if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
+        for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 1) {
+            EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
+            local_ptr += 16;
+            frame_ptr += sixteenth_pic_ptr->stride_y;
+        }
+    } else {
+        for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 2) {
+            EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
+            local_ptr += 16;
+            frame_ptr += sixteenth_pic_ptr->stride_y << 1;
         }
     }
+  
 }
 // Perform the motion estimation for first pass
 // anaghdin add descriptions

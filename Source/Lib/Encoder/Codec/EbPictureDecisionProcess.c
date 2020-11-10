@@ -3918,8 +3918,8 @@ void process_first_pass_frame(
     int16_t seg_idx;
 
     // Initialize Segments
-    pcs_ptr->first_pass_seg_column_count = 1;// scs_ptr->tf_segment_column_count; // anaghdin to get the right values
-    pcs_ptr->first_pass_seg_row_count = 1;// scs_ptr->tf_segment_row_count;
+    pcs_ptr->first_pass_seg_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[0]);
+    pcs_ptr->first_pass_seg_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
@@ -3942,7 +3942,7 @@ void process_first_pass_frame(
         out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
         out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
         out_results_ptr->segment_index = seg_idx;
-        out_results_ptr->task_type = 2;// define a macro
+        out_results_ptr->task_type = 2;// anaghdin define a macro
         eb_post_full_object(out_results_wrapper_ptr);
     }
 

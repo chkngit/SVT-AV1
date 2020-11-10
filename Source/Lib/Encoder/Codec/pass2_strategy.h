@@ -56,7 +56,6 @@ typedef struct {
 
 void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
 #if LAP_ENABLED_VBR
-//anaghdin update as above functions
 void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
 void av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);
 #else
