@@ -54,6 +54,8 @@ extern "C" {
 
 #define FEATURE_PA_ME                1 // The ability to do ME inloop or in PAME
 
+#define FEATURE_TPL_SOP              1  // Move TPL to source based operation for ime == 0
+
 #define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
 #if FEATURE_IN_LOOP_TPL
 #define ENABLE_TPL_ZERO_LAD     1 // Enable TPL in loop to work with zero LAD

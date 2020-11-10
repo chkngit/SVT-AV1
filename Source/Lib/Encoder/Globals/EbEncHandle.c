@@ -545,7 +545,7 @@ EbErrorType load_default_buffer_configuration_settings(
 
 #if FEATURE_PA_ME
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
-        min_ref = 18;
+        min_ref = 24;
 #else
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
@@ -653,7 +653,11 @@ EbErrorType load_default_buffer_configuration_settings(
     if (core_count > 1){
         scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count            = MAX(MIN(15, core_count >> 1), core_count / 6));
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
+#if FEATURE_TPL_SOP
+        scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
+#else
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count     = MAX(MIN(3, core_count >> 1), core_count / 12));
+#endif
 #if FEATURE_INL_ME
         // TODO: Tune the count here
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
@@ -2337,7 +2341,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 #if TUNE_TPL_OIS
         // Open loop intra done with TPL, data is not stored
-        scs_ptr->in_loop_ois = 1;
+        scs_ptr->in_loop_ois = 0;
 #endif
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed

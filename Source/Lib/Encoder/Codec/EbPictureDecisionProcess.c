@@ -4009,8 +4009,8 @@ void send_picture_out(
     EbObjectWrapper               *me_wrapper;
     EbObjectWrapper               *out_results_wrapper;
 
-    if (scs->static_config.look_ahead_distance == 0) {
 
+    if (scs->static_config.look_ahead_distance == 0) {
         EbObjectWrapper* reference_picture_wrapper;
         // Get Empty Reference Picture Object
         svt_get_empty_object(

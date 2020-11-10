@@ -7396,6 +7396,11 @@ void *rate_control_kernel(void *input_ptr) {
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
+
+#if  FEATURE_TPL_SOP
+
+           if (scs_ptr->in_loop_me)
+#endif
 #if FEATURE_IN_LOOP_TPL
 
 #if FEATURE_PA_ME

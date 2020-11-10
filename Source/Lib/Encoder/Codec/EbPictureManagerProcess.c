@@ -25,6 +25,8 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbEntropyCoding.h"
 #include "EbLog.h"
+
+#if !FEATURE_TPL_SOP
 /***************************************
  * Context
  ***************************************/
@@ -37,7 +39,7 @@ typedef struct PictureManagerContext {
     uint64_t pmgr_dec_order;
 #endif
 } PictureManagerContext;
-
+#endif
 // Token buffer is only used for palette tokens.
 static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2,
                                            const int num_planes) {
@@ -479,7 +481,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
 #endif
 
 
-static EbErrorType tpl_get_open_loop_me(
+ EbErrorType tpl_get_open_loop_me(
     PictureManagerContext           *context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr) {
@@ -755,6 +757,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         encode_context_ptr->app_callback_ptr,
                         EB_ENC_PM_ERROR6);
                 }
+
                 // Release the Reference Buffer once we know it is not a reference
                 if (pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
                     // Release the nominal live_count value
@@ -1509,7 +1512,10 @@ void *picture_manager_kernel(void *input_ptr) {
 
 #if FEATURE_INL_ME
 
+#if  FEATURE_TPL_SOP
                         // Get TPL ME
+                        if (scs_ptr->in_loop_me)
+#endif
                         tpl_get_open_loop_me(context_ptr, scs_ptr, child_pcs_ptr->parent_pcs_ptr);
 
                         const uint32_t segment_counts =  child_pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count;
