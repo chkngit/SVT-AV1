@@ -1096,9 +1096,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if ENABLE_TPL_TRAILING
         // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
-        pcs_ptr->tpl_trailing_frame_count = 6;
-#endif
+        pcs_ptr->tpl_trailing_frame_count = 0;
     pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
+#endif
     return return_error;
 }
 
@@ -4740,7 +4740,23 @@ void* picture_decision_kernel(void *input_ptr)
 #if TUNE_TPL
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
                     if (pcs_ptr->pd_window[2 + window_index])
+#if TUNE_TPL_END_OF_GOP
+                    {
+                        uint8_t is_frame_intra = 0;
+                        if (scs_ptr->intra_period_length == 0)
+                            is_frame_intra = 1;
+                        else if (scs_ptr->intra_period_length == -1)
+                            is_frame_intra = 0;
+                        else
+                            is_frame_intra = ((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number % (scs_ptr->intra_period_length + 1) ? 0 : 1;
+                        if (is_frame_intra)
+                            break;
+                        else
+                            pcs_ptr->pd_window_count++;
+                    }
+#else
                         pcs_ptr->pd_window_count++;
+#endif                
                     else
                         break;
 #endif
