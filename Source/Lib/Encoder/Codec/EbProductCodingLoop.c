@@ -9749,7 +9749,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint32_t             d1_first_block    = 1;
 #endif
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-#if FIX_10BIT//anaghdin: to remove output_stat
+#if FIX_10BIT && !FIRST_PASS_RESTRUCTURE
     if (context_ptr->hbd_mode_decision || (use_output_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth > EB_8BIT)) {
 #else
     if (context_ptr->hbd_mode_decision) {

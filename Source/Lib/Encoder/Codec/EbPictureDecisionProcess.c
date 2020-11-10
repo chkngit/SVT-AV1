@@ -5382,7 +5382,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
-                                if (use_output_stat(scs_ptr)) //anaghdin: do we need to create a new function for 1 pass lap_enabled?
+                                if (use_output_stat(scs_ptr))
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);

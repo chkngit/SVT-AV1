@@ -2249,7 +2249,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
-    // anaghdin to remove
     if (use_output_stat(scs_ptr) ||
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
         scs_ptr->static_config.super_block_size = 64;
@@ -2301,7 +2300,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->over_boundary_block_mode = 1;
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
-    if (use_output_stat(scs_ptr)) //anaghdin: check to remove
+    if (use_output_stat(scs_ptr))
         scs_ptr->over_boundary_block_mode = 0;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;

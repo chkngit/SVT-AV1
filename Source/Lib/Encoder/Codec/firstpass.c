@@ -2320,15 +2320,11 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 * Returns:
 *   this_intra_error.
 ***************************************************************************/
-static int open_loop_firstpass_intra_prediction(
-    uint32_t             blk_origin_x,
-    uint32_t             blk_origin_y,
-    uint8_t bwidth,
-    uint8_t bheight,
-    EbPictureBufferDesc *input_picture_ptr,
-    uint32_t             input_origin_index,
-    FRAME_STATS *const stats) {
-
+static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t blk_origin_y,
+                                                uint8_t bwidth, uint8_t bheight,
+                                                EbPictureBufferDesc *input_picture_ptr,
+                                                uint32_t             input_origin_index,
+                                                FRAME_STATS *const   stats) {
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
 
@@ -2351,7 +2347,6 @@ static int open_loop_firstpass_intra_prediction(
 
     for (uint32_t sub_blk_index_y = 0; sub_blk_index_y < sub_blk_rows; ++sub_blk_index_y) {
         for (uint32_t sub_blk_index_x = 0; sub_blk_index_x < sub_blk_cols; ++sub_blk_index_x) {
-           // TxSize tx_size = sub_blk_rows == 1 ? TX_16X16 : TX_4X4;
             TxSize tx_size = use_dc_pred ? ((bheight == FORCED_BLK_SIZE && bwidth == FORCED_BLK_SIZE) ? TX_16X16 : TX_8X8) : TX_4X4;
             sub_blk_origin_x = blk_origin_x + sub_blk_index_x * bwidth / sub_blk_cols;
             sub_blk_origin_y = blk_origin_y + sub_blk_index_y* bheight/ sub_blk_rows;
@@ -2408,26 +2403,15 @@ static int open_loop_firstpass_intra_prediction(
     // This penalty adds a cost matching that of a 0,0 mv to the intra case.
     this_intra_error += INTRA_MODE_PENALTY;
 
-    const int hbd = 0;// context_ptr->hbd_mode_decision; //anaghdin clean up
     const int stride = input_picture_ptr->stride_y;
-    if (hbd) {
-        uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
-        for (int r8 = 0; r8 < 2; ++r8) {
-            for (int c8 = 0; c8 < 2; ++c8) {
-                stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
-                    CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
-            }
+    uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
+    for (int r8 = 0; r8 < 2; ++r8) {
+        for (int c8 = 0; c8 < 2; ++c8) {
+            stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
+                CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
         }
     }
-    else {
-        uint8_t *buf = &(input_picture_ptr->buffer_y)[input_origin_index];
-        for (int r8 = 0; r8 < 2; ++r8) {
-            for (int c8 = 0; c8 < 2; ++c8) {
-                stats->frame_avg_wavelet_energy +=
-                    eb_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
-            }
-        }
-    }
+
     // Accumulate the intra error.
     stats->intra_error += (int64_t)this_intra_error;
     return this_intra_error;
@@ -2517,7 +2501,6 @@ static int open_loop_firstpass_inter_prediction(
                     golden_input_picture_ptr->stride_y,
                     bwidth,
                     bheight));
-
 
             // Assume 0,0 motion with no mv overhead.
             if (gf_mv.col != 0 && gf_mv.row != 0) {
@@ -2618,11 +2601,9 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
     uint32_t blk_origin_y;
     MV first_top_mv = kZeroMv;
     MV last_mv;
-
     uint32_t input_origin_index;
 
     EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
-
 
     for (uint32_t blk_index_y = 0; blk_index_y < blk_rows; ++blk_index_y) {
         for (uint32_t blk_index_x = 0; blk_index_x < blk_cols; ++blk_index_x) {
@@ -2641,8 +2622,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                 (ppcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
                 ? ppcs_ptr->aligned_height - blk_origin_y
                 : FORCED_BLK_SIZE;
-            //if (blk_width != FORCED_BLK_SIZE || blk_height != FORCED_BLK_SIZE)
-            //    continue;
+    
             input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
                 input_picture_ptr->stride_y +
                 (input_picture_ptr->origin_x + blk_origin_x);
@@ -2697,13 +2677,12 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                 mb_stats->tr_coded_error += this_intra_error;
                 mb_stats->coded_error += this_intra_error;
             }
-
         }
     }
 
     return EB_ErrorNone;
 }
-
+//anaghdin add description
 static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
                                         PictureParentControlSet *  ppcs_ptr,
                                         EbPictureBufferDesc *input_picture_ptr, int blk_row,
@@ -2752,7 +2731,7 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
         input_picture_ptr->origin_x + sb_origin_x;
 
     // set search method
-    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH; //anaghdin: check this
+    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
 
     uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
 #ifdef ARCH_X86
@@ -2861,45 +2840,10 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
 
-   // EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
-  //  uint32_t encoder_bit_depth = ppcs_ptr->scs_ptr->static_config.encoder_bit_depth;
-  //  EbBool   is_highbd         = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
-
-    eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
-#if 0
-    // only performed once for each picture
-    if (ppcs_ptr->temp_filt_prep_done == 0) {
-        ppcs_ptr->temp_filt_prep_done = 1;
-
-#if 1
-        // Pad chroma reference samples - once only per picture
-#if !FIX_10BIT_CRASH
-#if FEATURE_OPT_TF
-        if (ppcs_ptr->tf_ctrls.chroma)
-#endif
-#endif
-            for (int i = 0; i < (ppcs_ptr->past_altref_nframes +
-                ppcs_ptr->future_altref_nframes + 1);
-                i++) {
-                EbPictureBufferDesc *pic_ptr_ref =
-                    list_picture_control_set_ptr[i]->enhanced_picture_ptr;
-                generate_padding_pic(pic_ptr_ref, ss_x, ss_y, is_highbd);
-                //10bit: for all the reference pictures do the packing once at the beggining.
-                if (is_highbd && i != ppcs_ptr->past_altref_nframes) {
-                    EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y], input_picture_ptr->luma_size);
-                    // pack byte buffers to 16 bit buffer
-                    pack_highbd_pic(pic_ptr_ref, list_picture_control_set_ptr[i]->altref_buffer_highbd, ss_x, ss_y, EB_TRUE);
-                }
-            }
-#endif
-        }
-    }
-#endif
-    eb_release_mutex(ppcs_ptr->first_pass_mutex);
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
-    if (ppcs_ptr->first_pass_ref_count) //anaghdin added the condition
+    if (ppcs_ptr->first_pass_ref_count)
         first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
     
     eb_block_on_mutex(ppcs_ptr->first_pass_mutex);
@@ -2909,25 +2853,6 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
         // Perform the processing of the frame for each frame after me is done for all blocks
         first_pass_frame(ppcs_ptr);
 
-#if 0
-        if (is_highbd) {
-            unpack_highbd_pic(ppcs_ptr->altref_buffer_highbd,
-                input_picture_ptr,
-                ss_x,
-                ss_y,
-                EB_TRUE);
-
-            EB_FREE_ARRAY(ppcs_ptr->altref_buffer_highbd[C_Y]);
-            for (int i = 0; i < (ppcs_ptr->past_altref_nframes + ppcs_ptr->future_altref_nframes + 1); i++) {
-                if (i != ppcs_ptr->past_altref_nframes) {
-                    EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y]);
-                }
-            }
-        }
-#endif
-#if 0//LAP_LIMITED_STAT
-        if (!ppcs_ptr->scs_ptr->lap_enabled)
-#endif
         first_pass_frame_end(ppcs_ptr, ppcs_ptr->ts_duration);
 #if LAP_ENABLED_VBR
         if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_enabled)
@@ -2935,7 +2860,7 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
         if (ppcs_ptr->end_of_sequence_flag)
 #endif
             svt_av1_end_first_pass(ppcs_ptr);
-        // signal that first pass is done
+        // signal that the first pass is done
         eb_post_semaphore(ppcs_ptr->first_pass_done_semaphore);
     }
 
