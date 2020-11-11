@@ -144,7 +144,7 @@ void *source_based_operations_kernel(void *input_ptr) {
         SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         // Get TPL ME
 
-        if (scs_ptr->in_loop_me == 0) {
+        if (scs_ptr->in_loop_me == 0 && scs_ptr->static_config.enable_tpl_la) {
             tpl_get_open_loop_me(NULL, scs_ptr, pcs_ptr);
 
 

@@ -1514,7 +1514,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
 #if  FEATURE_TPL_SOP
                         // Get TPL ME
-                        if (scs_ptr->in_loop_me)
+                        if (scs_ptr->in_loop_me|| scs_ptr->static_config.enable_tpl_la == 0)
 #endif
                         tpl_get_open_loop_me(context_ptr, scs_ptr, child_pcs_ptr->parent_pcs_ptr);
 
