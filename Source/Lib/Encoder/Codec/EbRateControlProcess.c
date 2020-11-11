@@ -966,7 +966,9 @@ static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist,
 
     return rate_cost;
 }
-
+/************************************************
+* Genrate TPL MC Flow Synthesizer
+************************************************/
 static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, PictureParentControlSet *pcs_ptr,
     TplStats *tpl_stats_ptr,
     int mi_row, int mi_col,
@@ -1036,7 +1038,9 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
         }
     }
 }
-
+/************************************************
+* Genrate TPL MC Flow Synthesizer
+************************************************/
 static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], int32_t frame_idx, int mi_row, int mi_col, const int/*BLOCK_SIZE*/ bsize, uint8_t frames_in_sw) {
     const int mi_height = mi_size_high[bsize];
     const int mi_width = mi_size_wide[bsize];
