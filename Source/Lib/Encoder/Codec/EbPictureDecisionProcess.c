@@ -3946,12 +3946,12 @@ void store_tpl_pictures(
     if(is_delayed_intra(pcs))
     {
         pcs->tpl_group[0] = (void*)pcs;
-        memcpy(&pcs->tpl_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        EB_MEMCPY(&pcs->tpl_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = 1 + mg_size;
 
     }
     else {
-        memcpy(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        EB_MEMCPY(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
 #if !TUNE_TPL
         //add 3 future pictures from PD future window
@@ -5638,7 +5638,7 @@ void* picture_decision_kernel(void *input_ptr)
                         uint32_t mg_size = context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay - context_ptr->mini_gop_start_index[mini_gop_index]+1;
 #if FEATURE_NEW_DELAY
                         context_ptr->mg_size = mg_size;
-                        memcpy(context_ptr->mg_pictures_array_disp_order, context_ptr->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+                        EB_MEMCPY(context_ptr->mg_pictures_array_disp_order, context_ptr->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
 #endif
                         //sort based on decoder order
                         {

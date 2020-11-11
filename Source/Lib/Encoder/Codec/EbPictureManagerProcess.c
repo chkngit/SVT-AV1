@@ -234,6 +234,8 @@ void copy_dep_cnt_cleaning_list(
 
 }
 #if FEATURE_INL_ME
+// get references used by a TPL group
+// References are the source frames
 static uint8_t tpl_setup_me_refs(
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_group_frame_ptr,
@@ -252,7 +254,7 @@ static uint8_t tpl_setup_me_refs(
     uint64_t curr_poc = pcs_tpl_group_frame_ptr->picture_number;
     uint64_t base_poc = pcs_tpl_base_ptr->picture_number;
     uint32_t tpl_base_minigop = base_pred_struct_ptr->pred_struct_period;
-    //uint32_t curr_minigop_entry_idx = (curr_poc + tpl_base_minigop - base_poc) % tpl_base_minigop;
+
     uint32_t curr_minigop_entry_idx = (curr_poc > base_poc) ?
                                       (uint32_t)(curr_poc - base_poc) :
                                       (uint32_t)(curr_poc + tpl_base_minigop - base_poc);
@@ -466,10 +468,6 @@ static EbErrorType tpl_init_pcs_tpl_data(
         // If trailing frames, set as B slice and layer1 first, will update later when getting the refs
         pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type = B_SLICE;
 
-        // These will be updated in function tpl_setup_me_refs()
-        //pcs_tpl_group_frame_ptr->tpl_data.is_used_as_reference_flag = EB_FALSE;
-        //pcs_tpl_group_frame_ptr->tpl_data.tpl_temporal_layer_index = 1;
-        //pcs_tpl_group_frame_ptr->tpl_data.tpl_decode_order = 10;
     } else {
         pcs_tpl_group_frame_ptr->tpl_data.tpl_slice_type = pcs_tpl_group_frame_ptr->slice_type;
         pcs_tpl_group_frame_ptr->tpl_data.tpl_temporal_layer_index = pcs_tpl_group_frame_ptr->temporal_layer_index;

@@ -431,8 +431,6 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 
         encode_context_ptr->total_number_of_recon_frames++;
 
-        //svt_release_mutex(encode_context_ptr->terminating_conditions_mutex);
-
         // STOP READ/WRITE PROTECTED SECTION
         output_recon_ptr->n_filled_len = 0;
 

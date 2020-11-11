@@ -41,7 +41,7 @@ extern "C" {
 #define FIX_10BIT     1 // fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // fix RC token check to include double dash
 
-#define FEATURE_NEW_DELAY             1 // Change delay some sorts of I in PicDecision
+#define FEATURE_NEW_DELAY             1 // I frames with GOP resetting (aka IDR) are delayed in Picture Decision to wait for buffering of the next mini-gop frames
 #define FEATURE_INL_ME                1 //Enable in-loop ME
 #if FEATURE_INL_ME
 #define TUNE_IME_REUSE_TPL_RESULT     1 // Reuse TPL results for iLoopME
@@ -73,7 +73,7 @@ extern "C" {
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-
+#define DEBUG_TPL         0 // Prints to debug TPL
 #ifdef __cplusplus
 }
 #endif // __cplusplus

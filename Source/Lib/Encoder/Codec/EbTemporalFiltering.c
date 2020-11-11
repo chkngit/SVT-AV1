@@ -493,6 +493,7 @@ static void create_me_context_and_picture_control_inl(
     context_ptr->me_context_ptr->lambda =
         lambda_mode_decision_ra_sad[picture_control_set_ptr_central->picture_qp];
 
+#ifdef ARCH_X86_64
     {
         uint8_t *src_ptr = &(input_picture_ptr_central->buffer_y[buffer_index]);
 
@@ -503,6 +504,7 @@ static void create_me_context_and_picture_control_inl(
             _mm_prefetch(p, _MM_HINT_T2);
         }
     }
+#endif
     context_ptr->me_context_ptr->sb_src_ptr    = &(input_picture_ptr_central->buffer_y[buffer_index]);
     context_ptr->me_context_ptr->sb_src_stride = input_picture_ptr_central->stride_y;
 

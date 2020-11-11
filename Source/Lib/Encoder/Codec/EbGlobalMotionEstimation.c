@@ -156,7 +156,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
 }
 
 #if FEATURE_INL_ME
-// inloop global motion estimation
+// This function performs global motion estimation when in loop me is used
 void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
                               EbPictureBufferDesc *input_picture_ptr) {
     EbDownScaledObject *ds_object =
