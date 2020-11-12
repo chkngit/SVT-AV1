@@ -38,6 +38,7 @@
 #endif
 
 #if FEATURE_IN_LOOP_TPL
+// Generate lambda factor to tune lambda based on TPL stats
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
@@ -698,7 +699,7 @@ void tpl_mc_flow_dispenser(
 
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
-                            memcpy(best_coeff, coeff, sizeof(best_coeff));
+                            EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
 #if TUNE_INL_TPL_ENHANCEMENT
                             best_ref_poc = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
 #else
@@ -804,12 +805,12 @@ void tpl_mc_flow_dispenser(
                     }
                     else {
                         // intra recon
-#if 1//!TUNE_TPL_OIS
+
                         uint8_t *above_row;
                         uint8_t *left_col;
                         DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
                         DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
-#endif
+
                         above_row = above_data + 16;
                         left_col = left_data + 16;
                         uint8_t *recon_buffer =
@@ -975,7 +976,9 @@ static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist,
 
     return rate_cost;
 }
-
+/************************************************
+* Genrate TPL MC Flow Synthesizer
+************************************************/
 static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, PictureParentControlSet *pcs_ptr,
     TplStats *tpl_stats_ptr,
     int mi_row, int mi_col,
@@ -1045,7 +1048,9 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
         }
     }
 }
-
+/************************************************
+* Genrate TPL MC Flow Synthesizer
+************************************************/
 static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], int32_t frame_idx, int mi_row, int mi_col, const int/*BLOCK_SIZE*/ bsize, uint8_t frames_in_sw) {
     const int mi_height = mi_size_high[bsize];
     const int mi_width = mi_size_wide[bsize];
@@ -1113,8 +1118,9 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     if (mc_dep_cost_base != 0) {
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
-
-   // SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
+#if DEBUG_TPL
+    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
+#endif
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
@@ -1300,7 +1306,7 @@ EbErrorType tpl_mc_flow(
 #endif
         generate_r0beta(pcs_array[0]);
 
-#if 0 //AMIR_PRINTS
+#if DEBUG_TPL
         SVT_LOG("LOG displayorder:%ld\n",
             pcs_array[0]->picture_number);
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
@@ -7529,6 +7535,11 @@ void *rate_control_kernel(void *input_ptr) {
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
+
+#if  FEATURE_TPL_SOP
+
+           if (scs_ptr->in_loop_me)
+#endif
 #if FEATURE_IN_LOOP_TPL
 
 #if FEATURE_PA_ME
@@ -7748,7 +7759,7 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TUNE_TPL
                 if (scs_ptr->static_config.rate_control_mode == 1 &&
                     use_input_stat(scs_ptr) &&
-                    scs_ptr->static_config.look_ahead_distance != 0) //anaghdin what is this?>
+                    scs_ptr->static_config.look_ahead_distance != 0)
                     ;//hack skip base_q_idx writeback for accuracy loss like 89 to 88
                 else
 #endif

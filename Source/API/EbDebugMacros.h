@@ -41,7 +41,7 @@ extern "C" {
 #define FIX_10BIT     1 // fix 1st pass for 10bit input
 #define FIX_RC_TOKEN     1 // fix RC token check to include double dash
 
-#define FEATURE_NEW_DELAY             1 // Change delay some sorts of I in PicDecision
+#define FEATURE_NEW_DELAY             1 // I frames with GOP resetting (aka IDR) are delayed in Picture Decision to wait for buffering of the next mini-gop frames
 #define FEATURE_INL_ME                1 //Enable in-loop ME
 #if FEATURE_INL_ME
 #define TUNE_IME_REUSE_TPL_RESULT     1 // Reuse TPL results for iLoopME
@@ -54,6 +54,8 @@ extern "C" {
 
 #define FEATURE_PA_ME                1 // The ability to do ME inloop or in PAME
 
+#define FEATURE_TPL_SOP              1  // Move TPL to source based operation for ime == 0
+
 #define FEATURE_IN_LOOP_TPL 1 // Moving TPL to in loop
 #if FEATURE_IN_LOOP_TPL
 #define ENABLE_TPL_ZERO_LAD     1 // Enable TPL in loop to work with zero LAD
@@ -64,8 +66,9 @@ extern "C" {
 #define TUNE_TPL_OIS            1 // move ois to inloop TPL, can be done in me kernel with scs_ptr->in_loop_ois = 0
 #define TUNE_TPL_RATE           1 // remove  uncessary rate calculation
 #define TUNE_TPL_FWD_FRAME      1 // Tune TPL for FWD FRAME
+#define TUNE_TPL_END_OF_GOP     1 // Tune TPL for end of Gop frames
 #endif
-
+#define FIX_GM_COMPUTATION      1  // Fix global motion computation for different modes
 #define FEATURE_MDS2 1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2
 #define FEATURE_NIC_SCALING_PER_STAGE            1 // Add ability to scale NICs per stage; improve current trade-offs
 #define TUNE_NICS                                1 // Tune settings for NIC scaling/pruning/# of stages to improve trade-offs with new scaling
@@ -116,10 +119,10 @@ extern "C" {
 #define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
 #define FIX_GM_PARAMS_UPDATE                         1 // Fix GM r2r related to improper setting of GM params for NREF frames when GM is used for REF only
 
-#define GM_AGAIN                   1
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-
+#define DEBUG_TPL         0 // Prints to debug TPL
 #ifdef __cplusplus
 }
 #endif // __cplusplus

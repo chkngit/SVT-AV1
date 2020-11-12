@@ -4058,12 +4058,12 @@ void store_tpl_pictures(
     if(is_delayed_intra(pcs))
     {
         pcs->tpl_group[0] = (void*)pcs;
-        memcpy(&pcs->tpl_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        EB_MEMCPY(&pcs->tpl_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = 1 + mg_size;
 
     }
     else {
-        memcpy(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        EB_MEMCPY(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
 #if !TUNE_TPL
         //add 3 future pictures from PD future window
@@ -4860,7 +4860,25 @@ void* picture_decision_kernel(void *input_ptr)
 #if TUNE_TPL
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
                     if (pcs_ptr->pd_window[2 + window_index])
+#if TUNE_TPL_END_OF_GOP
+                    {
+                        uint8_t is_frame_intra = 0;
+                        if (scs_ptr->intra_period_length == 0)
+                            is_frame_intra = 1;
+                        else if (scs_ptr->intra_period_length == -1)
+                            is_frame_intra = 0;
+                        else
+                            is_frame_intra =
+                            (((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number %
+                            (scs_ptr->intra_period_length + 1)) ? 0 : 1;
+                        if (is_frame_intra)
+                            break;
+                        else
+                            pcs_ptr->pd_window_count++;
+                    }
+#else
                         pcs_ptr->pd_window_count++;
+#endif
                     else
                         break;
 #endif
@@ -5717,7 +5735,7 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->inloop_me_segments_total_count =
                                 (uint16_t)(pcs_ptr->inloop_me_segments_column_count * pcs_ptr->inloop_me_segments_row_count);
 #endif
-#if !FEATURE_IN_LOOP_TPL || GM_AGAIN
+#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
                             pcs_ptr->me_processed_sb_count = 0;
 #endif
                             //****************************************************
@@ -5750,7 +5768,7 @@ void* picture_decision_kernel(void *input_ptr)
                         uint32_t mg_size = context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay - context_ptr->mini_gop_start_index[mini_gop_index]+1;
 #if FEATURE_NEW_DELAY
                         context_ptr->mg_size = mg_size;
-                        memcpy(context_ptr->mg_pictures_array_disp_order, context_ptr->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+                        EB_MEMCPY(context_ptr->mg_pictures_array_disp_order, context_ptr->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
 #endif
                         //sort based on decoder order
                         {

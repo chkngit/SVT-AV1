@@ -131,6 +131,9 @@ void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->new_mv_count             = 0.0;
     section->count                    = 0.0;
     section->duration                 = 1.0;
+    section->raw_error_stdev          = 0.0;
+    section->pcnt_third_ref           = 0.0;
+    section->tr_coded_error           = 0.0;
 }
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame += frame->frame;
@@ -568,6 +571,8 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr,
             ? EB_TRUE
             : EB_FALSE;
 
+    candidate_ptr->count_non_zero_coeffs = 0;
+
     //ALL PLANE
     *(candidate_buffer->full_cost_ptr) = 0;
 }
@@ -756,6 +761,14 @@ static int firstpass_inter_prediction(
         candidate_buffer->candidate_ptr->interp_filters   = 0;
         svt_product_prediction_fun_table[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+        candidate_ptr->y_has_coeff = 0;
+        candidate_ptr->u_has_coeff = 0;
+        candidate_ptr->v_has_coeff = 0;
+        candidate_ptr->count_non_zero_coeffs = 0;
+#if !FIX_REMOVE_UNUSED_CODE
+        candidate_ptr->chroma_distortion = 0;
+        candidate_ptr->chroma_distortion_inter_depth = 0;
+#endif
         *(candidate_buffer->full_cost_ptr) = 0;
         // To convert full-pel MV
         mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;

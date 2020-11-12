@@ -2358,8 +2358,8 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
     }
 #if !ME_IDX_LUPT
     else {
-        context_ptr->me_block_offset = get_me_info_index(
-            pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+        context_ptr->me_block_offset =
+            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
             sq_blk_geom,
             context_ptr->geom_offset_x,
             context_ptr->geom_offset_y);

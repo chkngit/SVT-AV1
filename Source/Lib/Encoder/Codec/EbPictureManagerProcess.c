@@ -25,6 +25,7 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbEntropyCoding.h"
 #include "EbLog.h"
+#if !FEATURE_TPL_SOP
 /***************************************
  * Context
  ***************************************/
@@ -37,7 +38,7 @@ typedef struct PictureManagerContext {
     uint64_t pmgr_dec_order;
 #endif
 } PictureManagerContext;
-
+#endif
 // Token buffer is only used for palette tokens.
 static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2,
                                            const int num_planes) {
@@ -479,7 +480,7 @@ static EbErrorType tpl_init_pcs_tpl_data(
 #endif
 
 
-static EbErrorType tpl_get_open_loop_me(
+ EbErrorType tpl_get_open_loop_me(
     PictureManagerContext           *context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_tpl_base_ptr) {
@@ -877,7 +878,11 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
+#if FEATURE_PA_ME
+                        ((scs_ptr->enable_dec_order) || use_input_stat(scs_ptr)))
+#else
                         use_input_stat(scs_ptr))
+#endif
                         availability_flag = EB_FALSE;
 
  #if FEATURE_PA_ME
@@ -1505,7 +1510,10 @@ void *picture_manager_kernel(void *input_ptr) {
 
 #if FEATURE_INL_ME
 
+#if  FEATURE_TPL_SOP
                         // Get TPL ME
+                        if (scs_ptr->in_loop_me|| scs_ptr->static_config.enable_tpl_la == 0)
+#endif
                         tpl_get_open_loop_me(context_ptr, scs_ptr, child_pcs_ptr->parent_pcs_ptr);
 
                         const uint32_t segment_counts =  child_pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count;

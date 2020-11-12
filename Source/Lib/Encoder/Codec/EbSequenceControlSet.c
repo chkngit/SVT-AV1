@@ -306,6 +306,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #endif
 #if FEATURE_PA_ME
     dst->enable_pic_mgr_dec_order = src->enable_pic_mgr_dec_order;
+    dst->enable_dec_order = src->enable_dec_order;
 #endif
     return EB_ErrorNone;
 }

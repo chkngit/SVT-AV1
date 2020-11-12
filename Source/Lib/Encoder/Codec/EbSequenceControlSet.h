@@ -85,6 +85,7 @@ typedef struct SequenceControlSet {
 #endif
 #if FEATURE_PA_ME
     uint8_t  enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
+    uint8_t  enable_dec_order; // if enabled: encoding are in dec order
 #endif
 #if TUNE_TPL_OIS
     /*!< Use in loop motion OIS
