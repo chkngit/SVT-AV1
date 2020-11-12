@@ -55,7 +55,39 @@
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
 #define STATS_CAPABILITY_GROW(s) (s * 3 /2)
+#if LAP_ENABLED_VBR_BUF
+static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut* out, uint64_t frame_number) {
+    if (frame_number < out->size)
+        return EB_ErrorNone;
 
+    if ((int64_t)frame_number >= (int64_t)out->capability - 1) {
+        size_t capability = (int64_t)frame_number >= (int64_t)STATS_CAPABILITY_INIT - 1 ?
+            STATS_CAPABILITY_GROW(frame_number) : STATS_CAPABILITY_INIT;
+        if (scs_ptr->lap_enabled) {
+            //store the data points before re-allocation
+            uint64_t stats_in_start_offset = 0;
+            uint64_t stats_in_offset = 0;
+            uint64_t stats_in_end_offset = 0;
+            if (frame_number) {
+                stats_in_start_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_start - out->stat;
+                stats_in_offset = scs_ptr->twopass.stats_in - out->stat;
+                stats_in_end_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_end - out->stat;
+            }
+            EB_REALLOC_ARRAY(out->stat, capability);
+            // restore the pointers after re-allocation is done
+            scs_ptr->twopass.stats_buf_ctx->stats_in_start = out->stat + stats_in_start_offset;
+            scs_ptr->twopass.stats_in = out->stat + stats_in_offset;
+            scs_ptr->twopass.stats_buf_ctx->stats_in_end = out->stat + stats_in_end_offset;
+        }
+        else {
+            EB_REALLOC_ARRAY(out->stat, capability);
+        }
+        out->capability = capability;
+    }
+    out->size = frame_number + 1;
+    return EB_ErrorNone;
+    }
+#else
 static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_number) {
     if (frame_number < out->size)
         return EB_ErrorNone;
@@ -68,27 +100,23 @@ static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_numb
     out->size = frame_number + 1;
     return EB_ErrorNone;
 }
+#endif
 
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
     FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
     eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+#if LAP_ENABLED_VBR_BUF
+    if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
+#else
     if (realloc_stats_out(stats_out, frame_number) != EB_ErrorNone) {
+#endif
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
     } else {
         stats_out->stat[frame_number] = *stats;
     }
-#if LAP_ENABLED_VBR
-    if (scs_ptr->lap_enabled && frame_number == 0) {
-        scs_ptr->twopass.stats_buf_ctx->stats_in_start =
-            stats_out->stat;
-        scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
 
-        scs_ptr->twopass.stats_buf_ctx->stats_in_end =
-            scs_ptr->twopass.stats_buf_ctx->stats_in_start;
-    }
-#endif
-// TEMP debug code
+    // TEMP debug code
 #if OUTPUT_FPF
     {
         FILE *fpfile;
@@ -2308,7 +2336,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 
 #if FIRST_PASS_RESTRUCTURE
 /***************************************************************************
-* Computes and returns the intra pred error of a block.
+* Computes and returns the intra pred error of a block using src.
 * intra pred error: sum of squared error of the intra predicted residual.
 * Modifies:
 *   stats->intra_skip_count
@@ -2327,11 +2355,9 @@ static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t 
                                                 FRAME_STATS *const   stats) {
     int32_t        mb_row = blk_origin_y >> 4;
     int32_t        mb_col = blk_origin_x >> 4;
-
     const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
 
-    uint32_t sub_blk_origin_x;
-    uint32_t sub_blk_origin_y;
+    uint32_t sub_blk_origin_x, sub_blk_origin_y;
     uint8_t *above_row;
     uint8_t *left_col;
 
@@ -2363,7 +2389,6 @@ static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t 
     }
 
     EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
-
     int this_intra_error =
         (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
             input_origin_index,
@@ -2380,7 +2405,6 @@ static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t 
     else if ((mb_col > 0) && (stats->image_data_start_row == INVALID_ROW)) {
         stats->image_data_start_row = mb_row;
     }
-
     // aom_clear_system_state();
     double log_intra = log1p((double)this_intra_error);
     if (log_intra < 10.0)
@@ -2404,11 +2428,11 @@ static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t 
     this_intra_error += INTRA_MODE_PENALTY;
 
     const int stride = input_picture_ptr->stride_y;
-    uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
+    uint8_t *buf = &(input_picture_ptr->buffer_y)[input_origin_index];
     for (int r8 = 0; r8 < 2; ++r8) {
         for (int c8 = 0; c8 < 2; ++c8) {
-            stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
-                CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
+            stats->frame_avg_wavelet_energy +=
+                eb_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, 0);
         }
     }
 
@@ -2417,9 +2441,8 @@ static int open_loop_firstpass_intra_prediction(uint32_t blk_origin_x, uint32_t 
     return this_intra_error;
 }
 /***************************************************************************
-* Computes and returns the inter prediction error from the last frame.
-* Computes inter prediction errors from the golden and alt ref frames and
-* Updates stats accordingly.
+* Computes and returns the inter prediction error from the src last frame.
+* Computes inter prediction errors from the golden and updates stats accordingly.
 * Modifies:
 *    stats: many member params in it.
 *  Returns:
@@ -2579,15 +2602,18 @@ static int open_loop_firstpass_inter_prediction(
 
     return this_inter_error;
 }
-// Perform the processing for first pass
-// anaghdin add descriptions
+/***************************************************************************
+* Perform the processing for first pass.
+* For each 16x16 blocks performs DC and ME results from LAST frame and store
+* the required data.
+***************************************************************************/
 static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
     EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr : NULL;
 
-    const uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_width
+    const uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
-    const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) / //scs_ptr->seq_header.max_frame_height
+    const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
 
     uint32_t me_sb_size = ppcs_ptr->scs_ptr->sb_sz;
@@ -2595,10 +2621,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
         (ppcs_ptr->aligned_width + me_sb_size - 1) / me_sb_size;
     uint32_t me_sb_x, me_sb_y, me_sb_addr;
 
-    uint32_t blk_width;
-    uint32_t blk_height;
-    uint32_t blk_origin_x;
-    uint32_t blk_origin_y;
+    uint32_t blk_width, blk_height, blk_origin_x, blk_origin_y;
     MV first_top_mv = kZeroMv;
     MV last_mv;
     uint32_t input_origin_index;
@@ -2682,7 +2705,9 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
 
     return EB_ErrorNone;
 }
-//anaghdin add description
+/***************************************************************************
+* Prepare the me context for performing first pass me.
+***************************************************************************/
 static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
                                         PictureParentControlSet *  ppcs_ptr,
                                         EbPictureBufferDesc *input_picture_ptr, int blk_row,
@@ -2779,8 +2804,9 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     }
   
 }
-// Perform the motion estimation for first pass
-// anaghdin add descriptions
+/***************************************************************************
+* Perform the motion estimation for first pass.
+***************************************************************************/
 static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t segment_index) {
@@ -2813,13 +2839,9 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
-            // ------------
-            // motion estimation
-            // ------------
             // Initialize ME context
             first_pass_setup_me_context(
                 me_context_ptr, ppcs_ptr, input_picture_ptr, blk_row, blk_col, ss_x, ss_y);
-
             // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
             motion_estimate_sb(ppcs_ptr, // source picture control set -> references come from here
@@ -2835,7 +2857,9 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 }
 
 /************************************************************************************
-* anaghdin: add description
+* Performs the first pass based on open loop data.
+* Source frames are used for Intra and Inter prediction.
+* ME is done per segment but the remaining parts performed per frame.
 ************************************************************************************/
 void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
@@ -2860,7 +2884,7 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
         if (ppcs_ptr->end_of_sequence_flag)
 #endif
             svt_av1_end_first_pass(ppcs_ptr);
-        // signal that the first pass is done
+        // Signal that the first pass is done
         eb_post_semaphore(ppcs_ptr->first_pass_done_semaphore);
     }
 

@@ -2310,6 +2310,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
+
+#if LAP_ENABLED_VBR
+    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+        scs_ptr->lap_enabled = 1;
+    else
+        scs_ptr->lap_enabled = 0;
+#endif
 }
 
 void copy_api_from_app(

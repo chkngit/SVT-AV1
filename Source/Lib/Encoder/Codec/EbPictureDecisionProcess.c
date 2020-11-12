@@ -3915,7 +3915,7 @@ void process_first_pass_frame(
         out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
         out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
         out_results_ptr->segment_index = seg_idx;
-        out_results_ptr->task_type = 2;// anaghdin define a macro
+        out_results_ptr->task_type = 2;
         eb_post_full_object(out_results_wrapper_ptr);
     }
 

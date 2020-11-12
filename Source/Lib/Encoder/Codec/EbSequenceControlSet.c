@@ -184,14 +184,10 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
 
     scs_ptr->film_grain_random_seed = 7391;
     scs_ptr->reference_count        = 4;
-#if LAP_ENABLED_VBR
-    if(1 /*use_output_stat(scs_ptr) || use_input_stat(scs_ptr)*/)
-        scs_ptr->lap_enabled = 1 ;
-    else
-        scs_ptr->lap_enabled = 1;
-#else
+#if !LAP_ENABLED_VBR
     scs_ptr->lap_enabled = 0;
 #endif
+
     return EB_ErrorNone;
 }
 
@@ -309,6 +305,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #endif
 #if TUNE_TPL_OIS
     dst->in_loop_ois                     = src->in_loop_ois;
+#endif
+#if LAP_ENABLED_VBR
+    dst->lap_enabled                    = src->lap_enabled;
 #endif
     return EB_ErrorNone;
 }
