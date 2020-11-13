@@ -348,7 +348,7 @@ static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUM
 {1875 ,962 ,222 ,144 ,171 ,5 ,17 ,1272 ,15},
 {3 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0},
 };
-#if ME_IDX_LUPT
+#if TUNE_ME_IDX_LUPT
 static const uint32_t me_idx[] = {
     0,  0,  0,  0,  0,  1,  2,  0,  0,  3,  4,  1,  3,  0,  0,  2,  4,  0,  0,  0,  0,  0,  0,  0,
     0,  1,  1,  1,  1,  1,  5,  6,  1,  1,  9,  10, 5,  9,  1,  1,  6,  10, 1,  1,  1,  1,  1,  1,
@@ -400,7 +400,7 @@ static const uint32_t me_idx[] = {
 
 static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
     {
-#if FIX_ME_IDX_LUPT
+#if TUNE_ME_IDX_LUPT
         -1, -1, -1, -1, -1, 0,  -1, -1, -1, -1, -1, 0,  -1, -1, -1, -1, -1, 0,  0,  0,  0,  0,  1,
         2,  0,  0,  3,  4,  1,  3,  0,  0,  2,  4,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
         1,  5,  6,  1,  1,  9,  10, 5,  9,  1,  1,  6,  10, 1,  1,  1,  1,  1,  1,  1,  1,  5,  5,

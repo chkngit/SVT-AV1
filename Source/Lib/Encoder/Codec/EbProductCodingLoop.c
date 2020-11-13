@@ -693,7 +693,7 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1012, 1013, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1029, 1030, 1031, 1036, 1037, 1038, 1039,
     1040, 1065, 1070, 1071, 1072, 1073, 1074, 1079, 1080, 1081, 1082, 1083, 1088, 1089, 1090, 1091,
     1092, 1097, 1098, 1099, 1100};
-#if !INIT_BLOCK_OPT
+#if !TUNE_INIT_BLOCK_OPT
 void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t blk_idx = 0;
     do {
@@ -1482,7 +1482,7 @@ void set_dist_based_ref_pruning_controls(
 #endif
 void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     // minimum nics allowed
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
     uint32_t min_nics_stage1 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage1_scaling_num) ? 2 : 1;
     uint32_t min_nics_stage2 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage2_scaling_num) ? 2 : 1;
     uint32_t min_nics_stage3 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && context_ptr->nic_ctrls.stage3_scaling_num) ? 2 : 1;
@@ -1501,7 +1501,7 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 
     // no NIC setting should be done beyond this point
     for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
         context_ptr->md_stage_1_count[cidx] = MAX(min_nics_stage1,
             DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * stage1_scale_num, scale_denum));
         context_ptr->md_stage_2_count[cidx] = MAX(min_nics_stage2,
@@ -1536,7 +1536,7 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 #endif
 }
 
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
 void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 #else
 void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -1554,7 +1554,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     else
         memset(context_ptr->bypass_md_stage_2, EB_TRUE, CAND_CLASS_TOTAL);
 
-#if !FIX_NIC_1_CLEAN_UP
+#if !TUNE_NICS
     if (context_ptr->md_staging_count_level == 0) {
         // Stage 1 Cand Count
         context_ptr->md_stage_1_count[CAND_CLASS_0] = 1;
@@ -1657,7 +1657,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 // no NIC setting should be done beyond this point
                 // scale nics
             scale_nics (pcs_ptr,context_ptr);
-#if !FIX_NIC_1_CLEAN_UP
+#if !TUNE_NICS
         }
 #endif
 #if !FEATURE_MDS2
@@ -1672,7 +1672,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_3] =
             (context_ptr->md_stage_2_count[CAND_CLASS_3] + 1) >> 1;
 #endif
-#if !FIX_NIC_1_CLEAN_UP
+#if !TUNE_NICS
     }
 
     uint8_t use_nic_1_last_stage;
@@ -1938,20 +1938,6 @@ void sort_full_cost_based_candidates(struct ModeDecisionContext *context_ptr,
     }
 }
 #if FIX_TUNIFY_SORTING_ARRAY
-#if !FIX_TUNIFY_SORTING_ARRAY
-void construct_best_sorted_arrays_md_stage_1(struct ModeDecisionContext *  context_ptr,
-    ModeDecisionCandidateBuffer **buffer_ptr_array,
-    uint32_t *best_candidate_index_array) {//best = union from all classes
-
-    uint32_t best_candi = 0;
-    for (CandClass class_i = CAND_CLASS_0; class_i < CAND_CLASS_TOTAL; class_i++)
-        for (uint32_t candi = 0; candi < context_ptr->md_stage_1_count[class_i]; candi++)
-            best_candidate_index_array[best_candi++] =
-            context_ptr->cand_buff_indices[class_i][candi];
-
-    assert(best_candi == context_ptr->md_stage_1_total_count);
-}
-#endif
 void construct_best_sorted_arrays_md_stage_3(struct ModeDecisionContext *  context_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t *best_candidate_index_array) { //best = union from all classes
@@ -2331,12 +2317,12 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
         context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
         context_ptr->geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
         context_ptr->geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
-#if ME_IDX_LUPT
+#if TUNE_ME_IDX_LUPT
         context_ptr->me_block_offset = (uint32_t)
             me_idx_128x128[((context_ptr->geom_offset_y / me_sb_size) * 2) +
                            (context_ptr->geom_offset_x / me_sb_size)]
                           [context_ptr->blk_geom->blkidx_mds];
-#if !FIX_ME_IDX_LUPT_ASSERT
+#if !TUNE_ME_IDX_LUPT
         assert(context_ptr->me_block_offset != (uint32_t)(-1));
 #endif
     } else {
@@ -2352,7 +2338,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
     if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
         context_ptr->me_block_offset = 0;
     }
-#if !ME_IDX_LUPT
+#if !TUNE_ME_IDX_LUPT
     else {
         context_ptr->me_block_offset =
             get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
@@ -2361,7 +2347,7 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
                 context_ptr->geom_offset_y);
     }
 #endif
-#if FIX_ME_IDX_LUPT_ASSERT
+#if TUNE_ME_IDX_LUPT
     assert(context_ptr->me_block_offset != (uint32_t)(-1));
 #endif
     context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
@@ -5248,7 +5234,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
             //assert(context_ptr->three_quad_energy == 0 && context_ptr->cu_stats->size < 64);
 
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
             const int32_t shift =
                 (MAX_TX_SCALE -
                  av1_get_tx_scale_tab[context_ptr->blk_geom
@@ -7080,7 +7066,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         uint32_t cand_index = context_ptr->best_candidate_index_array[full_loop_candidate_index];
         ModeDecisionCandidateBuffer *candidate_buffer = candidate_buffer_ptr_array[cand_index];
         ModeDecisionCandidate *      candidate_ptr    = candidate_buffer->candidate_ptr;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         uint32_t  reduce_prec =   context_ptr->use_prev_mds_res &&
             (!context_ptr->bypass_md_stage_1[candidate_ptr->cand_class] ||
              !context_ptr->bypass_md_stage_2[candidate_ptr->cand_class]) &&
@@ -7090,7 +7076,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         // Set MD Staging full_loop_core settings
         context_ptr->md_staging_perform_inter_pred = context_ptr->md_staging_mode !=
             MD_STAGING_MODE_0;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         context_ptr->md_staging_skip_interpolation_search = reduce_prec
             ? 0 : ((context_ptr->interpolation_search_level == IFS_MDS3) ? EB_FALSE : EB_TRUE);
 #else
@@ -7108,7 +7094,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             context_ptr->md_staging_tx_size_mode = candidate_ptr->cand_class == CAND_CLASS_0 ||
                 candidate_ptr->cand_class == CAND_CLASS_3;
 #if TUNE_TX_TYPE_LEVELS
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         context_ptr->md_staging_txt_level = reduce_prec ? 0 : context_ptr->txt_ctrls.enabled;
 #else
         context_ptr->md_staging_txt_level = context_ptr->txt_ctrls.enabled;
@@ -7117,7 +7103,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         context_ptr->md_staging_tx_search = 1;
 #endif
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         context_ptr->md_staging_skip_rdoq = reduce_prec ? EB_TRUE : EB_FALSE;
 #else
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
@@ -8482,7 +8468,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->md_stage_3_total_count = 0;
 #if FIX_USE_MDS_CNT_INIT
     // Derive NIC(s)
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
     set_md_stage_counts(pcs_ptr, context_ptr);
 #else
     set_md_stage_counts(pcs_ptr, context_ptr, fast_candidate_total_count);
@@ -9214,7 +9200,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     const EbMdcLeafData *const leaf_data_array = mdcResultTbPtr->leaf_data_array;
     const uint16_t             tile_idx        = context_ptr->tile_index;
     context_ptr->sb_ptr                        = sb_ptr;
-#if !INIT_BLOCK_OPT
+#if !TUNE_INIT_BLOCK_OPT
     init_sq_nsq_block(scs_ptr, context_ptr);
 #endif
     uint32_t full_lambda = context_ptr->hbd_mode_decision

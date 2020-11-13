@@ -1970,7 +1970,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
 
 
-#if !FIX_NIC_1_CLEAN_UP
+#if !TUNE_NICS
     // Set md staging count level
     // Level 0              minimum count = 1
     // Level 1              set towards the best possible partitioning (to further optimize)
@@ -2085,7 +2085,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
 
 #if FEATURE_NIC_SCALING_PER_STAGE
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
     uint8_t nic_scaling_level = 13;
 #else
     uint8_t nic_scaling_level = 12;

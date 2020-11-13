@@ -2192,7 +2192,7 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_l = 1;
         rdoq_ctrls->fp_q_c = 1;
         rdoq_ctrls->satd_factor = (uint8_t)~0;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         rdoq_ctrls->early_exit_th = 0;
 #endif
         break;
@@ -2209,7 +2209,7 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_l = 1;
         rdoq_ctrls->fp_q_c = 0;
         rdoq_ctrls->satd_factor = 128;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         rdoq_ctrls->early_exit_th = 5;
 #endif
         break;
@@ -2226,7 +2226,7 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_l = 1;
         rdoq_ctrls->fp_q_c = 0;
         rdoq_ctrls->satd_factor = 64;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         rdoq_ctrls->early_exit_th = 5;
 #endif
         break;
@@ -2601,7 +2601,7 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         nic_ctrls->stage2_scaling_num = 2;
         nic_ctrls->stage3_scaling_num = 2;
         break;
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
     case 12:
         nic_ctrls->stage1_scaling_num = 3;
         nic_ctrls->stage2_scaling_num = 0;
@@ -2868,7 +2868,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             if (enc_mode <= ENC_M6)
                 context_ptr->global_mv_injection = 1;
-#if TUNE_ENABLE_GM_FOR_ALL_PRESETS // GM
+#if FEATURE_GM_OPT // GM
             else if (enc_mode <= ENC_M8)
 #if FEATURE_GM_OPT
                 context_ptr->global_mv_injection = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
@@ -3032,7 +3032,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 
 
-#if !FIX_NIC_1_CLEAN_UP
+#if !TUNE_NICS
     // Set md staging count level
     // Level 0              minimum count = 1
     // Level 1              set towards the best possible partitioning (to further optimize)
@@ -3425,7 +3425,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (!mode_offset) {
 #endif
         uint8_t nic_scaling_level = 1;
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
         if (pd_pass == PD_PASS_0)
             nic_scaling_level = 14;
         else if (pd_pass == PD_PASS_1)
@@ -3444,7 +3444,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_scaling_level = 7;
         else if (enc_mode <= ENC_M4)
             nic_scaling_level = 9;
-#if FIX_NIC_1_CLEAN_UP
+#if TUNE_NICS
         else if (enc_mode <= ENC_M5)
             nic_scaling_level = 11;
         else
@@ -3713,7 +3713,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->mds3_intra_prune_th = (uint16_t)~0;
     else
         context_ptr->mds3_intra_prune_th = 30;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
     if (pd_pass == PD_PASS_0)
         context_ptr->use_prev_mds_res = EB_FALSE;
     else if (pd_pass == PD_PASS_1)
@@ -3867,7 +3867,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
             set_child_to_be_considered(pcs_ptr, context_ptr, results_ptr, child_block_idx_4, sb_index, sb_size, pred_depth, pred_sq_idx , depth_step > 1 ? depth_step - 1 : 1);
     }
 }
-#if INIT_BLOCK_OPT
+#if TUNE_INIT_BLOCK_OPT
 void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_ptr,
                                 uint32_t blk_index, uint32_t tot_d1_blocks) {
     for (uint32_t d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
@@ -3948,7 +3948,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             if (pcs_ptr->parent_pcs_ptr->disallow_HV4)
                 tot_d1_blocks = MIN(17, tot_d1_blocks);
             d1_blocks_accumlated = 0;
-#if INIT_BLOCK_OPT
+#if TUNE_INIT_BLOCK_OPT
             init_allowed_blocks(results_ptr, context_ptr, blk_index, tot_d1_blocks);
 #else
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
@@ -4728,7 +4728,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                 : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
 }
-#if INIT_BLOCK_OPT
+#if TUNE_INIT_BLOCK_OPT
 void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
                 const BlockGeom *blk_geom) {
     context_ptr->md_local_blk_unit[blk_index].avail_blk_flag           = EB_FALSE;
@@ -4818,7 +4818,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                 blk_geom = get_blk_geom_mds(blk_index);
 
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
-#if INIT_BLOCK_OPT
+#if TUNE_INIT_BLOCK_OPT
                     init_block(context_ptr, blk_index, blk_geom);
 #endif
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;

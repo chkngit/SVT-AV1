@@ -18,7 +18,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
 #include "EbEncInterPrediction.h"
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
 #include "EbFullLoop.h"
 #endif
 
@@ -218,7 +218,7 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
     return t;
 }
 #define TX_SIZE TxSize
-#if !FEATURE_RDOQ_OPT
+#if !FEATURE_OPT_RDOQ
 static INLINE TX_SIZE get_txsize_entropy_ctx(TX_SIZE txsize) {
     return (TX_SIZE)((txsize_sqr_map[txsize] + txsize_sqr_up_map[txsize] + 1) >> 1);
 }
@@ -227,7 +227,7 @@ void svt_av1_update_eob_context(int eob, TX_SIZE tx_size, TxClass tx_class, Plan
                                 FRAME_CONTEXT *ec_ctx, uint8_t allow_update_cdf) {
     int       eob_extra;
     const int eob_pt  = get_eob_pos_token(eob, &eob_extra);
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
     TX_SIZE txs_ctx = get_txsize_entropy_ctx_tab[tx_size];
 #else
     TX_SIZE   txs_ctx = get_txsize_entropy_ctx(tx_size);
@@ -428,7 +428,7 @@ uint64_t svt_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx
         (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     const TxClass          tx_class = tx_type_to_class[transform_type];
     int32_t                cost;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
     const int32_t bwl    = get_txb_bwl_tab[transform_size];
     const int32_t width  = get_txb_wide_tab[transform_size];
     const int32_t height = get_txb_high_tab[transform_size];

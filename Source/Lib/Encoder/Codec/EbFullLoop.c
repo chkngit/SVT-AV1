@@ -754,7 +754,7 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
 
     return t;
 }
-#if !FEATURE_RDOQ_OPT
+#if !FEATURE_OPT_RDOQ
 static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
     return (TxSize)((txsize_sqr_map[txsize] + txsize_sqr_up_map[txsize] + 1) >> 1);
 }
@@ -1222,7 +1222,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
 #endif
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
     const int       shift      = av1_get_tx_scale_tab[tx_size];
     const PlaneType plane_type = plane;
     const TxSize    txs_ctx    = get_txsize_entropy_ctx_tab[tx_size];
@@ -1246,7 +1246,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
     const int           eob_multi_size = txsize_log2_minus4[tx_size];
     const LvMapEobCost *txb_eob_costs =
         &md_context->md_rate_estimation_ptr->eob_frac_bits[eob_multi_size][plane_type];
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
     const int eob_cost      = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
@@ -1270,7 +1270,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
     uint8_t *const levels = set_levels(levels_buf, width);
 
     if (*eob > 1) svt_av1_txb_init_levels(qcoeff_ptr, width, height, levels);
-#if !FEATURE_RDOQ_OPT
+#if !FEATURE_OPT_RDOQ
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
     const int eob_cost = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
@@ -1591,7 +1591,7 @@ int32_t av1_quantize_inv_quantize(
 
     QuantParam qparam;
 
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
      qparam.log_scale = av1_get_tx_scale_tab[txsize];
 #else
     qparam.log_scale = av1_get_tx_scale(txsize);
@@ -1621,7 +1621,7 @@ int32_t av1_quantize_inv_quantize(
     if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
 
         int satd = svt_aom_satd(coeff, n_coeffs);
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         const int shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[txsize]);
 #else
         const int shift = (MAX_TX_SCALE - av1_get_tx_scale(txsize));
@@ -1909,7 +1909,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         txb_full_distortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
         txb_full_distortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
         TxSize  tx_size = context_ptr->blk_geom->txsize[tx_depth][txb_itr];
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
         int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
 #else
         int32_t shift   = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
@@ -2404,7 +2404,7 @@ void cu_full_distortion_fast_txb_mode_r(
                     count_nonzero_coeffs_all[2],
                     component_type);
                 TxSize tx_size = context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr];
-#if FEATURE_RDOQ_OPT
+#if FEATURE_OPT_RDOQ
                 const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
 #else
                 const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
@@ -2688,7 +2688,7 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
             } else {
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost = current_depth_cost;
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].part    = PARTITION_SPLIT;
-#if INIT_BLOCK_OPT
+#if TUNE_INIT_BLOCK_OPT
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_TRUE;
 #endif
             }

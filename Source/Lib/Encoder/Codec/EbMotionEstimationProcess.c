@@ -431,7 +431,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
-#if TUNE_ENABLE_GM_FOR_ALL_PRESETS // GM
+#if FEATURE_GM_OPT // GM
         else if (enc_mode <= ENC_M8)
             context_ptr->me_context_ptr->compute_global_motion = pcs_ptr->is_used_as_reference_flag ? EB_TRUE : EB_FALSE;
 #endif
@@ -1160,12 +1160,6 @@ void *motion_estimation_kernel(void *input_ptr) {
                     pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
 #endif
             }
-#if FIX_GM_PARAMS_UPDATE
-            else if (!pcs_ptr->gm_ctrls.enabled) {
-                // Initilize global motion to be OFF for all references frames.
-                memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-            }
-#endif
 #endif
             if (
 #if TUNE_TPL_OIS
@@ -1851,12 +1845,6 @@ void *inloop_me_kernel(void *input_ptr) {
                             ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
 #endif
                 }
-#if FIX_GM_PARAMS_UPDATE
-                else if (!ppcs_ptr->gm_ctrls.enabled){
-                    // Initilize global motion to be OFF for all references frames.
-                    memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-                }
-#endif
 #endif
                 svt_get_empty_object(context_ptr->output_fifo_ptr,
                         &out_results_wrapper_ptr);

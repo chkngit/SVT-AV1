@@ -80,12 +80,11 @@ extern "C" {
 #define TUNE_CDF                                 1 // Update CDF Levels
 #define TUNE_TX_TYPE_LEVELS                      1 // Add Tx Type Grouping Levels
 #define TUNE_REMOVE_UNUSED_NEIG_ARRAY            1 // Removes unused neighbor array
-#define INIT_BLOCK_OPT                           1 // optimize block initialization
-#define ME_IDX_LUPT                              1 // get index using lookuptable
+#define TUNE_INIT_BLOCK_OPT                      1 // optimize block initialization
+#define TUNE_ME_IDX_LUPT                         1 // get index using lookuptable
 #define FEATURE_INTER_INTRA_LEVELS               1 // Cleanup and modify inter-intra levels
 #define TUNE_QPS_QPM                             1 // Improve the QPS settings for Keyframe. Improve QPM for nonI base frames
 #define TUNE_CDEF_FILTER                         1 // Added new fast search for CDEF
-#define FIX_ME_IDX_LUPT                          1 // bug fix stops encoder from deadlocking on >=360p clips
 #define FIX_OPTIMIZE_BUILD_QUANTIZER                 1 // Optimize eb_av1_build_quantizer():  called for each single frame (while the generated data does not change per frame). Moved buffer to sps, and performed 1 @ 1st frame only.
 #define FIX_REMOVE_UNUSED_CODE                       1 // Remove unused code
 #define FEATURE_OPT_IFS                              1 // Reverse IFS search order; regular to be performed last since the most probable then bypass the last evaluation if regular is the winner. 1 chroma compensation could be avoided if we add the ability to do chroma only when calling inter_comp.
@@ -101,21 +100,15 @@ extern "C" {
 #define FEATURE_PD0_CUT_DEPTH                        1 // Shut 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
 #define FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE         1 // Skip dc_sign derivation/update, and bypass useless mi_info updates
 #define FEATURE_OPT_RDOQ                             1 // Use default_quant for chroma and rdoq_bypass = f(satd)
+                                                       // lossless, early exit rdo, disables last md search tools (rdoq, txtype search, interpolation search)
 #define FEATURE_OPT_TF                               1 // Add the ability to perform luma only @ tf, control tf_16x16 using tf_32x32 pred error, apply tf @ base only
 #define TUNE_CFL_REF_ONLY                            1 // CFL only @ REF
-#define TUNE_ENABLE_GM_FOR_ALL_PRESETS               1 // GM @ REF, bipred only, rotzoom model omly
 #define FEATURE_GM_OPT                               1 // GM @ REF, bipred only, rotzoom model omly
 #define TUNE_HME_ME_TUNING                           1 // HME/ME:HME_L1=8x3 instead of 16x16, HME_L2=8x3 instead of 16x16, MAX_ME=64x32 instead 64x64
-#define FEATURE_RDOQ_OPT                             1 // lossless, early exit rdo, disables last md search tools (rdoq, txtype search, interpolation search)
-#define DC_ONLY_AT_NON_REF                       1 // use only intra dc at no reference frame
+#define DC_ONLY_AT_NON_REF                       1 // use only intra dc at non reference frame
 #define TUNE_PALETTE_LEVEL                       1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
-#define FIX_NIC_1_CLEAN_UP                           1 // Code clean-up/unification; Use scale to signal all PD NIC(s) and 1 NIC @ mds3
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
-#define FIX_10BIT_CRASH                              1 // Fixed bug that caused encoder to crash with 10-bit clips
-#define FIX_ME_IDX_LUPT_ASSERT                       1 // change location of assert statement,  code cleanup
-#define FIX_IFS_10BIT                                1 // fix bug relating to IFS 10 bit error
-#define FIX_GM_PARAMS_UPDATE                         1 // Fix GM r2r related to improper setting of GM params for NREF frames when GM is used for REF only
 
 
 //FOR DEBUGGING - Do not remove

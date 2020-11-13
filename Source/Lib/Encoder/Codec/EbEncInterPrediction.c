@@ -3347,7 +3347,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
-#if FIX_IFS_10BIT
+#if FIX_IFS
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                              .encoder_bit_depth > EB_8BIT)
                             ? 0
@@ -3458,7 +3458,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
-#if FIX_IFS_10BIT
+#if FIX_IFS
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                              .encoder_bit_depth > EB_8BIT)
                             ? 0
@@ -3574,7 +3574,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
-#if FIX_IFS_10BIT
+#if FIX_IFS
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                              .encoder_bit_depth > EB_8BIT)
                             ? 0
@@ -6785,7 +6785,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     }
 #if FEATURE_OPT_IFS
 #if FIX_IFS
-#if FIX_10BIT_CRASH
+#if FEATURE_OPT_TF
     if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT || !md_context_ptr->ifs_is_regular_last)
 #else
     if (!md_context_ptr->ifs_is_regular_last)
