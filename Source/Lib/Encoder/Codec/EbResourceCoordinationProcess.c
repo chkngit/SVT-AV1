@@ -484,7 +484,9 @@ void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
 #if FEATURE_PA_ME
     atomic_set_u32(&pcs_ptr->pame_done, 0);
-    EB_CREATE_SEMAPHORE(pcs_ptr->pame_done_semaphore, 0, 1);
+    if (pcs_ptr->end_of_sequence_flag == 0){
+        EB_CREATE_SEMAPHORE(pcs_ptr->pame_done_semaphore, 0, 1);
+    }
 
    pcs_ptr->num_tpl_grps = 0;
    pcs_ptr->num_tpl_processed = 0;

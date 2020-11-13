@@ -1340,7 +1340,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #endif
 
 #if FEATURE_PA_ME
-   // EB_CREATE_SEMAPHORE(object_ptr->pame_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->pame_done.mutex);
 #endif
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
