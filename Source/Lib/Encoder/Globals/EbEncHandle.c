@@ -545,7 +545,7 @@ EbErrorType load_default_buffer_configuration_settings(
 
 #if FEATURE_PA_ME
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
-        min_ref = 24;
+        min_ref = 18;
 #else
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;

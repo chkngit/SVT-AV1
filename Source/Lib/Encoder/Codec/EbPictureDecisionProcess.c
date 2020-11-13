@@ -4113,6 +4113,9 @@ void send_picture_out(
 
 
     if (scs->static_config.look_ahead_distance == 0) {
+#if FEATURE_PA_ME
+        if (pcs->is_used_as_reference_flag) {
+#endif
         EbObjectWrapper* reference_picture_wrapper;
         // Get Empty Reference Picture Object
         svt_get_empty_object(
@@ -4121,6 +4124,11 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
         // Give the new Reference a nominal live_count of 1
         svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+#if FEATURE_PA_ME
+        }else {
+            pcs->reference_picture_wrapper_ptr = NULL;
+        }
+#endif
 #if TUNE_INL_ME_RECON_INPUT
         if (pcs->is_used_as_reference_flag) {
             EbReferenceObject *reference_object =

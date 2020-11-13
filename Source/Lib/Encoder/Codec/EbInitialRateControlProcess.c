@@ -1635,6 +1635,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             update_motion_field_uniformity_over_time(
                                 encode_context_ptr, scs_ptr, pcs_ptr);
                         }
+#if FEATURE_PA_ME
+                        if (pcs_ptr->is_used_as_reference_flag)
+                        {
+#endif
                         // Get Empty Reference Picture Object
                         svt_get_empty_object(
                             scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
@@ -1654,6 +1658,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     ->reference_picture_wrapper_ptr,
                                 1);
                         }
+#if FEATURE_PA_ME
+                        }
+                        else {
+                            pcs_ptr->reference_picture_wrapper_ptr = NULL;
+                        }
+#endif
 #if !FEATURE_IN_LOOP_TPL
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
