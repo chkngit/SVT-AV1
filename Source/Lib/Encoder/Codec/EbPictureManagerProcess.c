@@ -672,21 +672,21 @@ void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_pt
                     tg_info_ptr->tile_group_width_in_sb,
                     tg_info_ptr->tile_group_height_in_sb);
             // Enable tile parallelism in Entropy Coding stage
-            for (uint16_t r = top_left_tile_row_idx;
-                    r < bottom_right_tile_row_idx;
-                    r++) {
-                for (uint16_t c = top_left_tile_col_idx;
-                        c < bottom_right_tile_col_idx;
-                        c++) {
-                    uint16_t tileIdx = r * tile_cols + c;
+            for (uint16_t s = top_left_tile_row_idx;
+                    s < bottom_right_tile_row_idx;
+                    s++) {
+                for (uint16_t d = top_left_tile_col_idx;
+                        d < bottom_right_tile_col_idx;
+                        d++) {
+                    uint16_t tileIdx = s * tile_cols + d;
                     parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
                         ->entropy_coding_current_row = 0;
                     parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
                         ->entropy_coding_current_available_row = 0;
                     parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
                         ->entropy_coding_row_count =
-                        (cm->tiles_info.tile_row_start_mi[r + 1] -
-                         cm->tiles_info.tile_row_start_mi[r]) >>
+                        (cm->tiles_info.tile_row_start_mi[s + 1] -
+                         cm->tiles_info.tile_row_start_mi[s]) >>
                         sb_size_log2;
                     parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
                         ->entropy_coding_in_progress = EB_FALSE;
