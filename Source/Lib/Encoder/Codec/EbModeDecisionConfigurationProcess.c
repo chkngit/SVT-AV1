@@ -780,18 +780,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
 #if TUNE_CDF
     uint8_t update_cdf_level = 0;
-#if TUNE_NEW_PRESETS
-    if (pcs_ptr->enc_mode <= ENC_M3)
-#else
     if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
-#if !TUNE_NEW_PRESETS
     else if (pcs_ptr->enc_mode <= ENC_M7)
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
-#endif
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 
@@ -861,11 +855,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
 #if FEATURE_NEW_OBMC_LEVELS
-#if TUNE_NEW_PRESETS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;

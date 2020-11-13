@@ -451,9 +451,6 @@ typedef struct MeContext {
     signed short tf_32x32_mv_x[4];
     signed short tf_32x32_mv_y[4];
     uint64_t tf_32x32_block_error[4];
-#if FIX_TF_REFACTOR
-    double tf_32x32_d_factor[4];
-#endif
     int tf_32x32_block_split_flag[4];
 #if FEATURE_OPT_TF
     int tf_16x16_search_do[4];

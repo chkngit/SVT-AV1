@@ -79,11 +79,9 @@ extern "C" {
 #define FEATURE_NEW_OBMC_LEVELS                  1 // Add new levels and controls for OBMC
 #define TUNE_CDF                                 1 // Update CDF Levels
 #define TUNE_TX_TYPE_LEVELS                      1 // Add Tx Type Grouping Levels
-#define TUNE_INIT_FAST_LOOP_OPT                  0 // Fast loop optimizations
 #define TUNE_REMOVE_UNUSED_NEIG_ARRAY            1 // Removes unused neighbor array
 #define INIT_BLOCK_OPT                           1 // optimize block initialization
 #define ME_IDX_LUPT                              1 // get index using lookuptable
-#define REFACTOR_MD_BLOCK_LOOP                   0 // Refactor the loop that iterates over all blocks at MD
 #define FEATURE_INTER_INTRA_LEVELS               1 // Cleanup and modify inter-intra levels
 #define TUNE_QPS_QPM                             1 // Improve the QPS settings for Keyframe. Improve QPM for nonI base frames
 #define TUNE_CDEF_FILTER                         1 // Added new fast search for CDEF

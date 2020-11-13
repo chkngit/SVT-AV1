@@ -989,11 +989,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
-#if TUNE_NEW_PRESETS
-            if (pcs_ptr->enc_mode <= ENC_M3)
-#else
             if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
                     pcs_ptr->cdef_level = 1;
                 else
 #if TUNE_CDEF_FILTER
@@ -3908,24 +3904,18 @@ void mctf_frame(
                 context_ptr->tf_level = 0;
         }
 #if FEATURE_OPT_TF
-#if TUNE_NEW_PRESETS
-        else if (pcs_ptr->enc_mode <= ENC_M6) {
-#else
         else if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
             else
                 context_ptr->tf_level = 0;
         }
-#if !TUNE_NEW_PRESETS
         else if (pcs_ptr->enc_mode <= ENC_M7) {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;
         }
-#endif
         else {
 #if FEATURE_OPT_TF
             if (pcs_ptr->temporal_layer_index == 0)
