@@ -747,6 +747,18 @@ static void allocate_gf_group_bits(GF_GROUP *gf_group, RATE_CONTROL *const rc,
     }
   }
 
+#if FIX_VBR_LAST_GOP_BITS
+  if (rc->baseline_gf_interval < 8) {
+    for (int idx = frame_index; idx < gf_group_size; ++idx) {
+      if (gf_group->update_type[idx] == ARF_UPDATE) {
+        layer_frames[gf_group->layer_depth[idx]] += 1;
+      }
+      if (gf_group->update_type[idx] == INTNL_ARF_UPDATE) {
+        layer_frames[gf_group->layer_depth[idx]] += 2;
+      }
+    }
+  }
+#endif
   // Allocate extra bits to each ARF layer
   int i;
   int layer_extra_bits[MAX_ARF_LAYERS + 1] = { 0 };
