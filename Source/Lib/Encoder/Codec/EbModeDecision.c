@@ -5607,7 +5607,7 @@ uint32_t product_full_mode_decision(
         }
     }
 #if FEATURE_RE_ENCODE
-    if (/*use_input_stat(scs_ptr) && */(context_ptr->pd_pass == PD_PASS_2)) {
+    if (/*use_input_stat(scs_ptr) && */context_ptr->pd_pass == PD_PASS_2) {
         blk_ptr->total_rate = buffer_ptr_array[lowest_cost_index]->candidate_ptr->total_rate;
     }
 #endif
