@@ -7538,9 +7538,9 @@ static double av1_get_compression_ratio(PictureParentControlSet *ppcs_ptr,
   const int upscaled_width = ppcs_ptr->av1_cm->frm_size.superres_upscaled_width;
   const int height = ppcs_ptr->av1_cm->frm_size.frame_height;//cm->height;
   const int luma_pic_size = upscaled_width * height;
-  const BITSTREAM_PROFILE profile = ppcs_ptr->scs_ptr->seq_header.seq_profile;
+  const /*BITSTREAM_PROFILE*/EbAv1SeqProfile profile = ppcs_ptr->scs_ptr->seq_header.seq_profile;
   const int pic_size_profile_factor =
-      profile == PROFILE_0 ? 15 : (profile == PROFILE_1 ? 30 : 36);
+      profile == /*PROFILE_0*/MAIN_PROFILE ? 15 : (profile == /*PROFILE_1*/HIGH_PROFILE ? 30 : 36);
   encoded_frame_size =
       (encoded_frame_size > 129 ? encoded_frame_size - 128 : 1);
   const size_t uncompressed_frame_size =
