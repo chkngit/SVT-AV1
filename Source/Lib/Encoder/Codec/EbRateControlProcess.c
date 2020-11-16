@@ -7662,7 +7662,7 @@ void recode_loop_update_q(
          scs_ptr->encode_context_ptr->recode_loop >= ALLOW_RECODE_KFMAXBW &&
          rc_cfg->mode != AOM_Q) ||
          rc_cfg->min_cr > 0;
-  rc->projected_frame_size = do_dummy_pack ? (((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >> AV1_PROB_COST_SHIFT)
+  rc->projected_frame_size = do_dummy_pack ? (int)(((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >> AV1_PROB_COST_SHIFT)
                                              + ((ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) ? 13  : 0))
                                            : 0;
   if (ppcs_ptr->loop_count) {
