@@ -224,7 +224,7 @@ typedef struct DepthRefinementCtrls {
 #endif
 
 }DepthRefinementCtrls;
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
 } PfCtrls;
@@ -600,7 +600,7 @@ typedef struct ModeDecisionContext {
     uint8_t      dist_based_ref_pruning;
     uint8_t block_based_depth_refinement_level;
     DepthRefinementCtrls depth_refinement_ctrls;
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
     uint8_t pf_level;
     PfCtrls pf_ctrls;
 #endif

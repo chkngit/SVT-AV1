@@ -1787,7 +1787,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         PLANE_TYPE_Y,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
         context_ptr->pf_ctrls.pf_shape);
 #else
         DEFAULT_SHAPE);
@@ -2089,7 +2089,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                 context_ptr->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);
@@ -2180,7 +2180,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                 context_ptr->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);

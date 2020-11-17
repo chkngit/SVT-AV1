@@ -2934,7 +2934,7 @@ uint64_t svt_handle_transform16x64_c(int32_t *output) {
     return three_quad_energy;
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 uint64_t handle_transform16x64_N2_N4_c(int32_t *output) {
     (void)output;
     return 0;
@@ -2968,7 +2968,7 @@ uint64_t handle_transform64x64_N2_N4_c(int32_t *output) {
 
     return 0;
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 void svt_av1_fwd_txfm2d_32x16_c(int16_t *input, int32_t *output, uint32_t input_stride,
                                 TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 16];
@@ -3058,7 +3058,7 @@ void svt_av1_fwd_txfm2d_4x8_c(int16_t *input, int32_t *output, uint32_t input_st
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t residual_stride,
                                    int32_t *coeff_buffer, uint32_t coeff_stride,
                                    TxSize transform_size, uint64_t *three_quad_energy,
@@ -3613,7 +3613,7 @@ EbErrorType av1_estimate_transform_default(int16_t *residual_buffer, uint32_t re
 
     return return_error;
 }
-#endif /* PARTIAL_FREQUENCY */
+#endif /* FEATURE_PARTIAL_FREQUENCY */
 /*********************************************************************
 * Transform
 *   Note there is an implicit assumption that TU Size <= PU Size,
@@ -3627,12 +3627,12 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
 {
     (void)trans_coeff_shape;
-#if !PARTIAL_FREQUENCY
+#if !FEATURE_PARTIAL_FREQUENCY
     EbErrorType return_error = EB_ErrorNone;
 #endif
     (void)coeff_stride;
     (void)component_type;
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
     switch (trans_coeff_shape) {
     case DEFAULT_SHAPE:
         return av1_estimate_transform_default(residual_buffer,
@@ -3678,7 +3678,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
     assert(0);
     return EB_ErrorBadParameter;
-#else  /*PARTIAL_FREQUENCY*/
+#else  /*FEATURE_PARTIAL_FREQUENCY*/
     switch (transform_size) {
     case TX_64X32:
         if (transform_type == DCT_DCT)
@@ -3841,7 +3841,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
     }
 
     return return_error;
-#endif  /*PARTIAL_FREQUENCY*/
+#endif  /*FEATURE_PARTIAL_FREQUENCY*/
 }
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff,
                                   int diff_stride, TxfmParam *txfm_param) {
@@ -4060,7 +4060,7 @@ void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_s
     svt_av1_highbd_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 void svt_av1_fidentity16_N2_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                              const int8_t *stage_range) {
     (void)stage_range;
@@ -7472,7 +7472,7 @@ void svt_av1_fwd_txfm2d_4x8_N4_c(int16_t *input, int32_t *output, uint32_t input
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 /*********************************************************************
  * Map Chroma QP
  *********************************************************************/

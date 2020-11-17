@@ -72,7 +72,7 @@ extern "C" {
 #define FEATURE_MDS2 1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2
 #define FEATURE_NIC_SCALING_PER_STAGE            1 // Add ability to scale NICs per stage; improve current trade-offs
 #define TUNE_NICS                                1 // Tune settings for NIC scaling/pruning/# of stages to improve trade-offs with new scaling
-#define PARTIAL_FREQUENCY                        1 //Calculate partial frequency transforms N2 or N4
+#define FEATURE_PARTIAL_FREQUENCY                        1 //Calculate partial frequency transforms N2 or N4
 #define TUNE_SC_QPS_IMP                          1 // Improve QP assignment for SC
 #define FEATURE_REMOVE_CIRCULAR                  1 // Remove circular actions from current NSQ feautres; replace them with non-circular levels
 #define FEATURE_NEW_INTER_COMP_LEVELS            1 // Add new levels and controls for inter compound; remove old levels
@@ -105,11 +105,11 @@ extern "C" {
 #define TUNE_CFL_REF_ONLY                            1 // CFL only @ REF
 #define FEATURE_GM_OPT                               1 // GM @ REF, bipred only, rotzoom model omly
 #define TUNE_HME_ME_TUNING                           1 // HME/ME:HME_L1=8x3 instead of 16x16, HME_L2=8x3 instead of 16x16, MAX_ME=64x32 instead 64x64
-#define DC_ONLY_AT_NON_REF                       1 // use only intra dc at non reference frame
+#define FEATURE_DC_ONLY_AT_NON_REF                       1 // use only intra dc at non reference frame
 #define TUNE_PALETTE_LEVEL                       1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
-#define FIX_IFS_10BIT_PATH                           1 
+#define FIX_IFS_10BIT_PATH                           1
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

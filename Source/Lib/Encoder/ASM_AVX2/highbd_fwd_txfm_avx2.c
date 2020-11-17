@@ -182,7 +182,7 @@ static INLINE void transpose_8nx8n(const __m256i *input, __m256i *output, const 
     }
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static INLINE void transpose_8nx8n_N2_half(const __m256i *input, __m256i *output,
                                            const int32_t width, const int32_t height) {
     const int32_t numcol      = height >> 3;
@@ -283,7 +283,7 @@ static INLINE void transpose_8nx8n_N2_quad(const __m256i *input, __m256i *output
         }
     }
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 static INLINE void transpose_4x8_avx2(const __m256i *in, __m256i *out) {
     __m256i perm = _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0);
 
@@ -438,7 +438,7 @@ static INLINE void load_buffer_8x8(const int16_t *input, __m256i *in, int32_t st
     in[7] = _mm256_slli_epi32(in[7], shift);
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static INLINE void load_buffer_8x8_N2(const int16_t *input, __m256i *in, int32_t stride,
                                       int32_t flipud, int32_t fliplr, int32_t shift) {
     __m128i temp[8];
@@ -491,7 +491,7 @@ static INLINE void load_buffer_8x8_N2(const int16_t *input, __m256i *in, int32_t
     in[12] = _mm256_slli_epi32(in[12], shift);
     in[14] = _mm256_slli_epi32(in[14], shift);
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 static INLINE void load_buffer_4x4_avx2(const int16_t *input, __m256i *in, int32_t stride,
                                         int32_t flipud, int32_t fliplr, int32_t shift) {
     if (!flipud) {
@@ -1133,7 +1133,7 @@ static INLINE void load_buffer_16x16(const int16_t *input, __m256i *out, int32_t
     convert_8x8_to_16x16(in, out);
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 
 static AOM_FORCE_INLINE void load_buffer_16x16_N2(const int16_t *input, __m256i *out, int32_t stride,
                                         int32_t flipud, int32_t fliplr, int32_t shift) {
@@ -1246,7 +1246,7 @@ static AOM_FORCE_INLINE void load_buffer_16x16_N2_half(const int16_t *input, __m
     // load first 8 columns
     load_buffer_8x8_N2(top_l, out /*& in[0]*/, stride, flipud, fliplr, shift);
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 static INLINE void col_txfm_16x16_rounding(__m256i *in, int32_t shift) {
     col_txfm_8x8_rounding(&in[0], shift);
     col_txfm_8x8_rounding(&in[8], shift);
@@ -3951,7 +3951,7 @@ static INLINE void load_buffer_32x32_avx2(const int16_t *input, __m256i *output,
     }
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static INLINE void load_buffer_32x16_avx2(const int16_t *input, __m256i *output, int32_t stride) {
     __m128i temp[4];
     int32_t i;
@@ -3986,7 +3986,7 @@ static INLINE void load_buffer_32x16_N2_avx2(const int16_t *input, __m256i *outp
         output += 4;
     }
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 static INLINE void fwd_txfm2d_32x32_avx2(const int16_t *input, int32_t *output,
                                          const int32_t stride, const Txfm2dFlipCfg *cfg,
                                          int32_t *txfm_buf) {
@@ -4165,7 +4165,7 @@ static INLINE void load_buffer_32x8n(const int16_t *input, __m256i *out, int32_t
     }
 }
 
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static AOM_FORCE_INLINE void load_buffer_16x8n(const int16_t *input, __m256i *out, int32_t stride,
                                      int32_t flipud, int32_t fliplr, int32_t shift,
                                      const int32_t height) {
@@ -5287,7 +5287,7 @@ void svt_av1_fwd_txfm2d_16x4_avx2(int16_t *input, int32_t *output, uint32_t stri
     }
     (void)bd;
 }
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 
 static INLINE void transpose_16x16_in_64x64_avx2(const __m256i *in, __m256i *out) {
     __m256i temp[32];
@@ -14733,4 +14733,4 @@ void svt_av1_fwd_txfm2d_64x16_N4_avx2(int16_t *input, int32_t *output, uint32_t 
     clear_buffer_wxh_N4(outcoeff256, num_col, txfm_size_row);
     (void)bd;
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/

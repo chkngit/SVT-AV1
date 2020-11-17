@@ -1923,7 +1923,7 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         break;
     }
 }
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 void set_pf_controls(ModeDecisionContext *mdctxt, uint8_t pf_level) {
 
    PfCtrls *pf_ctrls = &mdctxt->pf_ctrls;
@@ -3557,7 +3557,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
     set_block_based_depth_refinement_controls(context_ptr, context_ptr->block_based_depth_refinement_level);
 #endif
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
     if (pcs_ptr->slice_type != I_SLICE) {
         if (pd_pass == PD_PASS_0)
             context_ptr->pf_level = 1;
@@ -3648,7 +3648,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->dc_cand_only_flag =
         (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
     else
-#if DC_ONLY_AT_NON_REF
+#if FEATURE_DC_ONLY_AT_NON_REF
         if (enc_mode < ENC_M8)
             context_ptr->dc_cand_only_flag = EB_FALSE;
         else

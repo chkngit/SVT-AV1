@@ -388,7 +388,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
             PLANE_TYPE_Y,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
             context_ptr->md_context->pf_ctrls.pf_shape);
 #else
             DEFAULT_SHAPE);
@@ -546,7 +546,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
             context_ptr->md_context->pf_ctrls.pf_shape);
 #else
             DEFAULT_SHAPE);
@@ -602,7 +602,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
             context_ptr->md_context->pf_ctrls.pf_shape);
 #else
             DEFAULT_SHAPE);
@@ -781,7 +781,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 PLANE_TYPE_Y,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                 context_ptr->md_context->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);
@@ -938,7 +938,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                 context_ptr->md_context->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);
@@ -994,7 +994,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                 context_ptr->md_context->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);

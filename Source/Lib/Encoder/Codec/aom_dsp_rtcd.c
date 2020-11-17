@@ -296,7 +296,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     svt_handle_transform64x16 = svt_handle_transform64x16_c;
     svt_handle_transform64x32 = svt_handle_transform64x32_c;
     svt_handle_transform64x64 = svt_handle_transform64x64_c;
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
     handle_transform16x64_N2_N4 = handle_transform16x64_N2_N4_c;
     handle_transform32x64_N2_N4 = handle_transform32x64_N2_N4_c;
     handle_transform64x16_N2_N4 = handle_transform64x16_N2_N4_c;
@@ -340,7 +340,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     svt_av1_fwd_txfm2d_16x16_N4 = av1_transform_two_d_16x16_N4_c;
     svt_av1_fwd_txfm2d_8x8_N4 = av1_transform_two_d_8x8_N4_c;
     svt_av1_fwd_txfm2d_4x4_N4 = av1_transform_two_d_4x4_N4_c;
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
 
     svt_aom_fft2x2_float = svt_aom_fft2x2_float_c;
     svt_aom_fft4x4_float = svt_aom_fft4x4_float_c;
@@ -626,7 +626,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     if (flags & HAS_AVX2) svt_handle_transform64x16 = svt_handle_transform64x16_avx2;
                     if (flags & HAS_AVX2) svt_handle_transform64x32 = svt_handle_transform64x32_avx2;
                     if (flags & HAS_AVX2) svt_handle_transform64x64 = svt_handle_transform64x64_avx2;
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
                     if (flags & HAS_AVX2) handle_transform16x64_N2_N4 = handle_transform16x64_N2_N4_avx2;
                     if (flags & HAS_AVX2) handle_transform32x64_N2_N4 = handle_transform32x64_N2_N4_avx2;
                     if (flags & HAS_AVX2) handle_transform64x16_N2_N4 = handle_transform64x16_N2_N4_avx2;

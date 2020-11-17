@@ -322,7 +322,7 @@ void svt_av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stri
     }
     (void)bd;
 }
-#if PARTIAL_FREQUENCY
+#if FEATURE_PARTIAL_FREQUENCY
 static void fdct4x4_N2_sse4_1(__m128i *in, __m128i *out, int32_t bit, const int32_t num_col) {
     const int32_t *cospi   = cospi_arr(bit);
     const __m128i  cospi32 = _mm_set1_epi32(cospi[32]);
@@ -749,4 +749,4 @@ void svt_av1_fwd_txfm2d_4x4_N4_sse4_1(int16_t *input, int32_t *coeff, uint32_t s
     }
     (void)bd;
 }
-#endif /*PARTIAL_FREQUENCY*/
+#endif /*FEATURE_PARTIAL_FREQUENCY*/
