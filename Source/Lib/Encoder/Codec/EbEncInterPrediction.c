@@ -3338,14 +3338,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         candidate_buffer_ptr->candidate_ptr->use_intrabc,
-#if FIX_IFS_10BIT_PATH
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                             .encoder_bit_depth > EB_8BIT)
                         ? 0
                         : candidate_buffer_ptr->candidate_ptr->motion_mode,
-#else
-                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
-#endif
                         1,
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
@@ -3452,14 +3448,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         candidate_buffer_ptr->candidate_ptr->use_intrabc,
-#if FIX_IFS_10BIT_PATH
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                             .encoder_bit_depth > EB_8BIT)
                         ? 0
                         : candidate_buffer_ptr->candidate_ptr->motion_mode,
-#else
-                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
-#endif
                         1,
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
@@ -3571,14 +3563,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         candidate_buffer_ptr->candidate_ptr->use_intrabc,
-#if FIX_IFS_10BIT_PATH
                         (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
                             .encoder_bit_depth > EB_8BIT)
                         ? 0
                         : candidate_buffer_ptr->candidate_ptr->motion_mode,
-#else
-                        candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
-#endif
                         1,
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,

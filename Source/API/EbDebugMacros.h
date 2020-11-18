@@ -109,7 +109,6 @@ extern "C" {
 #define TUNE_PALETTE_LEVEL                       1 // palette level will only be 6 for temporal layer == 0, not encode preset <=M3
 #define FEATURE_MDS0_ELIMINATE_CAND                  1 // Eliminate candidates based on the estimated cost of the distortion in mds0.
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
-#define FIX_IFS_10BIT_PATH                           1
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
