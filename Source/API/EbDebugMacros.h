@@ -116,7 +116,6 @@ extern "C" {
 #define FIX_ONE_MIN_QP_ALLOWED    1 // Set default min_qp_allowed=1 for VBR good quality
 #define FIX_ALLOW_SB128_2PASS_VBR 1 // To allow SB128x128 for 2pass VBR
 #define FIX_2PASS_VBR_4L_SUPPORT  1 // Add 2pass VBR 4L support
-#define FIX_FIRST_PASS_GM         1 // Fix the GM setting for the first pass
 #define FIX_FIRST_PASS_HME        1 // Fix the hme/me based reference pruning level for the first pass
 
 //FOR DEBUGGING - Do not remove

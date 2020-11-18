@@ -6894,7 +6894,7 @@ static int get_bits_per_mb(PictureControlSet *pcs_ptr, int use_cyclic_refresh,
              : svt_av1_rc_bits_per_mb(ppcs_ptr->frm_hdr.frame_type, q,
 #if TUNE_SC_QPS_IMP
                 correction_factor, scs_ptr->static_config.encoder_bit_depth,
-                 pcs_ptr->parent_pcs_ptr->sc_content_detected);
+                 ppcs_ptr->sc_content_detected);
 #else
                  correction_factor, scs_ptr->static_config.encoder_bit_depth);
 #endif
@@ -6905,6 +6905,7 @@ static int get_bits_per_mb(PictureControlSet *pcs_ptr, int use_cyclic_refresh,
                  pcs_ptr->parent_pcs_ptr->sc_content_detected);
 #else
                  correction_factor, scs_ptr->static_config.encoder_bit_depth);
+#endif
 #endif
 }
 
@@ -7601,6 +7602,7 @@ static AOM_INLINE int recode_loop_test(PictureParentControlSet *ppcs_ptr, int hi
   return force_recode;
 }
 
+// get overshoot regulated q based on q_low
 static int get_regulated_q_overshoot(PictureParentControlSet *ppcs_ptr, int q_low,
                                      int q_high, int top_index,
                                      int bottom_index) {
@@ -7626,6 +7628,7 @@ static int get_regulated_q_overshoot(PictureParentControlSet *ppcs_ptr, int q_lo
   return q_regulated;
 }
 
+// get undershoot regulated q based on q_high
 static AOM_INLINE int get_regulated_q_undershoot(PictureParentControlSet *ppcs_ptr,
                                                  int q_high, int top_index,
                                                  int bottom_index) {
@@ -7648,6 +7651,9 @@ static AOM_INLINE int get_regulated_q_undershoot(PictureParentControlSet *ppcs_p
   return q_regulated;
 }
 
+// This function works out whether we under- or over-shot
+// our bitrate target and adjusts q as appropriate.  Also decides whether
+// or not we should do another recode loop, indicated by *loop
 void recode_loop_update_q(
     PictureParentControlSet *ppcs_ptr,
     int *const loop, int *const q, int *const q_low,

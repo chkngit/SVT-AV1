@@ -4899,8 +4899,6 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
     *do_recode = loop == 1;
 
     if (*do_recode) {
-        //int32_t prev_pic_qp = ppcs_ptr->picture_qp;
-        //int32_t prev_qindex = frm_hdr->quantization_params.base_q_idx;
         ppcs_ptr->loop_count++;
 
         frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
@@ -4912,12 +4910,6 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
             (uint8_t)CLIP3((int32_t)scs_ptr->static_config.min_qp_allowed,
                     (int32_t)scs_ptr->static_config.max_qp_allowed,
                     (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
-        //printf("do_recode POC%ld Changing QP from %d(%d) to %d(%d), projected_frame_size=%d\n",
-        //        ppcs_ptr->picture_number,
-        //        prev_pic_qp, prev_qindex,
-        //        ppcs_ptr->picture_qp,
-        //        frm_hdr->quantization_params.base_q_idx,
-        //        rc->projected_frame_size);
         pcs_ptr->picture_qp = ppcs_ptr->picture_qp;
 
         // 2pass QPM with tpl_la

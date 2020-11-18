@@ -448,10 +448,6 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 #endif
-#if FIX_FIRST_PASS_GM
-    if (use_output_stat(scs_ptr))
-        context_ptr->me_context_ptr->compute_global_motion = EB_FALSE; //gm_level = 0;
-#endif
 
     // Set hme/me based reference pruning level (0-4)
     if (enc_mode <= ENC_MR)

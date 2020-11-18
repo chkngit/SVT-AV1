@@ -2270,6 +2270,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.enable_tpl_la = 1;
         scs_ptr->static_config.intra_refresh_type     = 2;
     }
+#if FEATURE_RE_ENCODE
+    if (scs_ptr->static_config.recode_loop > 0 &&
+        (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
+        // Only allow re-encoding for 2pass VBR, otherwise force recode_loop to DISALLOW_RECODE or 0
+        scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
+    }
+#endif
 
     derive_input_resolution(
         &scs_ptr->input_resolution,
@@ -3351,8 +3358,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->under_shoot_pct = 25;
     config_ptr->over_shoot_pct = 25;
 #if FEATURE_RE_ENCODE
-    //config_ptr->recode_loop = 0;//DISALLOW_RECODE;
-    config_ptr->recode_loop = 2;//ALLOW_RECODE_KFARFGF;
+    config_ptr->recode_loop = ALLOW_RECODE_KFARFGF;
 #endif
 
     // Bitstream options
