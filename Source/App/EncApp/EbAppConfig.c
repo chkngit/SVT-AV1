@@ -1895,7 +1895,11 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
     }
     if (pass != DEFAULT || config->input_stat_file || config->output_stat_file) {
 #if FIX_2PASS_VBR_4L_SUPPORT
+#if TUNE_LOW_DELAY
+        if (config->config.hierarchical_levels > 4)
+#else
         if (config->config.hierarchical_levels != 3 && config->config.hierarchical_levels != 4)
+#endif
 #else
         if (config->config.hierarchical_levels != 4)
 #endif
