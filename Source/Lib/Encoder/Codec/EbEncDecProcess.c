@@ -2283,6 +2283,32 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         adaptive_md_cycles_red_ctrls->switch_level_th = 0;
         adaptive_md_cycles_red_ctrls->non_skip_level = 0;
         break;
+#if TUNE_NEW_PRESETS
+    case 2:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 100;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 3:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 150;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 0;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+    case 4:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 600;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 1;
+        break;
+    case 5:
+        adaptive_md_cycles_red_ctrls->enabled = 1;
+        adaptive_md_cycles_red_ctrls->skip_nsq_th = 300;
+        adaptive_md_cycles_red_ctrls->switch_level_th = 750;
+        adaptive_md_cycles_red_ctrls->non_skip_level = 0;
+        break;
+#else
     case 2:
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 75;
@@ -2307,6 +2333,7 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         adaptive_md_cycles_red_ctrls->switch_level_th = 500;
         adaptive_md_cycles_red_ctrls->non_skip_level = 1;
         break;
+#endif
     case 6:
         adaptive_md_cycles_red_ctrls->enabled = 1;
         adaptive_md_cycles_red_ctrls->skip_nsq_th = 500;
@@ -2726,10 +2753,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (enc_mode <= ENC_M4)
             txt_level = 1;
+#if !TUNE_NEW_PRESETS
         else if (enc_mode <= ENC_M5)
             txt_level = 3;
         else if (enc_mode <= ENC_M6)
             txt_level = 4;
+#endif
         else
             txt_level = 5;
     set_txt_controls(context_ptr, txt_level);
@@ -2771,7 +2800,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->interpolation_search_level = IFS_OFF;
     else
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M6)
+#endif
             context_ptr->interpolation_search_level = IFS_MDS1;
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
@@ -2806,7 +2839,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
     }
+#if TUNE_NEW_PRESETS
+    else if (enc_mode <= ENC_M2) {
+#else
     else if (enc_mode <= ENC_M3) {
+#endif
         context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
         context_ptr->chroma_at_last_md_stage_intra_th = 130;
         context_ptr->chroma_at_last_md_stage_cfl_th = 130;
@@ -2821,7 +2858,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    Allow cfl
     // 1                    Disable cfl
 #if TUNE_CFL_REF_ONLY
+#if TUNE_NEW_PRESETS
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         context_ptr->md_disable_cfl = EB_FALSE;
     else
         context_ptr->md_disable_cfl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
@@ -2829,7 +2870,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->md_disable_cfl = EB_FALSE;
 #endif
      // Set disallow_4x4
+#if TUNE_NEW_PRESETS
+    if (enc_mode <= ENC_M0)
+#else
      if (enc_mode <= ENC_M1)
+#endif
          context_ptr->disallow_4x4 = EB_FALSE;
      else
          context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
@@ -2905,7 +2950,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
         if (sequence_control_set_ptr->static_config.new_nearest_comb_inject ==
             DEFAULT)
+#if TUNE_NEW_PRESETS
+                if (enc_mode <= ENC_M0)
+#else
                 if (enc_mode <= ENC_M1)
+#endif
                     context_ptr->new_nearest_near_comb_injection = 1;
                 else
                     context_ptr->new_nearest_near_comb_injection = 0;
@@ -2940,7 +2989,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
     {
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             context_ptr->unipred3x3_injection = 1;
         else
             context_ptr->unipred3x3_injection = 0;
@@ -2958,9 +3011,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->bipred3x3_injection = 2;
     }
     else if (sequence_control_set_ptr->static_config.bipred_3x3_inject == DEFAULT) {
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             context_ptr->bipred3x3_injection = 1;
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M5)
+#else
         else if (enc_mode <= ENC_M6)
+#endif
             context_ptr->bipred3x3_injection = 2;
         else
             context_ptr->bipred3x3_injection = 0;
@@ -2979,9 +3040,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->inter_compound_mode = 0;
             else if (pd_pass == PD_PASS_1)
                 context_ptr->inter_compound_mode = 0;
+#if TUNE_NEW_PRESETS
+            else if (enc_mode <= ENC_MR)
+#else
             else if (enc_mode <= ENC_M0)
+#endif
                 context_ptr->inter_compound_mode = 1;
+#if TUNE_NEW_PRESETS
+            else if (enc_mode <= ENC_M0)
+#else
             else if (enc_mode <= ENC_M1)
+#endif
                 context_ptr->inter_compound_mode = 3;
             else if (enc_mode <= ENC_M3)
                 context_ptr->inter_compound_mode = 4;
@@ -3127,9 +3196,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_1_cand_prune_th = 75;
     else
 #if TUNE_NICS
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_MR)
+#else
         if (enc_mode <= ENC_M0)
+#endif
             context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             context_ptr->md_stage_1_cand_prune_th = 300;
         else if (enc_mode <= ENC_M5)
             context_ptr->md_stage_1_cand_prune_th = 200;
@@ -3150,9 +3227,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_1_class_prune_th = 100;
     else
 #if TUNE_NICS
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_MR)
+#else
         if (enc_mode <= ENC_M0)
+#endif
             context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             context_ptr->md_stage_1_class_prune_th = 300;
         else if (enc_mode <= ENC_M5)
             context_ptr->md_stage_1_class_prune_th = 200;
@@ -3259,17 +3344,29 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->coeff_area_based_bypass_nsq_th = 0;
         else
             context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
+#if TUNE_NEW_PRESETS
+        adaptive_md_cycles_redcution_controls(context_ptr, 0);
+#else
         uint8_t adaptive_md_cycles_level = 0;
         if (pd_pass == PD_PASS_2) {
 #if FEATURE_REMOVE_CIRCULAR
             if (enc_mode <= ENC_MR)
                 adaptive_md_cycles_level = 0;
+#if TUNE_NEW_PRESETS
+            else if (enc_mode <= ENC_M0)
+                adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+            else if (enc_mode <= ENC_M1)
+                adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 3 : 5;
+            else if (enc_mode <= ENC_M2)
+                adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
+#else
             else if (enc_mode <= ENC_M0)
                 adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 3;
             else if (enc_mode <= ENC_M1)
                 adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 4;
             else if (enc_mode <= ENC_M2)
                 adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 5 : 7;
+#endif
             else
                 adaptive_md_cycles_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6 : 7;
 #else
@@ -3288,6 +3385,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         }
         adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
+#endif
         // Weighting (expressed as a percentage) applied to
         // square shape costs for determining if a and b
         // shapes should be skipped. Namely:
@@ -3307,8 +3405,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 else
                     if (enc_mode <= ENC_M0)
                         context_ptr->sq_weight = 105;
+#if !TUNE_NEW_PRESETS
                     else if (enc_mode <= ENC_M1)
                         context_ptr->sq_weight = 100;
+#endif
                     else if (enc_mode <= ENC_M2)
                         context_ptr->sq_weight = 95;
                     else
@@ -3326,8 +3426,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_MR)
             context_ptr->switch_md_mode_based_on_sq_coeff = 0;
 #if FEATURE_REMOVE_CIRCULAR
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M0)
+            context_ptr->switch_md_mode_based_on_sq_coeff = 1;
+        else if (enc_mode <= ENC_M1)
+            context_ptr->switch_md_mode_based_on_sq_coeff = 2;
+        else if (enc_mode <= ENC_M2)
+            context_ptr->switch_md_mode_based_on_sq_coeff = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 3;
+        else
+            context_ptr->switch_md_mode_based_on_sq_coeff = 3;
+#else
         else
             context_ptr->switch_md_mode_based_on_sq_coeff = 2;
+#endif
 #else
         else if (enc_mode <= ENC_M2)
             context_ptr->switch_md_mode_based_on_sq_coeff = 1;
@@ -3368,8 +3479,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_inter_intra_level = 0;
         else if (pd_pass == PD_PASS_1)
             context_ptr->md_inter_intra_level = 0;
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M1)
+            context_ptr->md_inter_intra_level = 2;
+        else if (enc_mode <= ENC_M2)
+            context_ptr->md_inter_intra_level = 3;
+#else
         else if (enc_mode <= ENC_M2)
             context_ptr->md_inter_intra_level = 2;
+#endif
         else
             context_ptr->md_inter_intra_level = 0;
     }
@@ -3414,7 +3532,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if FEATURE_MDS2 //-----
     if (enc_mode <= ENC_MRS)
         context_ptr->md_staging_tx_size_level = 1;
+#if TUNE_NEW_PRESETS
+    else if (enc_mode <= ENC_M1)
+#else
     else if (enc_mode <= ENC_M0)
+#endif
         context_ptr->md_staging_tx_size_level = 2;
     else
         context_ptr->md_staging_tx_size_level = 0;
@@ -3449,10 +3571,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_scaling_level = 5;
         else if (enc_mode <= ENC_M3)
             nic_scaling_level = 7;
+#if !TUNE_NEW_PRESETS
         else if (enc_mode <= ENC_M4)
             nic_scaling_level = 9;
+#endif
 #if TUNE_NICS
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M5)
+#endif
             nic_scaling_level = 11;
         else
             nic_scaling_level = 12;
@@ -3534,11 +3662,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->block_based_depth_refinement_level = 1;
     context_ptr->block_based_depth_refinement_level = 2;
 #endif
+#if TUNE_NEW_PRESETS
+    if (enc_mode <= ENC_M5)
+        context_ptr->block_based_depth_refinement_level = 0;
+    else if (enc_mode <= ENC_M6)
+        context_ptr->block_based_depth_refinement_level = 2;
+#else
     if (enc_mode <= ENC_M6)
         context_ptr->block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M7) {
         context_ptr->block_based_depth_refinement_level = 3;
     }
+#endif
     else {
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 4;
@@ -3582,12 +3717,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_sq_mv_search_level = 0;
     else
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             context_ptr->md_sq_mv_search_level = 1;
         else if (enc_mode <= ENC_M4)
             context_ptr->md_sq_mv_search_level = 2;
+#if !TUNE_NEW_PRESETS
         else if (enc_mode <= ENC_M5)
             context_ptr->md_sq_mv_search_level = 3;
+#endif
         else
             context_ptr->md_sq_mv_search_level = 4;
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
@@ -3598,7 +3739,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (enc_mode <= ENC_MRS)
             context_ptr->md_nsq_mv_search_level = 1;
+#if TUNE_NEW_PRESETS
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M3)
+#endif
             context_ptr->md_nsq_mv_search_level = 2;
         else
             context_ptr->md_nsq_mv_search_level = 4;
@@ -3635,7 +3780,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_pme_level = 3;
     else
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             context_ptr->md_subpel_pme_level = 1;
         else
             context_ptr->md_subpel_pme_level = 2;
@@ -3684,8 +3833,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->disable_angle_z2_intra_flag = EB_FALSE;
 #if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
+    // Shut skip_context and dc_sign update for rate estimation
     if (pd_pass == PD_PASS_0)
+#if TUNE_NEW_PRESETS
+        context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M7 ? EB_FALSE : EB_TRUE;
+#endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
     else
@@ -3701,7 +3855,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pcs_ptr->slice_type == I_SLICE)
         context_ptr->skip_intra = 0;
     else if (pd_pass == PD_PASS_0)
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             context_ptr->skip_intra = 0;
         else
             context_ptr->skip_intra = 1;
@@ -3726,9 +3884,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->use_prev_mds_res = EB_FALSE;
     else
+#if TUNE_NEW_PRESETS
+    context_ptr->use_prev_mds_res =
+            (enc_mode <= ENC_M5 || pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? EB_FALSE
+                                                                                       : EB_TRUE;
+#else
         context_ptr->use_prev_mds_res =
             (enc_mode <= ENC_M7 || pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? EB_FALSE
                                                                                        : EB_TRUE;
+#endif
 #endif
 #if FEATURE_MDS0_ELIMINATE_CAND
     if (pd_pass == PD_PASS_0)
@@ -3739,9 +3903,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (pcs_ptr->slice_type == I_SLICE)
             context_ptr->early_cand_elimination = 0;
         else
+#if TUNE_NEW_PRESETS
+            context_ptr->early_cand_elimination = (enc_mode <= ENC_M6) ? 0 : 1;
+#else
             context_ptr->early_cand_elimination = (enc_mode <= ENC_M7) ? 0 : 1;
 #endif
-
+#endif
     return return_error;
 }
 /******************************************************
@@ -4609,7 +4776,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             }
                         }
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
+#if TUNE_NEW_PRESETS
+                            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
