@@ -7196,7 +7196,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
             rc->this_frame_target);
 
         //printf("\n After poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, base_frame_target=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, rc->this_frame_target);
-#endif 
+#endif
     //  printf("\nrc_pick_q_and_bounds return poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, isintra=%d base_frame_target=%d, buffer_level=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, frame_is_intra_only(pcs_ptr->parent_pcs_ptr), rc->base_frame_target, rc->buffer_level);
 
     return q;

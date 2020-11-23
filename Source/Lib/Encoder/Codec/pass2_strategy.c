@@ -926,7 +926,7 @@ static void impose_gf_length(PictureParentControlSet *pcs_ptr, int max_intervals
 #if FIX_2PASS_VBR_4L_SUPPORT
         cut_here =
 #if LAP_ENABLED_VBR_TUNE
-        ((i % gf_interval == 0) || 
+        ((i % gf_interval == 0) ||
          ((((rc->frames_to_key - cut_pos[count_cuts - 1]) < gf_interval) || (scs_ptr->lap_enabled && scs_ptr->static_config.hierarchical_levels != pcs_ptr->hierarchical_levels)) && (i % (gf_interval >> 1) == 0)))
             ? 1 : 0;
 #else

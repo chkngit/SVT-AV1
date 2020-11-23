@@ -2624,7 +2624,7 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
         scs_ptr->static_config.rate_control_mode == 0) {
 #endif
-    
+
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
     }

@@ -2333,7 +2333,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 #endif
 
     // Set hme/me based reference pruning level (0-4)
-#if 0 // FIX_FIRST_PASS_HME //anaghdin
+#if FIX_FIRST_PASS_HME && !FIRST_PASS_ME_SETTING
     if (scs_ptr->static_config.enc_mode <= ENC_MR)
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
     else if (scs_ptr->static_config.enc_mode <= ENC_M3)
@@ -2664,7 +2664,7 @@ static EbErrorType first_pass_frame(PictureParentControlSet *  ppcs_ptr) {
                 (ppcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
                 ? ppcs_ptr->aligned_height - blk_origin_y
                 : FORCED_BLK_SIZE;
-    
+
             input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
                 input_picture_ptr->stride_y +
                 (input_picture_ptr->origin_x + blk_origin_x);
@@ -2826,7 +2826,7 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
             frame_ptr += sixteenth_pic_ptr->stride_y << 1;
         }
     }
-  
+
 }
 /***************************************************************************
 * Perform the motion estimation for first pass.
@@ -2893,7 +2893,7 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
     // Perform the me for the first pass for each segment
     if (ppcs_ptr->first_pass_ref_count)
         first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
-    
+
     svt_block_on_mutex(ppcs_ptr->first_pass_mutex);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {
