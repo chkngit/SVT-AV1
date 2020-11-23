@@ -3398,7 +3398,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->active_channel_count = 1;
 
     // Debug info
-    config_ptr->recon_enabled = 0;
+    config_ptr->recon_enabled = 1;
 
     // Alt-Ref default values
     config_ptr->tf_level = DEFAULT;
