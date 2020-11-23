@@ -117,6 +117,20 @@ extern "C" {
 #define FIX_ALLOW_SB128_2PASS_VBR 1 // To allow SB128x128 for 2pass VBR
 #define FIX_2PASS_VBR_4L_SUPPORT  1 // Add 2pass VBR 4L support
 #define FIX_FIRST_PASS_HME        1 // Fix the hme/me based reference pruning level for the first pass
+#if 1
+#define FIRST_PASS_RESTRUCTURE 1
+#define LAP_ENABLED_VBR 1
+#define LAP_ENABLED_VBR_BUF 1
+#define LAP_ENABLED_VBR_DEBUG 1
+#define VBR_CODE_UPDATE 1
+#define FIRST_PASS_REF_FIXES 1
+#define LAP_LIMITED_STAT 0
+#define LAP_ENABLED_VBR_TUNE 1
+#define FIRST_PASS_ME_SETTING 1
+#else
+    #define OLD_SETTING_FIX 1
+#endif
+
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

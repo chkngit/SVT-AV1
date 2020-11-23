@@ -32,7 +32,9 @@
 #include "EbPictureDemuxResults.h"
 #include "EbRateControlTasks.h"
 #endif
-
+#if FIRST_PASS_RESTRUCTURE
+#include "firstpass.h"
+#endif
 /* --32x32-
 |00||01|
 |02||03|
@@ -129,7 +131,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
             }
             else {
+#if LAP_ENABLED_VBR
+                if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
                 if (use_output_stat(scs_ptr)) {
+#endif
                     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 37;
                     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 175;
                 }
@@ -163,7 +169,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #endif
     else {
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
         }
@@ -187,7 +197,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
         }
     if (!pcs_ptr->sc_content_detected)
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
         }
@@ -243,7 +257,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
 #endif
     if (!pcs_ptr->sc_content_detected)
+#if LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
                 me_context_ptr->hme_level1_search_area_in_width_array[1] =
                 me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -544,7 +562,11 @@ EbErrorType signal_tpl_me_kernel(SequenceControlSet *       scs_ptr,
     return return_error;
 };
 #endif
+#if FIRST_PASS_RESTRUCTURE
+void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
+                                 MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
 
+#endif
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -898,8 +920,14 @@ void *motion_estimation_kernel(void *input_ptr) {
 
         context_ptr->me_context_ptr->me_alt_ref = in_results_ptr->task_type == 1;
 #else
+#if FIRST_PASS_RESTRUCTURE
+        context_ptr->me_context_ptr->me_type =
+            in_results_ptr->task_type == 1 ? ME_MCTF :
+            in_results_ptr->task_type == 0 ? ME_OPEN_LOOP : ME_FIRST_PASS;
+#else
         context_ptr->me_context_ptr->me_type =
             in_results_ptr->task_type == 1 ? ME_MCTF: ME_OPEN_LOOP;
+#endif
 #endif
 
         // Lambda Assignement
@@ -967,6 +995,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
+#if FIRST_PASS_RESTRUCTURE
+            EbBool skip_me = EB_FALSE;
+            if (use_output_stat(scs_ptr))
+                skip_me = EB_TRUE;
+            if (!skip_me) {
+#endif
             // *** MOTION ESTIMATION CODE ***
 #if FEATURE_INL_ME
             if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
@@ -1213,7 +1247,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 #endif
-
+#if !FIRST_PASS_RESTRUCTURE
             // ZZ SSDs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
             if (use_output_stat(scs_ptr) && scs_ptr->static_config.look_ahead_distance != 0) {
@@ -1228,6 +1262,8 @@ void *motion_estimation_kernel(void *input_ptr) {
                         y_sb_end_index);
                 }
             }
+#endif
+#if !LAP_ENABLED_VBR
             // Calculate the ME Distortion and OIS Historgrams
 
             svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
@@ -1424,7 +1460,10 @@ void *motion_estimation_kernel(void *input_ptr) {
 #endif
 
             svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
-
+#endif
+#if FIRST_PASS_RESTRUCTURE
+            }
+#endif
             // Get Empty Results Object
             svt_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
                                 &out_results_wrapper_ptr);
@@ -1439,7 +1478,11 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             // Post the Full Results Object
             svt_post_full_object(out_results_wrapper_ptr);
+#if FIRST_PASS_RESTRUCTURE
+        } else if (in_results_ptr->task_type == 1) {
+#else
         } else {
+#endif
             // ME Kernel Signal(s) derivation
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
 
@@ -1455,6 +1498,20 @@ void *motion_estimation_kernel(void *input_ptr) {
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
         }
+#if FIRST_PASS_RESTRUCTURE
+        else {
+            // ME Kernel Signal(s) derivation
+            first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+
+            // first pass start
+            context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
+            open_loop_first_pass(
+                pcs_ptr, context_ptr, in_results_ptr->segment_index);
+
+            // Release the Input Results
+            svt_release_object(in_results_wrapper_ptr);
+        }
+#endif
     }
 
     return NULL;
@@ -1720,7 +1777,10 @@ void *inloop_me_kernel(void *input_ptr) {
                 skip_me = ppcs_ptr->tpl_me_done;
 #endif
             }
-
+#if FIRST_PASS_RESTRUCTURE
+            if(use_output_stat(scs_ptr))
+                skip_me = EB_TRUE;
+#endif
             // Segments
             segment_index = in_results_ptr->segment_index;
 

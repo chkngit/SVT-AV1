@@ -1464,7 +1464,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Determine offset from the Head Ptr
                 determine_picture_offset_in_queue(
                     encode_context_ptr, pcs_ptr, in_results_ptr);
-
+#if !LAP_ENABLED_VBR
             if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                 ; //skip 2pass VBR
             else
@@ -1472,7 +1472,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Getting the Histogram Queue Data
                 get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
             }
-
+#endif
             for (uint8_t temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
                  temporal_layer_index++)
                 pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
@@ -1603,7 +1603,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             pcs_ptr->end_of_sequence_region = EB_TRUE;
                         else
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
-
+#if !LAP_ENABLED_VBR
                         if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                             ; //skip 2pass VBR
                         else
@@ -1615,6 +1615,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
                             }
                         }
+#endif
                         // BACKGROUND ENHANCEMENT Part II
                         if (!pcs_ptr->end_of_sequence_flag &&
                             scs_ptr->static_config.look_ahead_distance != 0) {

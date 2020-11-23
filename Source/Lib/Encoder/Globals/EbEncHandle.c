@@ -2289,9 +2289,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
 #if FIX_ALLOW_SB128_2PASS_VBR
+#if !LAP_ENABLED_VBR
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0 && !use_input_stat(scs_ptr))
                                               ? 64
                                               : scs_ptr->static_config.super_block_size;
+#endif
 #else
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
 #endif
@@ -2330,7 +2332,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->in_loop_me = 1;
 #endif
 #endif
-
 #if FEATURE_PA_ME
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT
@@ -2373,6 +2374,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
+
+#if LAP_ENABLED_VBR
+    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+        scs_ptr->lap_enabled = 1;
+    else
+        scs_ptr->lap_enabled = 0;
+#endif
 }
 
 void copy_api_from_app(
@@ -2597,16 +2605,26 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
+#if LAP_ENABLED_VBR
+    else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
+#else
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr)))
+#endif
+
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
-    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
+    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0) //LAP_ENABLED_VBR anaghdin check these functions
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
+#if LAP_ENABLED_VBR
+        scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD) {
+#else
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
         scs_ptr->static_config.rate_control_mode == 0) {
+#endif
+    
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
     }
