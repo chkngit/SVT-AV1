@@ -2272,7 +2272,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 #if FEATURE_RE_ENCODE
     if (scs_ptr->static_config.recode_loop > 0 &&
+#if LAP_ENABLED_VBR
+        (scs_ptr->static_config.rate_control_mode != 1)) {
+#else
         (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
+#endif
         // Only allow re-encoding for 2pass VBR, otherwise force recode_loop to DISALLOW_RECODE or 0
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
