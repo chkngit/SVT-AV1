@@ -26,7 +26,7 @@
 #include "EbPictureDecisionProcess.h"
 #include "EbModeDecisionConfigurationProcess.h"
 #include "mv.h"
-#if FIRST_PASS_RESTRUCTURE
+#if FEATURE_FIRST_PASS_RESTRUCTURE
 #ifdef ARCH_X86_64
 #include <xmmintrin.h>
 #endif
@@ -36,14 +36,14 @@
 #define _MM_HINT_T2 1
 #endif
 
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
     if (cnt >= MODE_DECISION_CANDIDATE_MAX_COUNT_Y)                                          \
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
 #endif
-#define OUTPUT_FPF 1
+#define OUTPUT_FPF 0
 
 #define INTRA_MODE_PENALTY 1024
 #define NEW_MV_MODE_PENALTY 32
@@ -55,7 +55,7 @@
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
 #define STATS_CAPABILITY_GROW(s) (s * 3 /2)
-#if LAP_ENABLED_VBR_BUF
+#if FEATURE_LAP_ENABLED_VBR
 static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut* out, uint64_t frame_number) {
     if (frame_number < out->size)
         return EB_ErrorNone;
@@ -106,7 +106,7 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS
                                     uint64_t frame_number) {
     FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
     svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-#if LAP_ENABLED_VBR_BUF
+#if FEATURE_LAP_ENABLED_VBR
     if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
 #else
     if (realloc_stats_out(stats_out, frame_number) != EB_ErrorNone) {
@@ -369,9 +369,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
-#if 0//LAP_ENABLED_VBR_DEBUG
-    SVT_LOG("stats_in_end++: %.0f\n", twopass->stats_buf_ctx->stats_in_end->frame);
-#endif
+
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end++;
@@ -519,7 +517,7 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet 
 
     return return_error;
 }
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,
@@ -631,7 +629,7 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr,
 }
 #endif
 #define LOW_MOTION_ERROR_THRESH 25
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 /***************************************************************************
 * Computes and returns the intra pred error of a block.
 * intra pred error: sum of squared error of the intra predicted residual.
@@ -1893,7 +1891,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 #endif
     return return_error;
 }
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 #if TUNE_TX_TYPE_LEVELS
 void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
 #else
@@ -2333,7 +2331,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 #endif
 
     // Set hme/me based reference pruning level (0-4)
-#if FIX_FIRST_PASS_HME && !FIRST_PASS_ME_SETTING
+#if FIX_FIRST_PASS_HME && !FEATURE_FIRST_PASS_RESTRUCTURE
     if (scs_ptr->static_config.enc_mode <= ENC_MR)
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
     else if (scs_ptr->static_config.enc_mode <= ENC_M3)
@@ -2350,7 +2348,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
     return return_error;
 };
 
-#if FIRST_PASS_RESTRUCTURE
+#if FEATURE_FIRST_PASS_RESTRUCTURE
 /***************************************************************************
 * Computes and returns the intra pred error of a block using src.
 * intra pred error: sum of squared error of the intra predicted residual.
@@ -2550,7 +2548,7 @@ static int open_loop_firstpass_inter_prediction(
 
         if (gf_motion_error < motion_error && gf_motion_error < this_intra_error) {
             ++stats->second_ref_count;
-#if FIRST_PASS_ME_SETTING
+#if FEATURE_FIRST_PASS_RESTRUCTURE
             motion_error = gf_motion_error;
 #endif
         }
@@ -2750,7 +2748,7 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     }
 
     context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
-#if FIRST_PASS_REF_FIXES
+#if FEATURE_FIRST_PASS_RESTRUCTURE
     // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
     EbPictureBufferDesc *quarter_pic_ptr = ppcs_ptr->ds_pics.quarter_picture_ptr;
 
@@ -2902,7 +2900,7 @@ void open_loop_first_pass(PictureParentControlSet *ppcs_ptr,
         first_pass_frame(ppcs_ptr);
 
         first_pass_frame_end(ppcs_ptr, ppcs_ptr->ts_duration);
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
         if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_enabled)
 #else
         if (ppcs_ptr->end_of_sequence_flag)

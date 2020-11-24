@@ -2272,7 +2272,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 #if FEATURE_RE_ENCODE
     if (scs_ptr->static_config.recode_loop > 0 &&
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
         (scs_ptr->static_config.rate_control_mode != 1)) {
 #else
         (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
@@ -2293,7 +2293,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
 #if FIX_ALLOW_SB128_2PASS_VBR
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0 && !use_input_stat(scs_ptr))
                                               ? 64
                                               : scs_ptr->static_config.super_block_size;
@@ -2379,7 +2379,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
 
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
     if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
         scs_ptr->lap_enabled = 1;
     else
@@ -2609,20 +2609,20 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
 #else
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr)))
 #endif
 
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
-    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0) //LAP_ENABLED_VBR anaghdin check these functions
+    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0) //FEATURE_LAP_ENABLED_VBR anaghdin check these functions
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD) {
 #else
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&

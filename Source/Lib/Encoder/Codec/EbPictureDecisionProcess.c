@@ -3994,7 +3994,7 @@ EbBool is_delayed_intra(PictureParentControlSet *pcs) {
     else
         return 0;
 }
-#if FIRST_PASS_RESTRUCTURE
+#if FEATURE_FIRST_PASS_RESTRUCTURE
 /*
   Performs first pass in ME process
 */
@@ -4972,7 +4972,7 @@ void* picture_decision_kernel(void *input_ptr)
             }
 
             pcs_ptr->pic_decision_reorder_queue_idx = queue_entry_index;
-#if FIRST_PASS_RESTRUCTURE
+#if FEATURE_FIRST_PASS_RESTRUCTURE
             pcs_ptr->first_pass_done = 0;
 #endif
         }
@@ -4989,8 +4989,8 @@ void* picture_decision_kernel(void *input_ptr)
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
-#if FIRST_PASS_RESTRUCTURE
-#if LAP_ENABLED_VBR
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+#if FEATURE_LAP_ENABLED_VBR
             if (use_output_stat(scs_ptr) || scs_ptr->lap_enabled) {
 #else
             if (use_output_stat(scs_ptr)) {
@@ -5005,10 +5005,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                         PictureParentControlSet *first_pass_pcs_ptr = (PictureParentControlSet*)first_pass_queue_entry->parent_pcs_wrapper_ptr->object_ptr;
                         if (!first_pass_pcs_ptr->first_pass_done) {
-#if 0//LAP_ENABLED_VBR_DEBUG
-                            SVT_LOG("First Pass: POC:%lld\n", first_pass_queue_entry->picture_number);
-#endif
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
                             first_pass_pcs_ptr->first_pass_done = 1;
 #endif
                             int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(entry_index);
@@ -5018,7 +5015,7 @@ void* picture_decision_kernel(void *input_ptr)
                             first_pass_pcs_ptr->first_pass_ref_count = first_pass_queue_entry->picture_number > 1 ? 2 : first_pass_queue_entry->picture_number > 0 ? 1 : 0;
 
                             process_first_pass_frame(scs_ptr, first_pass_pcs_ptr, context_ptr);
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
                             first_pass_pcs_ptr->first_pass_done = 1;
 #endif
                         }

@@ -85,7 +85,7 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
 
     return EB_ErrorNone;
 }
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
 void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 #if FIX_OPTIMIZE_BUILD_QUANTIZER
     Dequants *const dequants = pcs_ptr->hbd_mode_decision ?
@@ -725,7 +725,7 @@ void *packetization_kernel(void *input_ptr) {
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
 
         if(use_input_stat(scs_ptr) ||
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
             scs_ptr->lap_enabled ||
 #endif
 #if FEATURE_PA_ME
@@ -782,7 +782,7 @@ void *packetization_kernel(void *input_ptr) {
         // Send the number of bytes per frame to RC
         pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
         queue_entry_ptr->total_num_bits         = pcs_ptr->parent_pcs_ptr->total_num_bits;
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
         // update the rate tables used in RC based on the encoded bits of each sb
         update_rc_rate_tables(pcs_ptr, scs_ptr);
 #endif
@@ -835,7 +835,7 @@ void *packetization_kernel(void *input_ptr) {
         // Post Rate Control Taks
         svt_post_full_object(rate_control_tasks_wrapper_ptr);
         if (use_input_stat(scs_ptr) ||
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
             scs_ptr->lap_enabled ||
 #endif
 #if FEATURE_PA_ME

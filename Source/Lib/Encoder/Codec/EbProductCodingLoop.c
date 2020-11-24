@@ -5250,7 +5250,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         }
 
         //LUMA-ONLY
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;
         else
@@ -8906,7 +8906,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
  void first_pass_md_encode_block(PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
     ModeDecisionCandidateBuffer *bestcandidate_buffers[5]);
@@ -9263,7 +9263,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint32_t             d1_block_itr      = 0;
     uint32_t             d1_first_block    = 1;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-#if FIX_10BIT && !FIRST_PASS_RESTRUCTURE
+#if FIX_10BIT && !FEATURE_FIRST_PASS_RESTRUCTURE
     if (context_ptr->hbd_mode_decision || (use_output_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth > EB_8BIT)) {
 #else
     if (context_ptr->hbd_mode_decision) {
@@ -9440,7 +9440,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         uint8_t  redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (!use_output_stat(scs_ptr))
 #endif
         {
@@ -9608,7 +9608,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 !zero_sq_coeff_skip_action &&
                 !skip_next_depth &&
                 !skip_nsq) {
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                 if (use_output_stat(scs_ptr))
                     first_pass_md_encode_block(pcs_ptr,
                         context_ptr,

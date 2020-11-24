@@ -684,7 +684,7 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
             svt_av1_init_second_pass(scs_ptr);
         }
     }
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
     else if (scs_ptr->lap_enabled){
         svt_av1_init_single_pass_lap(scs_ptr);
     }
@@ -1025,7 +1025,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
 #else
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))

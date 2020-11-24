@@ -26,9 +26,7 @@
 #include "firstpass.h"
 #include "EbSequenceControlSet.h"
 #include "EbEntropyCoding.h"
-#if LAP_ENABLED_VBR_DEBUG
-#include "EbLog.h"
-#endif
+
 //#define INT_MAX 0x7fffffff
 
 #define DEFAULT_KF_BOOST 2300
@@ -92,21 +90,13 @@ static int input_stats(TWO_PASS *p, FIRSTPASS_STATS *fps) {
   ++p->stats_in;
   return 1;
 }
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
 static int input_stats_lap(TWO_PASS *p, FIRSTPASS_STATS *fps) {
     if (p->stats_in >= p->stats_buf_ctx->stats_in_end) return EOF;
 
-    *fps = *p->stats_in; //anaghdin check
-    ///* Move old stats[0] out to accommodate for next frame stats  */
-    //memmove(p->frame_stats_arr[0], p->frame_stats_arr[1],
-    //    (p->stats_buf_ctx->stats_in_end - p->stats_in - 1) *
-    //    sizeof(FIRSTPASS_STATS));
-
-    //p->stats_buf_ctx->stats_in_end--;
+    *fps = *p->stats_in;
     ++p->stats_in;
-#if 0//LAP_ENABLED_VBR_DEBUG
-    SVT_LOG("stats_in_end--:  %.0f\t%.0f\n", p->stats_in->frame, (p->stats_buf_ctx->stats_in_end-1)->frame);
-#endif
+
     return 1;
 }
 #endif
@@ -550,7 +540,7 @@ static double calc_kf_frame_boost(const RATE_CONTROL *rc,
   // Update the accumulator for second ref error difference.
   // This is intended to give an indication of how much the coded error is
   // increasing over time.
-#if VBR_CODE_UPDATE //anaghdin added
+#if VBR_CODE_UPDATE
   *sr_accumulator += AOMMAX(0.0, (this_frame->sr_coded_error - this_frame->coded_error));
 #else
   *sr_accumulator += (this_frame->sr_coded_error - this_frame->coded_error);
@@ -895,7 +885,7 @@ static void impose_gf_length(PictureParentControlSet *pcs_ptr, int max_intervals
     EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
     int                 i                  = 0;
-#if LAP_ENABLED_VBR_TUNE
+#if FEATURE_LAP_ENABLED_VBR
     max_intervals = scs_ptr->lap_enabled
         ? scs_ptr->static_config.hierarchical_levels != pcs_ptr->hierarchical_levels ? 2 : 1
         : max_intervals;
@@ -925,10 +915,14 @@ static void impose_gf_length(PictureParentControlSet *pcs_ptr, int max_intervals
         // To cut based on PD decisions, only supports 5L for now
 #if FIX_2PASS_VBR_4L_SUPPORT
         cut_here =
-#if LAP_ENABLED_VBR_TUNE
-        ((i % gf_interval == 0) ||
-         ((((rc->frames_to_key - cut_pos[count_cuts - 1]) < gf_interval) || (scs_ptr->lap_enabled && scs_ptr->static_config.hierarchical_levels != pcs_ptr->hierarchical_levels)) && (i % (gf_interval >> 1) == 0)))
-            ? 1 : 0;
+#if FEATURE_LAP_ENABLED_VBR
+            ((i % gf_interval == 0) ||
+             ((((rc->frames_to_key - cut_pos[count_cuts - 1]) < gf_interval) ||
+               (scs_ptr->lap_enabled &&
+                scs_ptr->static_config.hierarchical_levels != pcs_ptr->hierarchical_levels)) &&
+              (i % (gf_interval >> 1) == 0)))
+            ? 1
+            : 0;
 #else
             ((i % gf_interval == 0) || ((rc->frames_to_key - cut_pos[count_cuts - 1]) < gf_interval && (i % (gf_interval>>1) == 0)))
                 ? 1 : 0;
@@ -1738,9 +1732,6 @@ static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS 
   for (j = 0; j < FRAMES_TO_CHECK_DECAY; ++j) recent_loop_decay[j] = 1.0;
 
   while (twopass->stats_in < twopass->stats_buf_ctx->stats_in_end &&
-#if  LAP_LIMITED_STAT
-      num_stats_used_for_kf_boost < 23 &&
-#endif
          frames_to_key < num_frames_to_detect_scenecut) {
     int i = 0;
     // Accumulate total number of stats available till next key frame
@@ -1819,7 +1810,7 @@ static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS 
 
   return frames_to_key;
 }
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
 static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_group_err/*,
                                  double kf_group_avg_error*/) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
@@ -2257,7 +2248,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
 
   int err = 0;
   if (scs_ptr->lap_enabled) {
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
     err = input_stats_lap(twopass, this_frame);
 #endif
   } else {
@@ -2500,7 +2491,7 @@ static void av1_rc_update_framerate(SequenceControlSet *scs_ptr/*, int width, in
 }
 
 // from aom encoder.c
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
 void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
 #else
 static void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
@@ -2509,7 +2500,7 @@ static void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
   scs_ptr->double_frame_rate = framerate < 0.1 ? 30 : framerate;
   av1_rc_update_framerate(scs_ptr/*, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height*/);
 }
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
 void set_rc_param(SequenceControlSet *scs_ptr) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
     FrameInfo *frame_info = &encode_context_ptr->frame_info;
@@ -2588,7 +2579,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   FIRSTPASS_STATS *stats;
 
   if (!twopass->stats_buf_ctx->stats_in_end) return;
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
   set_rc_param(scs_ptr);
 #else
   {

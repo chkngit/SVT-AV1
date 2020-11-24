@@ -326,7 +326,7 @@ struct TileDataEnc;
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section);
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section,
                           const FIRSTPASS_STATS *frame);
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 struct PictureParentControlSet;
 extern void svt_av1_end_first_pass(struct PictureParentControlSet *pcs_ptr);
 extern void first_pass_frame_end(struct PictureParentControlSet *pcs_ptr, const int64_t ts_duration);

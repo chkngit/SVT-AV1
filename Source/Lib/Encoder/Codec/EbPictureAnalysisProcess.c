@@ -4233,7 +4233,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                             (EbPictureBufferDesc *)pa_ref_obj_->quarter_filtered_picture_ptr,
                             (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr);
                 }
-#if FIRST_PASS_REF_FIXES
+#if FEATURE_FIRST_PASS_RESTRUCTURE
                 if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                     pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_filtered_picture_ptr;
                     pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr;

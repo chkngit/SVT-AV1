@@ -2318,7 +2318,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                               (sb_origin_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
 #if FEATURE_RE_ENCODE
-#if LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
         if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled ) &&
 #else
         if (use_input_stat(scs_ptr)  &&
@@ -3215,7 +3215,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL
                                                                                  : COMPONENT_LUMA);
                                 }
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                                 // CBF Tu decision
                                 if (use_output_stat(scs_ptr)) {
                                     context_ptr->md_context

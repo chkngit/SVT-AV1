@@ -4474,7 +4474,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
     MeSbResults *me_results =
         pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
     EbBool       allow_bipred =
-#if !FIRST_PASS_RESTRUCTURE
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         (use_output_stat(scs_ptr) || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)
 #else
         (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)

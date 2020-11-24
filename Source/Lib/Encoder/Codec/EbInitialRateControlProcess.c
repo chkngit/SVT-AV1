@@ -1464,7 +1464,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Determine offset from the Head Ptr
                 determine_picture_offset_in_queue(
                     encode_context_ptr, pcs_ptr, in_results_ptr);
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
             if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                 ; //skip 2pass VBR
             else
@@ -1603,7 +1603,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             pcs_ptr->end_of_sequence_region = EB_TRUE;
                         else
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
-#if !LAP_ENABLED_VBR
+#if !FEATURE_LAP_ENABLED_VBR
                         if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                             ; //skip 2pass VBR
                         else
