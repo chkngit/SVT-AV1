@@ -6593,7 +6593,7 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
       // encoded in the second pass is a guess. However, the sum duration is not.
       // It is calculated based on the actual durations of all frames from the
       // first pass.
-      av1_new_framerate(scs_ptr, frame_rate);
+      svt_av1_new_framerate(scs_ptr, frame_rate);
   }
 #endif
 }

@@ -2488,7 +2488,7 @@ static void av1_rc_update_framerate(SequenceControlSet *scs_ptr/*, int width, in
 
 // from aom encoder.c
 #if FEATURE_LAP_ENABLED_VBR
-void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
+void svt_av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
 #else
 static void av1_new_framerate(SequenceControlSet *scs_ptr, double framerate) {
 #endif
@@ -2622,7 +2622,11 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   // encoded in the second pass is a guess. However, the sum duration is not.
   // It is calculated based on the actual durations of all frames from the
   // first pass.
+#if FEATURE_LAP_ENABLED_VBR 
+  svt_av1_new_framerate(scs_ptr, frame_rate);
+#else
   av1_new_framerate(scs_ptr, frame_rate);
+#endif
   twopass->bits_left =
       (int64_t)(stats->duration * (int64_t)scs_ptr->static_config.target_bit_rate / 10000000.0);
 
