@@ -5409,7 +5409,11 @@ void *mode_decision_kernel(void *input_ptr) {
                         // [PD_PASS_0]
                         // Input : mdc_blk_ptr built @ mdc process (up to 4421)
                         // Output: md_blk_arr_nsq reduced set of block(s)
-
+                        uint32_t blk_idx = 0;
+                        do {
+                            context_ptr->md_context->md_local_blk_unit[blk_idx].avail_blk_flag = EB_FALSE;
+                            ++blk_idx;
+                        } while (blk_idx < scs_ptr->max_block_cnt);
                         // Build the t=0 cand_block_array
                         build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 

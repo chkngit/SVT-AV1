@@ -2590,7 +2590,15 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     /********************** Parse parameters from input file if in y4m format **************************/
     /********************** overriding config file and command line inputs    **************************/
     /***************************************************************************************************/
-
+    {
+        for (index = 0; index < num_channels; ++index) {
+            EncChannel* c = channels + index;
+            if (c->config->recon_file)
+                c->config->config.recon_enabled = 1;
+            else
+                c->config->config.recon_enabled = 0;
+        }
+    }
     for (index = 0; index < num_channels; ++index) {
         EncChannel* c = channels + index;
         if (c->config->y4m_input == EB_TRUE) {
