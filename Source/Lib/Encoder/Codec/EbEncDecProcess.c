@@ -4046,7 +4046,9 @@ void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_pt
                                 uint32_t blk_index, uint32_t tot_d1_blocks) {
     for (uint32_t d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
         uint32_t d1_blk_idx                                        = blk_index + d1_block_idx;
+#if !FIX_VALID_BLOCK_DERIVATION_OPT
         context_ptr->md_local_blk_unit[d1_blk_idx].avail_blk_flag  = EB_FALSE;
+#endif
         context_ptr->md_blk_arr_nsq[d1_blk_idx].split_flag         = EB_TRUE;
         context_ptr->md_local_blk_unit[d1_blk_idx].tested_blk_flag = EB_FALSE;
         context_ptr->md_blk_arr_nsq[d1_blk_idx].part               = PARTITION_SPLIT;
@@ -4194,7 +4196,11 @@ void generate_statistics_txt(
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+                    if (context_ptr->avail_blk_flag[blk_index]) {
+#else
                     if (context_ptr->md_local_blk_unit[blk_index].avail_blk_flag) {
+#endif
                         uint8_t part_idx = context_ptr->md_blk_arr_nsq[blk_index].part;
                         int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[blk_geom->sqi_mds].pred_depth_refinement;
                         // Set the bounds of pred_depth_refinement for array indexing
@@ -4301,7 +4307,11 @@ void generate_statistics_depth(
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+                    if (context_ptr->avail_blk_flag[blk_index]) {
+#else
                     if (context_ptr->md_local_blk_unit[blk_index].avail_blk_flag) {
+#endif
                         int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[blk_geom->sqi_mds].pred_depth_refinement;
                         pred_depth_refinement = MIN(pred_depth_refinement, 1);
                         pred_depth_refinement = MAX(pred_depth_refinement, -1);
@@ -4436,12 +4446,21 @@ void generate_statistics_nsq(
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+                    if (context_ptr->avail_blk_flag[blk_index]) {
+#else
                     if (context_ptr->md_local_blk_unit[blk_index].avail_blk_flag) {
+#endif
                         uint8_t band_idx = 0;
                         uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
                         uint64_t band_width = (sq_size_idx == 0) ? 100 : (sq_size_idx == 1) ? 50 : 20;
                         uint8_t part_idx = part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part];
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+
+                        uint8_t sse_g_band = (!context_ptr->md_disallow_nsq && context_ptr->avail_blk_flag[blk_geom->sqi_mds]) ?
+#else
                         uint8_t sse_g_band = (!context_ptr->md_disallow_nsq && context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag) ?
+#endif
                             context_ptr->md_local_blk_unit[blk_geom->sqi_mds].sse_gradian_band[part_idx] : 1;
                         const uint32_t count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
                         const uint32_t total_samples = (blk_geom->bwidth*blk_geom->bheight);
@@ -4556,7 +4575,11 @@ static uint8_t determine_sb_class(
             (blk_geom->sq_size < 128) ? 1 : 0;
         EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+            context_ptr->avail_blk_flag[blk_index] &&
+#else
             context_ptr->md_local_blk_unit[blk_index].avail_blk_flag &&
+#endif
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
@@ -4647,8 +4670,12 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
         (blk_geom->sqi_mds -
         (blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]) -
         parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+    if (mdctxt->avail_blk_flag[parent_depth_idx_mds]) {
+#else
 
     if (mdctxt->md_local_blk_unit[parent_depth_idx_mds].avail_blk_flag) {
+#endif
         parent_to_current_deviation =
             (int64_t)(((int64_t)MAX(mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost, 1) - (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
@@ -4682,6 +4709,24 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
 
     uint64_t child_cost = 0;
     uint8_t child_cnt = 0;
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+    if (mdctxt->avail_blk_flag[child_block_idx_1]) {
+        child_cost += mdctxt->md_local_blk_unit[child_block_idx_1].default_cost;
+        child_cnt++;
+    }
+    if (mdctxt->avail_blk_flag[child_block_idx_2]) {
+        child_cost += mdctxt->md_local_blk_unit[child_block_idx_2].default_cost;
+        child_cnt++;
+    }
+    if (mdctxt->avail_blk_flag[child_block_idx_3]) {
+        child_cost += mdctxt->md_local_blk_unit[child_block_idx_3].default_cost;
+        child_cnt++;
+    }
+    if (mdctxt->avail_blk_flag[child_block_idx_4]) {
+        child_cost += mdctxt->md_local_blk_unit[child_block_idx_4].default_cost;
+        child_cnt++;
+    }
+#else
     if (mdctxt->md_local_blk_unit[child_block_idx_1].avail_blk_flag) {
         child_cost += mdctxt->md_local_blk_unit[child_block_idx_1].default_cost;
         child_cnt++;
@@ -4698,7 +4743,7 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
         child_cost += mdctxt->md_local_blk_unit[child_block_idx_4].default_cost;
         child_cnt++;
     }
-
+#endif
     if (child_cnt) {
         child_cost = (child_cost / child_cnt) * 4;
         child_to_current_deviation =
@@ -4909,7 +4954,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if TUNE_INIT_BLOCK_OPT
 void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
                 const BlockGeom *blk_geom) {
+#if !FIX_VALID_BLOCK_DERIVATION_OPT
     context_ptr->md_local_blk_unit[blk_index].avail_blk_flag           = EB_FALSE;
+#endif
     context_ptr->md_local_blk_unit[blk_index].left_neighbor_partition  = +INVALID_NEIGHBOR_DATA;
     context_ptr->md_local_blk_unit[blk_index].above_neighbor_partition = +INVALID_NEIGHBOR_DATA;
     if (!context_ptr->md_disallow_nsq)
@@ -5108,7 +5155,12 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
     }
 }
 #endif
-
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+static void init_avail_blk_flag(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr) {
+    // Initialize avail_blk_flag to false
+    memset(context_ptr->avail_blk_flag, EB_FALSE, sizeof(uint8_t) * scs_ptr->max_block_cnt);
+}
+#endif
 /* EncDec (Encode Decode) Kernel */
 /*********************************************************************************
 *
@@ -5412,6 +5464,10 @@ void *mode_decision_kernel(void *input_ptr) {
 
                         // Build the t=0 cand_block_array
                         build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#if  FIX_VALID_BLOCK_DERIVATION_OPT
+                        // Initialize avail_blk_flag to false
+                        init_avail_blk_flag(scs_ptr, context_ptr->md_context);
+#endif
 
                         // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                         // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
@@ -5454,6 +5510,10 @@ void *mode_decision_kernel(void *input_ptr) {
 #endif
                             // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
                             build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#if FIX_VALID_BLOCK_DERIVATION_OPT
+                            // Initialize avail_blk_flag to false
+                            init_avail_blk_flag(scs_ptr, context_ptr->md_context);
+#endif
 
                             // [PD_PASS_1] Mode Decision - Further reduce the number of
                             // depth(s) to be considered in later PD stages. This pass uses more accurate
@@ -5500,6 +5560,10 @@ void *mode_decision_kernel(void *input_ptr) {
                     else
                         // Build the t=0 cand_block_array
                         build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#if  FIX_VALID_BLOCK_DERIVATION_OPT
+                    // Initialize avail_blk_flag to false
+                    init_avail_blk_flag(scs_ptr, context_ptr->md_context);
+#endif
 
                     // [PD_PASS_2] Mode Decision - Obtain the final partitioning decision using more accurate info
                     // than previous stages.  Reduce the total number of partitions to 1.

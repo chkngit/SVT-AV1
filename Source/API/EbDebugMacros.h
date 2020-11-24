@@ -119,6 +119,7 @@ extern "C" {
 #define FIX_FIRST_PASS_HME        1 // Fix the hme/me based reference pruning level for the first pass
 
 #define TUNE_NEW_PRESETS                             1 // Preset tuning for M0-M7
+#define FIX_VALID_BLOCK_DERIVATION_OPT 1 // Initialize avail_blk_flag to false
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL         0 // Prints to debug TPL
