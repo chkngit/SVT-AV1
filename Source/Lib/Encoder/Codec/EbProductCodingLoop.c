@@ -2911,8 +2911,18 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &me_mv_y);
                 }
                 context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (int32_t)~0;
+#if FIX_INTERPOLATION_SEARCH
+                context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
+                context_ptr->fp_me_mv[list_idx][ref_idx].row    = me_mv_y;
+                context_ptr->sub_me_mv[list_idx][ref_idx].col   = me_mv_x;
+                context_ptr->sub_me_mv[list_idx][ref_idx].row   = me_mv_y;
+#endif
                 if (context_ptr->md_subpel_me_ctrls.enabled) {
                     // Copy ME MV before subpel
+#if !FIX_INTERPOLATION_SEARCH
+                    context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
+                    context_ptr->fp_me_mv[list_idx][ref_idx].row = me_mv_y;
+#endif
                     context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
                     context_ptr->fp_me_mv[list_idx][ref_idx].row = me_mv_y;
                     context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (uint32_t)md_subpel_search(pcs_ptr,
