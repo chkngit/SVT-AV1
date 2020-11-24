@@ -4000,8 +4000,6 @@ EbBool is_delayed_intra(PictureParentControlSet *pcs) {
 */
 void process_first_pass_frame(
     SequenceControlSet      *scs_ptr, PictureParentControlSet *pcs_ptr, PictureDecisionContext  *context_ptr) {
-
-     // Start Filtering in ME processes
     int16_t seg_idx;
 
     // Initialize Segments
@@ -4021,7 +4019,6 @@ void process_first_pass_frame(
 
         EbObjectWrapper               *out_results_wrapper_ptr;
         PictureDecisionResults        *out_results_ptr;
-
         svt_get_empty_object(
             context_ptr->picture_decision_results_output_fifo_ptr,
             &out_results_wrapper_ptr);
@@ -4033,12 +4030,10 @@ void process_first_pass_frame(
     }
 
     svt_block_on_semaphore(pcs_ptr->first_pass_done_semaphore);
-
     svt_release_object(pcs_ptr->me_data_wrapper_ptr);
     pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
 }
 #endif
-
 /*
   Performs Motion Compensated Temporal Filtering in ME process
 */

@@ -2261,23 +2261,29 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.look_ahead_distance = 1;
         scs_ptr->static_config.enable_tpl_la = 0;
         scs_ptr->static_config.rate_control_mode = 0;
-        scs_ptr->static_config.intra_refresh_type     = 2;
+        scs_ptr->static_config.intra_refresh_type = 2;
     }
+#if FEATURE_LAP_ENABLED_VBR
+    else if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#else
     else if (use_input_stat(scs_ptr)) {
+#endif
 #if !ENABLE_TPL_ZERO_LAD
         scs_ptr->static_config.look_ahead_distance = 16;
 #endif
         scs_ptr->static_config.enable_tpl_la = 1;
-        scs_ptr->static_config.intra_refresh_type     = 2;
+        scs_ptr->static_config.intra_refresh_type = 2;
     }
+
 #if FEATURE_RE_ENCODE
     if (scs_ptr->static_config.recode_loop > 0 &&
 #if FEATURE_LAP_ENABLED_VBR
-        (scs_ptr->static_config.rate_control_mode != 1)) {
+        (!scs_ptr->static_config.rate_control_mode || !scs_ptr->lap_enabled)) {
+        // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
 #else
         (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
-#endif
         // Only allow re-encoding for 2pass VBR, otherwise force recode_loop to DISALLOW_RECODE or 0
+#endif
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
 #endif
@@ -2293,7 +2299,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
 #if FIX_ALLOW_SB128_2PASS_VBR
-#if !FEATURE_LAP_ENABLED_VBR
+#if FEATURE_LAP_ENABLED_VBR
+    if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
+        scs_ptr->static_config.super_block_size = 64;
+#else
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0 && !use_input_stat(scs_ptr))
                                               ? 64
                                               : scs_ptr->static_config.super_block_size;
@@ -2378,13 +2387,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
-
-#if FEATURE_LAP_ENABLED_VBR
-    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
-        scs_ptr->lap_enabled = 1;
-    else
-        scs_ptr->lap_enabled = 0;
-#endif
 }
 
 void copy_api_from_app(
@@ -2552,7 +2554,12 @@ void copy_api_from_app(
 #if FEATURE_RE_ENCODE
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
 #endif
-
+#if FEATURE_LAP_ENABLED_VBR
+    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+        scs_ptr->lap_enabled = 0; //turned off temporarily
+    else
+        scs_ptr->lap_enabled = 0;
+#endif
     //Segmentation
     //TODO: check RC mode and set only when RC is enabled in the final version.
     scs_ptr->static_config.enable_adaptive_quantization = config_struct->enable_adaptive_quantization;
@@ -2603,6 +2610,12 @@ void copy_api_from_app(
     scs_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)config_struct)->qp;
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
+#if FEATURE_LAP_ENABLED_VBR
+    if (scs_ptr->static_config.rate_control_mode && !scs_ptr->lap_enabled && scs_ptr->static_config.enable_tpl_la) {
+        SVT_LOG("SVT [Warning]: force enable_tpl_la to be 0. Not supported for 1 PASS RC \n", );
+        scs_ptr->static_config.enable_tpl_la = 0;
+    }
+#endif
     // Extract frame rate from Numerator and Denominator if not 0
     if (scs_ptr->static_config.frame_rate_numerator != 0 && scs_ptr->static_config.frame_rate_denominator != 0)
         scs_ptr->frame_rate = scs_ptr->static_config.frame_rate = (((scs_ptr->static_config.frame_rate_numerator << 8) / (scs_ptr->static_config.frame_rate_denominator)) << 8);
@@ -2616,7 +2629,7 @@ void copy_api_from_app(
 #endif
 
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
-    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0) //FEATURE_LAP_ENABLED_VBR anaghdin check these functions
+    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);

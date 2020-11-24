@@ -1264,35 +1264,35 @@ void *motion_estimation_kernel(void *input_ptr) {
                 }
             }
 #endif
-#if !FEATURE_LAP_ENABLED_VBR
-            // Calculate the ME Distortion and OIS Historgrams
 
-            svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
-
-
+#if FEATURE_LAP_ENABLED_VBR
+            if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled) {
+#endif
+                // Calculate the ME Distortion and OIS Historgrams
+                svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
 #if !FEATURE_INL_ME
-            if (scs_ptr->static_config.rate_control_mode
-                && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
-                ) {
-                if (pcs_ptr->slice_type != I_SLICE) {
-                    for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
-                        for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
+                if (scs_ptr->static_config.rate_control_mode
+                    && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+                    ) {
+                    if (pcs_ptr->slice_type != I_SLICE) {
+                        for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
+                            ++y_sb_index)
+                            for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
+                                ++x_sb_index) {
                             uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                             uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
+                            uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                                BLOCK_SIZE_64
                                 ? pcs_ptr->aligned_width - sb_origin_x
                                 : BLOCK_SIZE_64;
                             uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
+                                BLOCK_SIZE_64
                                 ? pcs_ptr->aligned_height - sb_origin_y
                                 : BLOCK_SIZE_64;
 
-                            uint32_t sb_index                           = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
+                            uint32_t sb_index = (uint16_t)(x_sb_index +
+                                y_sb_index * pic_width_in_sb);
                             pcs_ptr->inter_sad_interval_index[sb_index] = 0;
                             pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
@@ -1321,13 +1321,13 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 uint32_t intra_sad_interval_index =
                                     pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
                                 intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
+                                    2);
                                 if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
                                     uint32_t sad_interval_index_temp = intra_sad_interval_index -
                                         ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
                                     intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
+                                        1) +
                                         (sad_interval_index_temp >> 3);
                                 }
                                 if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
@@ -1341,126 +1341,129 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 ++pcs_ptr->full_sb_count;
                             }
                         }
-                } else
-                    for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
-                        for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
-                            uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_width - sb_origin_x
-                                : BLOCK_SIZE_64;
-                            uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_height - sb_origin_y
-                                : BLOCK_SIZE_64;
+                    }
+                    else
+                        for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
+                            ++y_sb_index)
+                            for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
+                                ++x_sb_index) {
+                        uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_width - sb_origin_x
+                            : BLOCK_SIZE_64;
+                        uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_height - sb_origin_y
+                            : BLOCK_SIZE_64;
 
-                            uint32_t sb_index = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
+                        uint32_t sb_index = (uint16_t)(x_sb_index +
+                            y_sb_index * pic_width_in_sb);
 
-                            pcs_ptr->inter_sad_interval_index[sb_index] = 0;
-                            pcs_ptr->intra_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->inter_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
-                            if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
-                                uint32_t intra_sad_interval_index =
-                                    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
-                                intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
-                                if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                    uint32_t sad_interval_index_temp = intra_sad_interval_index -
-                                        ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
+                        if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
+                            uint32_t intra_sad_interval_index =
+                                pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
+                            intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
+                                2);
+                            if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                    ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
-                                    intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
-                                        (sad_interval_index_temp >> 3);
-                                }
-                                if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                    intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
-
-                                pcs_ptr->intra_sad_interval_index[sb_index] =
-                                    intra_sad_interval_index;
-
-                                pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
-
-                                ++pcs_ptr->full_sb_count;
+                                intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
+                                    1) +
+                                    (sad_interval_index_temp >> 3);
                             }
+                            if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+
+                            pcs_ptr->intra_sad_interval_index[sb_index] =
+                                intra_sad_interval_index;
+
+                            pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
+
+                            ++pcs_ptr->full_sb_count;
                         }
-            }
+                    }
+                }
 #else
-            if (scs_ptr->static_config.rate_control_mode
-                && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
-                ) {
+                if (scs_ptr->static_config.rate_control_mode
+                    && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+                    ) {
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
+                        ++y_sb_index)
                         for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
-                            uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_width - sb_origin_x
-                                : BLOCK_SIZE_64;
-                            uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_height - sb_origin_y
-                                : BLOCK_SIZE_64;
+                            ++x_sb_index) {
+                        uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_width - sb_origin_x
+                            : BLOCK_SIZE_64;
+                        uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_height - sb_origin_y
+                            : BLOCK_SIZE_64;
 
-                            uint32_t sb_index = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
-                            pcs_ptr->inter_sad_interval_index[sb_index] = 0;
-                            pcs_ptr->intra_sad_interval_index[sb_index] = 0;
+                        uint32_t sb_index = (uint16_t)(x_sb_index +
+                            y_sb_index * pic_width_in_sb);
+                        pcs_ptr->inter_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
-                            if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
-                                if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
-                                    uint16_t sad_interval_index = (uint16_t)(
-                                            pcs_ptr->rc_me_distortion[sb_index] >>
-                                            (12 - SAD_PRECISION_INTERVAL)); //change 12 to 2*log2(64)
+                        if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
+                            if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
+                                uint16_t sad_interval_index = (uint16_t)(
+                                    pcs_ptr->rc_me_distortion[sb_index] >>
+                                    (12 - SAD_PRECISION_INTERVAL)); //change 12 to 2*log2(64)
 
-                                    sad_interval_index = (uint16_t)(sad_interval_index >> 2);
-                                    if (sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                        uint16_t sad_interval_index_temp = sad_interval_index -
-                                            ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
-
-                                        sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) +
-                                            (sad_interval_index_temp >> 3);
-                                    }
-                                    if (sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                        sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
-
-                                    pcs_ptr->inter_sad_interval_index[sb_index] = sad_interval_index;
-
-                                    pcs_ptr->me_distortion_histogram[sad_interval_index]++;
-                                }
-
-                                uint32_t intra_sad_interval_index =
-                                    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
-                                intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
-                                if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                    uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                sad_interval_index = (uint16_t)(sad_interval_index >> 2);
+                                if (sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                    uint16_t sad_interval_index_temp = sad_interval_index -
                                         ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
-                                    intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
+                                    sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) +
                                         (sad_interval_index_temp >> 3);
                                 }
-                                if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                    intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+                                if (sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                    sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
 
-                                pcs_ptr->intra_sad_interval_index[sb_index] =
-                                    intra_sad_interval_index;
+                                pcs_ptr->inter_sad_interval_index[sb_index] = sad_interval_index;
 
-                                pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
-
-                                ++pcs_ptr->full_sb_count;
+                                pcs_ptr->me_distortion_histogram[sad_interval_index]++;
                             }
+
+                            uint32_t intra_sad_interval_index =
+                                pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
+                            intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
+                                2);
+                            if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                    ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
+
+                                intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
+                                    1) +
+                                    (sad_interval_index_temp >> 3);
+                            }
+                            if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+
+                            pcs_ptr->intra_sad_interval_index[sb_index] =
+                                intra_sad_interval_index;
+
+                            pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
+
+                            ++pcs_ptr->full_sb_count;
                         }
+                    }
                 }
 #endif
 
-            svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+                svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+#if FEATURE_LAP_ENABLED_VBR
+            }
 #endif
 #if FEATURE_FIRST_PASS_RESTRUCTURE
             }

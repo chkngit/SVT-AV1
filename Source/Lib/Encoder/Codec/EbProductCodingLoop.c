@@ -4926,10 +4926,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
         ? pcs_ptr->input_frame16bit
         : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     SequenceControlSet *scs_ptr;
     scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
         ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
               .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
