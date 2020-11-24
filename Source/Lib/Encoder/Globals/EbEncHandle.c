@@ -2612,7 +2612,7 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
 #if FEATURE_LAP_ENABLED_VBR
     if (scs_ptr->static_config.rate_control_mode && !scs_ptr->lap_enabled && scs_ptr->static_config.enable_tpl_la) {
-        SVT_LOG("SVT [Warning]: force enable_tpl_la to be 0. Not supported for 1 PASS RC \n", );
+        SVT_LOG("SVT [Warning]: force enable_tpl_la to be 0. Not supported for 1 PASS RC \n");
         scs_ptr->static_config.enable_tpl_la = 0;
     }
 #endif
