@@ -8336,8 +8336,6 @@ void *rate_control_kernel(void *input_ptr) {
                         ? context_ptr->rate_control_param_queue[PARALLEL_GOP_MAX_NUMBER - 1]
                         : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
-#if FEATURE_LAP_ENABLED_VBR //anaghdin
-#endif
             if (scs_ptr->static_config.rate_control_mode == 0
 #if !ENABLE_TPL_ZERO_LAD
                 &&

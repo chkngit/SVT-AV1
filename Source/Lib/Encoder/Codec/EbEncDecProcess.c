@@ -4760,7 +4760,9 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     int32_t force_blk_size = FORCED_BLK_SIZE;
+#endif
 #if FEATURE_PD0_CUT_DEPTH
     int32_t min_sq_size =
         (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16)
@@ -5045,6 +5047,7 @@ void *mode_decision_kernel(void *input_ptr) {
         uint32_t sb_row_index_start = 0, sb_row_index_count = 0;
         context_ptr->tot_intra_coded_area       = 0;
 #if  FEATURE_FIRST_PASS_RESTRUCTURE
+        // Bypass encdec for the first pass
         if (use_output_stat(scs_ptr)) {
 
             svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
@@ -5053,7 +5056,6 @@ void *mode_decision_kernel(void *input_ptr) {
             svt_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
             enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
-            //CHKN these are not needed for DLF
             enc_dec_results_ptr->completed_sb_row_index_start = 0;
             enc_dec_results_ptr->completed_sb_row_count =
                 ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);

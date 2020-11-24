@@ -999,6 +999,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             EbBool skip_me = EB_FALSE;
             if (use_output_stat(scs_ptr))
                 skip_me = EB_TRUE;
+            // skip me for the first pass. ME is already performed
             if (!skip_me) {
 #endif
             // *** MOTION ESTIMATION CODE ***

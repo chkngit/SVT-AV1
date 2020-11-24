@@ -4010,7 +4010,6 @@ void process_first_pass_frame(
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
-    // anaghdin: do we always need this if single thread is used?
     if (pcs_ptr->me_data_wrapper_ptr == NULL) {
         EbObjectWrapper               *me_wrapper;
         svt_get_empty_object(context_ptr->me_fifo_ptr, &me_wrapper);
@@ -5009,9 +5008,11 @@ void* picture_decision_kernel(void *input_ptr)
                             first_pass_pcs_ptr->first_pass_done = 1;
 #endif
                             int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(entry_index);
-                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[0] = first_pass_queue_entry->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
+                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[0] = first_pass_queue_entry->picture_number > 0 ?
+                                (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                             temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(temp_entry_index);
-                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[1] = first_pass_queue_entry->picture_number > 1 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
+                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[1] = first_pass_queue_entry->picture_number > 1 ?
+                                (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                             first_pass_pcs_ptr->first_pass_ref_count = first_pass_queue_entry->picture_number > 1 ? 2 : first_pass_queue_entry->picture_number > 0 ? 1 : 0;
 
                             process_first_pass_frame(scs_ptr, first_pass_pcs_ptr, context_ptr);
@@ -5022,7 +5023,6 @@ void* picture_decision_kernel(void *input_ptr)
                     }
                 }
             }
-
 #endif
 
 #if FEATURE_NEW_DELAY

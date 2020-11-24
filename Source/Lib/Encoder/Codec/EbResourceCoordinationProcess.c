@@ -685,9 +685,8 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
         }
     }
 #if FEATURE_LAP_ENABLED_VBR
-    else if (scs_ptr->lap_enabled){
+    else if (scs_ptr->lap_enabled)
         svt_av1_init_single_pass_lap(scs_ptr);
-    }
 #endif
 }
 

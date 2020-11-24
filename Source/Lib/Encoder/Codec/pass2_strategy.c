@@ -8,7 +8,7 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
  /*!\defgroup gf_group_algo Golden Frame Group
   * \ingroup high_level_algo
   * Algorithms regarding determining the length of GF groups and defining GF
@@ -209,7 +209,7 @@ static int find_qindex_by_rate_with_correction(
 
 // Bits Per MB at different Q (Multiplied by 512)
 #define BPER_MB_NORMBITS 9
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
 /*!\brief Choose a target maximum Q for a group of frames
  *
  * \ingroup rate_control
@@ -540,7 +540,7 @@ static double calc_kf_frame_boost(const RATE_CONTROL *rc,
   // Update the accumulator for second ref error difference.
   // This is intended to give an indication of how much the coded error is
   // increasing over time.
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
   *sr_accumulator += AOMMAX(0.0, (this_frame->sr_coded_error - this_frame->coded_error));
 #else
   *sr_accumulator += (this_frame->sr_coded_error - this_frame->coded_error);
@@ -690,7 +690,7 @@ static int calculate_section_intra_ratio(const FIRSTPASS_STATS *begin,
 
   return (int)(intra_error / DOUBLE_DIVIDE_CHECK(coded_error));
 }
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
 // Calculate the total bits to allocate in this GF/ARF group.
 /*!\brief Calculates the bit target for this GF/ARF group
  *
@@ -713,7 +713,7 @@ static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs_ptr,
   TWO_PASS *const twopass = &scs_ptr->twopass;
   const int max_bits = frame_max_bits(rc, encode_context_ptr);
   int64_t total_group_bits;
-#if !VBR_CODE_UPDATE
+#if !TUNE_VBR_CODE_UPDATE
   if (scs_ptr->lap_enabled) {
     total_group_bits = rc->avg_frame_bandwidth * rc->baseline_gf_interval;
     return total_group_bits;
@@ -1091,9 +1091,8 @@ static int construct_multi_layer_gf_structure(
     gf_group->max_layer_depth = 0;
     ++frame_index;
 
-    // anaghdin: for now only 5L is supported. In 5L case, when there are not enough picture,
-    // we switch to 4L and after that we use 4L P pictures. In the else, we handle the P-case manually
-    // this logic has to move to picture decision
+    // In 5L case, when there are not enough picture, we switch to 4L and after that we use 4L
+    // P pictures. In the else, we handle the P-case manually this logic has to move to picture decision
 #if FIX_2PASS_VBR_4L_SUPPORT
     if (gf_interval >= (max_gf_interval>>1))
 #else
@@ -1173,7 +1172,7 @@ static void av1_gop_bit_allocation(RATE_CONTROL *const rc,
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 // Analyse and define a gf/arf group.
 #define MAX_GF_BOOST 5400
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
 /*!\brief Define a GF group.
  *
  * \ingroup gf_group_algo
@@ -1389,7 +1388,7 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
 
   // Reset the file position.
   reset_fpf_position(twopass, start_pos);
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
   if (scs_ptr->lap_enabled) {
       // Since we don't have enough stats to know the actual error of the
       // gf group, we assume error of each frame to be equal to 1 and set
@@ -1683,7 +1682,7 @@ static int get_projected_kf_boost(RATE_CONTROL *const rc) {
       (int)rint((tpl_factor * rc->kf_boost) / tpl_factor_num_stats);
   return projected_kf_boost;
 }
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
 /*!\brief Determine the location of the next key frame
  *
  * \ingroup gf_group_algo
@@ -1811,8 +1810,7 @@ static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS 
   return frames_to_key;
 }
 #if FEATURE_LAP_ENABLED_VBR
-static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_group_err/*,
-                                 double kf_group_avg_error*/) {
+static int64_t get_kf_group_bits(PictureParentControlSet *pcs_ptr, double kf_group_err) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL *const rc = &encode_context_ptr->rc;
@@ -1945,7 +1943,7 @@ static double get_kf_boost_score(PictureParentControlSet *pcs_ptr, double kf_raw
   }
   return boost_score;
 }
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
 #define MAX_KF_BITS_INTERVAL_SINGLE_PASS 5
 #endif
 // This function imposes the key frames based on the intra refresh period
@@ -1992,7 +1990,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     double kf_group_err = 0.0;
     double sr_accumulator = 0.0;
     //double kf_group_avg_error = 0.0;
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
     int frames_to_key, frames_to_key_clipped = INT_MAX;
     int64_t kf_group_bits_clipped = INT64_MAX;
 #else
@@ -2014,8 +2012,6 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
         rc->frames_to_key = AOMMIN(kf_cfg->key_freq_max, frames_to_key);
     else
         rc->frames_to_key = kf_cfg->key_freq_max;
-    //anaghdin
-    //if (scs_ptr->lap_enabled) correct_frames_to_key(cpi);
 
     // If there is a max kf interval set by the user we must obey it.
     // We already breakout of the loop above at 2x max.
@@ -2079,7 +2075,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
         twopass->kf_group_bits = 0;
     }
     twopass->kf_group_bits = AOMMAX(0, twopass->kf_group_bits);
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
     if (scs_ptr->lap_enabled) {
         // In the case of single pass based on LAP, frames to  key may have an
         // inaccurate value, and hence should be clipped to an appropriate
@@ -2142,7 +2138,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     }
 
     // Work out how many bits to allocate for the key frame itself.
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
   // In case of LAP enabled for VBR, if the frames_to_key value is
   // very high, we calculate the bits based on a clipped value of
   // frames_to_key.
@@ -2160,7 +2156,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     gf_group->update_type[0] = KF_UPDATE;
 
     // Note the total error score of the kf group minus the key frame itself.
-#if VBR_CODE_UPDATE
+#if TUNE_VBR_CODE_UPDATE
     if (scs_ptr->lap_enabled)
         // As we don't have enough stats to know the actual error of the group,
         // we assume the complexity of each frame to be equal to 1, and set the
