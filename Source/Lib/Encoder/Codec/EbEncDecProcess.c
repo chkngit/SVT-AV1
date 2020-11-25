@@ -5034,7 +5034,9 @@ void *mode_decision_kernel(void *input_ptr) {
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
         context_ptr->coded_sb_count   = 0;
         segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
+#if  !FEATURE_FIRST_PASS_RESTRUCTURE
         EbBool last_sb_flag           = EB_FALSE;
+#endif
         // SB Constants
         uint8_t sb_sz      = (uint8_t)scs_ptr->sb_size_pix;
         uint8_t sb_size_log2 = (uint8_t)svt_log2f(sb_sz);
@@ -5044,7 +5046,9 @@ void *mode_decision_kernel(void *input_ptr) {
         uint16_t tile_group_width_in_sb = pcs_ptr->parent_pcs_ptr
                                               ->tile_group_info[context_ptr->tile_group_index]
                                               .tile_group_width_in_sb;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         uint32_t sb_row_index_start = 0, sb_row_index_count = 0;
+#endif
         context_ptr->tot_intra_coded_area       = 0;
 #if  FEATURE_FIRST_PASS_RESTRUCTURE
         // Bypass encdec for the first pass
@@ -5154,7 +5158,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     context_ptr->md_context->tile_index = sb_ptr->tile_info.tile_rs_index;
                     context_ptr->md_context->sb_origin_x = sb_origin_x;
                     context_ptr->md_context->sb_origin_y = sb_origin_y;
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     sb_row_index_start =
                         (x_sb_index + 1 == tile_group_width_in_sb && sb_row_index_count == 0)
                             ? y_sb_index
@@ -5162,6 +5166,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     sb_row_index_count = (x_sb_index + 1 == tile_group_width_in_sb)
                                              ? sb_row_index_count + 1
                                              : sb_row_index_count;
+#endif
                     mdc_ptr = context_ptr->md_context->mdc_sb_array;
                     context_ptr->sb_index = sb_index;
                     context_ptr->md_context->sb_class = NONE_CLASS;
@@ -5430,7 +5435,11 @@ void *mode_decision_kernel(void *input_ptr) {
                 pcs_ptr->txt_cnt[depth_delta][txs_idx] += context_ptr->md_context->txt_cnt[depth_delta][txs_idx];
 
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+        EbBool last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
+#else
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
+#endif
         svt_release_mutex(pcs_ptr->intra_mutex);
 
         if (last_sb_flag) {
