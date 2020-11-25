@@ -2622,7 +2622,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   // encoded in the second pass is a guess. However, the sum duration is not.
   // It is calculated based on the actual durations of all frames from the
   // first pass.
-#if FEATURE_LAP_ENABLED_VBR 
+#if FEATURE_LAP_ENABLED_VBR
   svt_av1_new_framerate(scs_ptr, frame_rate);
 #else
   av1_new_framerate(scs_ptr, frame_rate);

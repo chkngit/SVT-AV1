@@ -2278,7 +2278,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FEATURE_RE_ENCODE
     if (scs_ptr->static_config.recode_loop > 0 &&
 #if FEATURE_LAP_ENABLED_VBR
-        (!scs_ptr->static_config.rate_control_mode || !scs_ptr->lap_enabled)) {
+        (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !use_input_stat(scs_ptr)))) {
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
 #else
         (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
@@ -2611,7 +2611,8 @@ void copy_api_from_app(
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
 #if FEATURE_LAP_ENABLED_VBR
-    if (scs_ptr->static_config.rate_control_mode && !scs_ptr->lap_enabled && scs_ptr->static_config.enable_tpl_la) {
+    if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) &&
+        !scs_ptr->lap_enabled && scs_ptr->static_config.enable_tpl_la) {
         SVT_LOG("SVT [Warning]: force enable_tpl_la to be 0. Not supported for 1 PASS RC \n");
         scs_ptr->static_config.enable_tpl_la = 0;
     }
