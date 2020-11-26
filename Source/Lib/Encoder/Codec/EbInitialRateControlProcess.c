@@ -1516,7 +1516,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         PictureParentControlSet* pcs =
                             (PictureParentControlSet*)(encode_context_ptr
                                                            ->initial_rate_control_reorder_queue
+#if FIX_IRC_IDX
+                                                               [queue_entry_index_temp2]
+#else
                                                                [queue_entry_index_temp]
+#endif
                                                                ->parent_pcs_wrapper_ptr)->object_ptr;
                         if (pcs->is_next_frame_intra)
                             break;

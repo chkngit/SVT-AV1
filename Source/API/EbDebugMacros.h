@@ -127,6 +127,7 @@ extern "C" {
 #define TUNE_NEW_PRESETS                             1 // Preset tuning for M0-M7
 #define FIX_VALID_BLOCK_DERIVATION_OPT 1 // Initialize avail_blk_flag to false
 #define FIX_INTERPOLATION_SEARCH 1 // Fix initialization for interpolation search
+#define FIX_IRC_IDX 1 // Fix initial_rate_control_reorder_queue[] index error
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
