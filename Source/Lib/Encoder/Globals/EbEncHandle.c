@@ -2098,6 +2098,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
+    else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
+        scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+    }
 
     derive_input_resolution(
         &scs_ptr->input_resolution,
@@ -2663,6 +2666,10 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->recode_loop > 4) {
+        SVT_LOG("Error Instance %u: The recode_loop must be [0 - 4] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
     if (config->rate_control_mode > 2) {
 
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
@@ -3142,7 +3149,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_max_section_pct = 2000;
     config_ptr->under_shoot_pct = 25;
     config_ptr->over_shoot_pct = 25;
-    config_ptr->recode_loop = ALLOW_RECODE_KFARFGF;
+    config_ptr->recode_loop = ALLOW_RECODE_DEFAULT;
 
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;

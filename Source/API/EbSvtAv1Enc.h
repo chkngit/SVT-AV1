@@ -531,7 +531,9 @@ typedef struct EbSvtAv1EncConfiguration {
      * ALLOW_RECODE_KFMAXBW = 1, Allow recode for KF and exceeding maximum frame bandwidth.
      * ALLOW_RECODE_KFARFGF = 2, Allow recode only for KF/ARF/GF frames.
      * ALLOW_RECODE = 3, Allow recode for all frames based on bitrate constraints.
-     * default is 2 */
+     * ALLOW_RECODE_DEFAULT = 4, Default setting, ALLOW_RECODE_KFARFGF for M0~5 and
+     *                                            ALLOW_RECODE_KFMAXBW for M6~8.
+     * default is 4 */
     uint32_t recode_loop;
 
     /* Flag to signal the content being a screen sharing content type
